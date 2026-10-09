@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_pack_user,craf.pack user,model_craf_pack,base.group_user,1,0,0,0
+access_craf_pack_stock,craf.pack stock,model_craf_pack,stock.group_stock_user,1,1,1,0
+access_craf_pack_manager,craf.pack manager,model_craf_pack,stock.group_stock_manager,1,1,1,1
+access_craf_pack_wizard_user,craf.pack.wizard user,model_craf_pack_wizard,stock.group_stock_user,1,1,1,1

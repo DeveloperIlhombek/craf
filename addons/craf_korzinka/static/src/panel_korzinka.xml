@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_korzinka.PanelKorzinka" t-inherit="craf_dashboard.Panel" t-inherit-mode="extension">
+        <xpath expr="(//div[hasclass('row')])[1]" position="after">
+            <div class="row g-3 mb-3" t-if="state.data.baskets">
+                <t t-set="bk" t-value="state.data.baskets"/>
+                <div class="col-6 col-md-3">
+                    <div class="o_craf_card h-100">
+                        <div class="o_craf_label">Korzinkalar (davrda)</div>
+                        <div class="o_craf_value"><t t-esc="bk.filled"/> ta</div>
+                        <div class="o_craf_sub"><t t-esc="fmt(bk.pcs)"/> dona · <t t-esc="fmt(bk.kg)"/> kg</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="o_craf_card h-100">
+                        <div class="o_craf_label">Bugun to'ldirildi</div>
+                        <div class="o_craf_value"><t t-esc="bk.filled_today"/> ta</div>
+                        <div class="o_craf_sub">press smenalaridan</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="o_craf_card h-100">
+                        <div class="o_craf_label">Kimyoga kutmoqda</div>
+                        <div class="o_craf_value"><t t-esc="bk.waiting_chem"/> ta</div>
+                        <div class="o_craf_sub">Kimyoviy ishlov joyida</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="o_craf_card h-100">
+                        <div class="o_craf_label">Bo'yashga tayyor</div>
+                        <div class="o_craf_value"><t t-esc="bk.ready_paint"/> ta</div>
+                        <div class="o_craf_sub">kimyodan o'tgan</div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>

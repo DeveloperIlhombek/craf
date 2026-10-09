@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_paint_batch_user,craf.paint.batch user,model_craf_paint_batch,base.group_user,1,0,0,0
+access_craf_paint_batch_mrp,craf.paint.batch mrp,model_craf_paint_batch,mrp.group_mrp_user,1,1,1,1
+access_craf_paint_batch_line_user,craf.paint.batch.line user,model_craf_paint_batch_line,base.group_user,1,0,0,0
+access_craf_paint_batch_line_mrp,craf.paint.batch.line mrp,model_craf_paint_batch_line,mrp.group_mrp_user,1,1,1,1
+access_craf_paint_chem_line_user,craf.paint.chem.line user,model_craf_paint_chem_line,base.group_user,1,0,0,0
+access_craf_paint_chem_line_mrp,craf.paint.chem.line mrp,model_craf_paint_chem_line,mrp.group_mrp_user,1,1,1,1

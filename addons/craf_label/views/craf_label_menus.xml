@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_craf_pack" name="Pachkalar" parent="craf_profile.menu_craf_root"
+              action="action_craf_pack" sequence="25"/>
+</odoo>

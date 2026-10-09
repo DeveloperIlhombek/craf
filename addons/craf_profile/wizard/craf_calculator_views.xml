@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_calculator_view_form" model="ir.ui.view">
+        <field name="name">craf.calculator.form</field>
+        <field name="model">craf.calculator</field>
+        <field name="arch" type="xml">
+            <form string="Kalkulyator">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Pachka / dona / metr / kg kalkulyatori</h1>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not warning">
+                        <field name="warning" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="1. Mahsulot">
+                            <field name="product_id" options="{'no_create': True}"
+                                   placeholder="Kod yoki nom yozing: T-BAL, Ламбер ..."/>
+                            <field name="kg_per_m" invisible="not product_id"/>
+                            <field name="length_m" invisible="not product_id"/>
+                            <field name="pcs_per_pack" invisible="not product_id"/>
+                            <field name="params_changed" invisible="1"/>
+                            <div colspan="2" invisible="not params_changed">
+                                <button name="action_save_params" type="object" string="Mahsulotga saqlash"
+                                        class="btn-primary" icon="fa-save"/>
+                                <span class="text-muted ms-2">kg/m kesimga, qolganlari mahsulotga yoziladi</span>
+                            </div>
+                        </group>
+                        <group string="2. Nimani bilasiz?">
+                            <field name="mode" widget="radio" options="{'horizontal': true}" string="Kiritish"/>
+                            <field name="in_packs" invisible="mode != 'pack'"/>
+                            <field name="in_extra_pcs" invisible="mode != 'pack'"/>
+                            <field name="in_pcs" invisible="mode != 'pcs'"/>
+                            <field name="in_m" invisible="mode != 'm'"/>
+                            <field name="in_kg" invisible="mode != 'kg'"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info text-center my-3" role="status" invisible="not product_id">
+                        <h2 class="mb-0"><field name="res_text" readonly="1"/></h2>
+                    </div>
+                    <group>
+                        <group string="3. Natija">
+                            <field name="res_pcs"/>
+                            <field name="res_m"/>
+                            <field name="res_kg"/>
+                            <field name="res_packs" invisible="1"/>
+                            <field name="res_rest" invisible="1"/>
+                        </group>
+                        <group string="Omborda" invisible="not product_id">
+                            <field name="stock_text"/>
+                            <field name="free_text"/>
+                            <field name="stock_kg"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_calculator" model="ir.actions.act_window">
+        <field name="name">Kalkulyator</field>
+        <field name="res_model">craf.calculator</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+</odoo>

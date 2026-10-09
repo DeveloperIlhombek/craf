@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bitta sahifa: Kunlik hisobot + kalkulyator -->
+    <record id="craf_hisobot.action_craf_kunlik" model="ir.actions.client">
+        <field name="name">Hisobot va kalkulyator</field>
+    </record>
+    <record id="craf_hisobot.menu_craf_kunlik" model="ir.ui.menu">
+        <field name="name">Hisobot va kalkulyator</field>
+    </record>
+    <!-- Alohida kalkulyator menyusi endi kerak emas (mahsulot kartochkasidagi tugma qoladi) -->
+    <record id="craf_profile.menu_craf_calculator" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- Mahsulot: o'ram -->
+    <record id="product_template_form_view_craf_pkg" model="ir.ui.view">
+        <field name="name">product.template.form.craf.pkg</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="craf_hisobot.product_template_form_view_craf_min"/>
+        <field name="arch" type="xml">
+            <field name="craf_min_qty" position="after">
+                <label for="craf_pkg_kg" invisible="craf_section_id"/>
+                <div class="o_row" invisible="craf_section_id">
+                    1 <field name="craf_pkg_name" class="oe_inline" style="max-width: 7rem;" placeholder="qop"/>
+                    = <field name="craf_pkg_kg" class="oe_inline" style="max-width: 6rem;"/> kg
+                </div>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_template_list_view_craf_materials_pkg" model="ir.ui.view">
+        <field name="name">product.template.list.craf.materials.pkg</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="craf_hisobot.product_template_list_view_craf_materials_min"/>
+        <field name="arch" type="xml">
+            <field name="craf_min_qty" position="after">
+                <field name="craf_pkg_name" string="O'ram" optional="show"/>
+                <field name="craf_pkg_kg" string="1 o'ram, kg" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Bo'yash: qadoqlandi pachka + dona -->
+    <record id="craf_paint_batch_view_form_pack" model="ir.ui.view">
+        <field name="name">craf.paint.batch.form.pack</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="inherit_id" ref="craf_paint.craf_paint_batch_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']/list/field[@name='pcs_in']" position="after">
+                <field name="out_packs" string="Pachka" sum="Jami"
+                       decoration-danger="out_packs and not per_pack"/>
+                <field name="out_extra" string="+ dona" sum="Jami"/>
+                <field name="per_pack" string="Dona/pachka" optional="hide"/>
+                <field name="pcs_packed" string="Qadoqlandi" sum="Jami" optional="hide"
+                       decoration-danger="pcs_packed and pcs_packed != pcs_ok"/>
+                <field name="pcs_in_auto" column_invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/list/field[@name='area_m2']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/list/field[@name='pcs_ok']" position="attributes">
+                <attribute name="decoration-danger">pcs_packed and pcs_packed != pcs_ok</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/form//field[@name='pcs_in']" position="after">
+                <label for="out_packs"/>
+                <div class="o_row">
+                    <field name="out_packs" class="oe_inline"/> pachka +
+                    <field name="out_extra" class="oe_inline"/> dona
+                    <span class="text-muted" invisible="not per_pack">(1 pachka = <field name="per_pack" class="oe_inline"/> dona)</span>
+                </div>
+                <field name="pcs_packed" invisible="not out_packs and not out_extra"/>
+                <field name="pcs_in_auto" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/kanban//t[@t-name='card']" position="inside">
+                <div class="small text-muted" invisible="not out_packs and not out_extra">
+                    qadoqlandi: <field name="packs_text"/>
+                </div>
+                <field name="out_packs" invisible="1"/>
+                <field name="out_extra" invisible="1"/>
+            </xpath>
+            <field name="powder_qty" position="before">
+                <label for="powder_bags" invisible="not powder_pkg_kg and not powder_bags"/>
+                <div class="o_row" invisible="not powder_pkg_kg and not powder_bags">
+                    <field name="powder_bags" class="oe_inline" readonly="state != 'draft'"/>
+                    <span class="text-muted">× <field name="powder_pkg_kg" class="oe_inline"/> kg</span>
+                </div>
+            </field>
+        </field>
+    </record>
+
+    <!-- Pech: o'ram (qop) bilan -->
+    <record id="craf_foundry_melt_view_form_pkg" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.form.pkg</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']/list/field[@name='qty']" position="before">
+                <field name="bags" string="O'ram" optional="show" readonly="not pkg_kg and not bags"/>
+                <field name="pkg_name" string="Nomi" optional="hide"/>
+                <field name="pkg_kg" string="1 o'ram, kg" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/form//field[@name='qty']" position="before">
+                <label for="bags" invisible="not pkg_kg and not bags"/>
+                <div class="o_row" invisible="not pkg_kg and not bags">
+                    <field name="bags" class="oe_inline"/>
+                    <field name="pkg_name" class="oe_inline" readonly="1"/>
+                    <span class="text-muted">× <field name="pkg_kg" class="oe_inline"/> kg</span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_view_craf" model="ir.ui.view">
+        <field name="name">product.template.form.craf</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='general_information']" position="after">
+                <page string="Profil" name="craf_profile">
+                    <group>
+                        <group string="Kesim va rang">
+                            <field name="craf_section_id"/>
+                            <field name="craf_color_id"/>
+                            <field name="craf_length_m"/>
+                            <field name="craf_pcs_per_pack"/>
+                            <field name="craf_name_1c"/>
+                        </group>
+                        <group string="Og'irlik">
+                            <field name="craf_kg_per_m"/>
+                            <field name="craf_kg_per_pc"/>
+                            <field name="craf_kg_per_pack"/>
+                        </group>
+                        <group string="Qoldiq" invisible="not id">
+                            <field name="craf_stock_text"/>
+                            <field name="craf_free_text"/>
+                            <field name="craf_stock_kg"/>
+                        </group>
+                    </group>
+                    <button name="action_craf_calculator" type="object" string="Kalkulyatorni ochish"
+                            class="btn-primary" icon="fa-calculator" invisible="not id or not craf_section_id"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_craf" model="ir.ui.view">
+        <field name="name">product.template.search.craf</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="craf_section_id"/>
+                <field name="craf_color_id"/>
+                <separator/>
+                <filter name="craf_profiles" string="Profillar" domain="[('craf_section_id', '!=', False)]"/>
+                <filter name="craf_no_pack" string="Dona/pachka kiritilmagan"
+                        domain="[('craf_section_id', '!=', False), ('craf_pcs_per_pack', '=', 0)]"/>
+                <group>
+                    <filter name="craf_group_section" string="Kesim" context="{'group_by': 'craf_section_id'}"/>
+                    <filter name="craf_group_color" string="Rang" context="{'group_by': 'craf_color_id'}"/>
+                    <filter name="craf_group_length" string="Uzunlik" context="{'group_by': 'craf_length_m'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_list_view_craf" model="ir.ui.view">
+        <field name="name">product.template.list.craf</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Profillar" editable="bottom" create="false">
+                <field name="default_code" readonly="1"/>
+                <field name="name" readonly="1"/>
+                <field name="craf_section_id" optional="show"/>
+                <field name="craf_color_id" optional="show"/>
+                <field name="craf_length_m"/>
+                <field name="craf_pcs_per_pack"/>
+                <field name="craf_kg_per_m" optional="show"/>
+                <field name="craf_kg_per_pc" optional="show"/>
+                <field name="craf_kg_per_pack" optional="hide"/>
+                <field name="qty_available" string="Umumiy qoldiq, шт" optional="show"/>
+                <field name="craf_stock_text" optional="show"/>
+                <field name="craf_free_text" optional="hide"/>
+                <field name="craf_stock_kg" optional="show"/>
+                <field name="uom_id" optional="hide" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="product_template_kanban_view_craf" model="ir.ui.view">
+        <field name="name">product.template.kanban.craf</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1" create="false">
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <main class="pe-2 min-w-0">
+                            <field name="name" class="fw-bold"/>
+                            <div class="text-muted small">
+                                <field name="default_code"/> · <field name="craf_length_m"/> m · <field name="craf_pcs_per_pack"/> dona/pachka
+                            </div>
+                            <div class="d-flex mt-1 align-items-baseline">
+                                <span><field name="qty_available" class="fw-bold"/> шт</span>
+                                <span class="ms-auto text-muted small"><field name="craf_stock_text"/></span>
+                            </div>
+                            <div class="text-muted small">
+                                <field name="craf_kg_per_pc"/> kg/dona · <field name="craf_stock_kg"/> kg
+                            </div>
+                        </main>
+                        <aside t-if="record.image_128.raw_value">
+                            <field name="image_128" widget="image" options="{'img_class': 'w-100 object-fit-contain'}"/>
+                        </aside>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="product_template_kanban_view_craf_materials" model="ir.ui.view">
+        <field name="name">product.template.kanban.craf.materials</field>
+        <field name="model">product.template</field>
+        <field name="priority">91</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <templates>
+                    <t t-name="card">
+                        <field name="name" class="fw-bold"/>
+                        <div class="d-flex mt-1 align-items-baseline">
+                            <span class="text-muted small"><field name="default_code"/></span>
+                            <span class="ms-auto"><field name="qty_available" class="fw-bold"/> <field name="uom_id"/></span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_craf_profiles" model="ir.actions.act_window">
+        <field name="name">Profillar</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('craf_section_id', '!=', False)]</field>
+        <field name="context">{'search_default_craf_group_section': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('product_template_list_view_craf')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('product_template_kanban_view_craf')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('product.product_template_form_view')})]"/>
+    </record>
+
+    <record id="product_template_list_view_craf_materials" model="ir.ui.view">
+        <field name="name">product.template.list.craf.materials</field>
+        <field name="model">product.template</field>
+        <field name="priority">91</field>
+        <field name="arch" type="xml">
+            <list string="Xom-ashyo">
+                <field name="default_code"/>
+                <field name="name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="qty_available" string="Umumiy qoldiq"/>
+                <field name="virtual_available" string="Prognoz" optional="hide"/>
+                <field name="uom_id" string="Birlik"/>
+                <field name="craf_name_1c" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_craf_materials" model="ir.actions.act_window">
+        <field name="name">Xom-ashyo</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('craf_section_id', '=', False), ('is_storable', '=', True)]</field>
+        <field name="context">{'group_by': 'categ_id'}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('product_template_list_view_craf_materials')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('product_template_kanban_view_craf_materials')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('product.product_template_form_view')})]"/>
+    </record>
+</odoo>

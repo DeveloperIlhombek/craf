@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_foundry_melt_view_form_korzinka" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.form.korzinka</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_form"/>
+        <field name="arch" type="xml">
+            <field name="slag_qty" position="before">
+                <field name="cut_waste_qty" readonly="state != 'draft'"/>
+            </field>
+            <field name="slag_product_id" position="after">
+                <field name="cut_waste_product_id" readonly="state != 'draft'" options="{'no_create': True}"
+                       groups="base.group_no_one"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_list_korzinka" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.list.korzinka</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_list"/>
+        <field name="arch" type="xml">
+            <field name="slag_qty" position="before">
+                <field name="cut_waste_qty" sum="Jami" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>

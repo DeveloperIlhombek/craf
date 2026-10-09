@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_location_form_craf_map" model="ir.ui.view">
+        <field name="name">stock.location.form.craf.map</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='additional_info']/.." position="after">
+                <group string="Zavod xaritasi" name="craf_map" invisible="usage != 'internal'">
+                    <group>
+                        <field name="craf_map_show"/>
+                        <field name="craf_map_kind" invisible="not craf_map_show"/>
+                        <field name="craf_map_sequence" invisible="not craf_map_show"/>
+                    </group>
+                    <group invisible="not craf_map_show">
+                        <field name="craf_map_x"/>
+                        <field name="craf_map_y"/>
+                        <field name="craf_map_w"/>
+                        <field name="craf_map_h"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

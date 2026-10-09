@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_zavod_xarita" model="ir.actions.client">
+        <field name="name">Zavod xaritasi</field>
+        <field name="tag">craf_zavod_xarita</field>
+    </record>
+    <menuitem id="menu_craf_zavod_xarita" name="Zavod xaritasi" parent="craf_profile.menu_craf_root"
+              action="action_craf_zavod_xarita" sequence="5"/>
+</odoo>

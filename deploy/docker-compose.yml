@@ -1,0 +1,62 @@
+# Craf — VPS uchun: PostgreSQL 17 + Odoo 19 + Caddy (HTTPS)
+# Ishga tushirish: deploy/install.sh (u .env va config/odoo.conf ni yaratadi)
+name: craf
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env faylida bo'lishi kerak}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    shm_size: 256mb
+
+  odoo:
+    image: odoo:19.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: ${DB_USER:-odoo}
+      PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ../addons:/mnt/extra-addons:ro
+      - ./config:/etc/odoo:ro
+      - odoo-data:/var/lib/odoo
+      - ../backups:/backups
+    expose:
+      - "8069"
+      - "8072"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - odoo
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  db-data:
+  odoo-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mrp_production_form_view_craf" model="ir.ui.view">
+        <field name="name">mrp.production.form.craf</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="craf_can_plan_stages" invisible="1"/>
+                <button name="action_craf_plan_stages" type="object" string="Oldingi bosqichlarni rejalash"
+                        icon="fa-sitemap" invisible="not craf_can_plan_stages"
+                        help="Komponent (bo'yalmagan profil, quyma) yetishmasa, Press va Литейка uchun buyurtma ochadi"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

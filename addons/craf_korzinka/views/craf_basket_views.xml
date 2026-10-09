@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Korzinka (jismoniy) -->
+    <record id="craf_basket_view_list" model="ir.ui.view">
+        <field name="name">craf.basket.list</field>
+        <field name="model">craf.basket</field>
+        <field name="arch" type="xml">
+            <list string="Korzinkalar" editable="bottom" decoration-muted="state == 'empty'"
+                  decoration-warning="state == 'press'" decoration-success="state == 'kimyo'">
+                <field name="name"/>
+                <field name="tare_kg"/>
+                <field name="capacity"/>
+                <field name="state" widget="badge" decoration-warning="state == 'press'"
+                       decoration-success="state == 'kimyo'" decoration-muted="state == 'empty'"/>
+                <field name="content"/>
+                <field name="pcs"/>
+                <field name="kg"/>
+                <field name="location_id"/>
+                <field name="load_count" optional="hide"/>
+                <field name="note" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_basket_view_kanban" model="ir.ui.view">
+        <field name="name">craf.basket.kanban</field>
+        <field name="model">craf.basket</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge"
+                                  t-att-class="record.state.raw_value === 'press' ? 'text-bg-warning' : (record.state.raw_value === 'kimyo' ? 'text-bg-success' : 'text-bg-light')">
+                                <field name="state"/>
+                            </span>
+                        </div>
+                        <field name="content" class="text-muted small"/>
+                        <div class="d-flex mt-1">
+                            <span><field name="pcs"/> dona · <field name="kg"/> kg</span>
+                            <span class="ms-auto text-muted small"><field name="location_id"/></span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_basket_view_form" model="ir.ui.view">
+        <field name="name">craf.basket.form</field>
+        <field name="model">craf.basket</field>
+        <field name="arch" type="xml">
+            <form string="Korzinka">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_loads" type="object" class="oe_stat_button" icon="fa-history">
+                            <field name="load_count" widget="statinfo" string="To'ldirish"/>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="tare_kg"/>
+                            <field name="capacity"/>
+                            <field name="note"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Hozir">
+                            <field name="state"/>
+                            <field name="content"/>
+                            <field name="pcs"/>
+                            <field name="kg"/>
+                            <field name="location_id"/>
+                            <field name="current_load_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_basket_view_search" model="ir.ui.view">
+        <field name="name">craf.basket.search</field>
+        <field name="model">craf.basket</field>
+        <field name="arch" type="xml">
+            <search string="Korzinkalar">
+                <field name="name"/>
+                <filter name="empty" string="Bo'sh" domain="[('state', '=', 'empty')]"/>
+                <filter name="waiting" string="Kimyoga kutmoqda" domain="[('state', '=', 'press')]"/>
+                <filter name="ready" string="Bo'yashga tayyor" domain="[('state', '=', 'kimyo')]"/>
+                <separator/>
+                <filter name="archived" string="Arxiv" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_basket" model="ir.actions.act_window">
+        <field name="name">Korzinkalar</field>
+        <field name="res_model">craf.basket</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="path">craf-korzinkalar</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Korzinkalarni kiriting</p>
+            <p>Har bir korzinkaning kodi va bo'sh og'irligi (tara). Sig'imi odatda 120 dona.</p>
+        </field>
+    </record>
+
+    <!-- Korzinka yuklari -->
+    <record id="craf_basket_load_view_list" model="ir.ui.view">
+        <field name="name">craf.basket.load.list</field>
+        <field name="model">craf.basket.load</field>
+        <field name="arch" type="xml">
+            <list string="Korzinka yuklari" create="false">
+                <field name="date"/>
+                <field name="basket_id"/>
+                <field name="shift_id"/>
+                <field name="section_id"/>
+                <field name="qty_6" sum="Jami"/>
+                <field name="qty_5" sum="Jami"/>
+                <field name="pcs_total" sum="Jami"/>
+                <field name="kg_theory" sum="Jami"/>
+                <field name="net_kg" sum="Jami" optional="show"/>
+                <field name="kg_diff" optional="hide"/>
+                <field name="state" widget="badge" decoration-warning="state == 'press'"
+                       decoration-success="state == 'kimyo'" decoration-muted="state == 'boyash'"/>
+                <field name="location_id" optional="show"/>
+                <field name="treatment_id" optional="hide"/>
+                <field name="paint_batch_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_basket_load_view_form" model="ir.ui.view">
+        <field name="name">craf.basket.load.form</field>
+        <field name="model">craf.basket.load</field>
+        <field name="arch" type="xml">
+            <form string="Korzinka yuki" create="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="basket_id"/>
+                            <field name="shift_id"/>
+                            <field name="date"/>
+                            <field name="section_id"/>
+                            <field name="state"/>
+                            <field name="location_id"/>
+                        </group>
+                        <group>
+                            <field name="qty_6"/>
+                            <field name="qty_5"/>
+                            <field name="pcs_total"/>
+                            <field name="kg_theory"/>
+                            <field name="gross_kg"/>
+                            <field name="net_kg"/>
+                            <field name="kg_diff"/>
+                        </group>
+                        <group>
+                            <field name="treatment_id"/>
+                            <field name="paint_batch_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_basket_load_view_search" model="ir.ui.view">
+        <field name="name">craf.basket.load.search</field>
+        <field name="model">craf.basket.load</field>
+        <field name="arch" type="xml">
+            <search string="Korzinka yuklari">
+                <field name="basket_id"/>
+                <field name="shift_id"/>
+                <field name="section_id"/>
+                <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="waiting" string="Kimyoga kutmoqda" domain="[('state', '=', 'press')]"/>
+                <filter name="ready" string="Bo'yashga tayyor" domain="[('state', '=', 'kimyo')]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_section" string="Profil" context="{'group_by': 'section_id'}"/>
+                    <filter name="group_state" string="Holati" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_basket_load" model="ir.actions.act_window">
+        <field name="name">Korzinka yuklari</field>
+        <field name="res_model">craf.basket.load</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_date': 1}</field>
+    </record>
+</odoo>

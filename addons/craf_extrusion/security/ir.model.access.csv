@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_extrusion_shift_user,craf.extrusion.shift user,model_craf_extrusion_shift,base.group_user,1,0,0,0
+access_craf_extrusion_shift_mrp,craf.extrusion.shift mrp,model_craf_extrusion_shift,mrp.group_mrp_user,1,1,1,1
+access_craf_extrusion_shift_line_user,craf.extrusion.shift.line user,model_craf_extrusion_shift_line,base.group_user,1,0,0,0
+access_craf_extrusion_shift_line_mrp,craf.extrusion.shift.line mrp,model_craf_extrusion_shift_line,mrp.group_mrp_user,1,1,1,1

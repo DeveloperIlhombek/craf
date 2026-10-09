@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_craf_root" name="Craf" sequence="5"
+              web_icon="craf_profile,static/description/icon.png"/>
+    <menuitem id="menu_craf_calculator" name="Kalkulyator" parent="menu_craf_root"
+              action="action_craf_calculator" sequence="10"/>
+    <menuitem id="menu_craf_profiles" name="Profillar" parent="menu_craf_root"
+              action="action_craf_profiles" sequence="20"/>
+    <menuitem id="menu_craf_materials" name="Xom-ashyo" parent="menu_craf_root"
+              action="action_craf_materials" sequence="30"/>
+    <menuitem id="menu_craf_config" name="Sozlamalar" parent="menu_craf_root" sequence="90"/>
+    <menuitem id="menu_craf_sections" name="Kesimlar" parent="menu_craf_config"
+              action="action_craf_profile_section" sequence="10"/>
+    <menuitem id="menu_craf_colors" name="Ranglar" parent="menu_craf_config"
+              action="action_craf_color" sequence="20"/>
+</odoo>

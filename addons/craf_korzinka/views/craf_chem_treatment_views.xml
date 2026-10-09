@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_chem_treatment_view_list" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.list</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="arch" type="xml">
+            <list string="Kimyoviy ishlov" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="shift" optional="show"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="basket_count" sum="Jami"/>
+                <field name="pcs_total" sum="Jami"/>
+                <field name="kg_total" sum="Jami"/>
+                <field name="area_total" sum="Jami" optional="hide"/>
+                <field name="chem_kg" sum="Jami"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_chem_treatment_view_kanban" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.kanban</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center mb-1">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : (record.state.raw_value === 'draft' ? 'text-bg-info' : 'text-bg-secondary')"><field name="state"/></span>
+                        </div>
+                        <div class="text-muted small"><field name="date"/> · <field name="shift"/></div>
+                        <div class="d-flex mt-1">
+                            <span><field name="basket_count" class="fw-bold"/> korzinka · <field name="pcs_total"/> dona</span>
+                            <span class="ms-auto">kimyo <field name="chem_kg" class="fw-bold"/> kg</span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_chem_treatment_view_form" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.form</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="arch" type="xml">
+            <form string="Kimyoviy ishlov">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary" icon="fa-check"
+                            invisible="state != 'draft'"
+                            confirm="Tasdiqlansa, korzinkalardagi profillar Bo'yash sexiga o'tadi va kimyo qoldiqdan yechiladi. Davom etasizmi?"/>
+                    <button name="action_add_waiting" type="object" string="Kutayotgan korzinkalar" icon="fa-shopping-basket"
+                            invisible="state != 'draft'"/>
+                    <button name="action_fill_norms" type="object" string="Kimyoni me'yordan" icon="fa-flask"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_pickings" type="object" class="oe_stat_button" icon="fa-truck"
+                                invisible="not picking_ids">
+                            <span class="o_stat_text">Ko'chirish</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted">Kimyoviy ishlov</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Smena">
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="shift" readonly="state != 'draft'"/>
+                            <field name="equipment_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                        </group>
+                        <group string="Jami">
+                            <field name="basket_count"/>
+                            <field name="pcs_total"/>
+                            <field name="kg_total"/>
+                            <field name="area_total"/>
+                            <field name="chem_kg"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Korzinkalar" name="baskets">
+                            <field name="load_ids" readonly="state != 'draft'" options="{'no_create': True}">
+                                <list>
+                                    <field name="basket_id"/>
+                                    <field name="shift_id"/>
+                                    <field name="content"/>
+                                    <field name="pcs_total" sum="Jami"/>
+                                    <field name="kg_theory" sum="Jami"/>
+                                    <field name="net_kg" sum="Jami" optional="show"/>
+                                    <field name="area_m2" sum="Jami" optional="show"/>
+                                </list>
+                                <kanban class="o_kanban_mobile">
+                                    <templates>
+                                        <t t-name="card">
+                                            <field name="basket_id" class="fw-bold"/>
+                                            <field name="content" class="text-muted small"/>
+                                            <div><field name="pcs_total"/> dona · <field name="kg_theory"/> kg</div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+                        <page string="Kimyo sarfi" name="chem">
+                            <field name="chem_line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="product_id" options="{'no_create': True}"/>
+                                    <field name="available_qty" column_invisible="parent.state != 'draft'"
+                                           decoration-danger="available_qty &lt; qty"/>
+                                    <field name="qty_norm" sum="Jami"/>
+                                    <field name="qty" sum="Jami"/>
+                                    <field name="uom_id" optional="hide"/>
+                                    <field name="state" column_invisible="1"/>
+                                </list>
+                                <kanban class="o_kanban_mobile">
+                                    <templates>
+                                        <t t-name="card">
+                                            <field name="product_id" class="fw-bold"/>
+                                            <div class="d-flex"><span class="text-muted">me'yor <field name="qty_norm"/></span>
+                                                <span class="ms-auto">sarf <field name="qty" class="fw-bold"/> kg</span></div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form string="Kimyo">
+                                    <group>
+                                        <field name="product_id" options="{'no_create': True}"/>
+                                        <field name="qty_norm"/>
+                                        <field name="qty"/>
+                                        <field name="state" invisible="1"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Joylar va izoh" name="other">
+                            <group>
+                                <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                                <field name="location_dest_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                                <field name="picking_ids" widget="many2many_tags" readonly="1"/>
+                            </group>
+                            <field name="note" placeholder="Izoh…"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_chem_treatment_view_search" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.search</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="arch" type="xml">
+            <search string="Kimyoviy ishlov">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_chem_treatment" model="ir.actions.act_window">
+        <field name="name">Kimyoviy ishlov</field>
+        <field name="res_model">craf.chem.treatment</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="path">craf-kimyo</field>
+        <field name="context">{'search_default_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Kimyoviy ishlovni yozing</p>
+            <p>"Kutayotgan korzinkalar" press dan kelgan korzinkalarni qo'shadi, "Kimyoni me'yordan" sarfni hisoblaydi.</p>
+        </field>
+    </record>
+</odoo>

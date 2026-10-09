@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_extrusion_shift_view_form_korzinka" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.form.korzinka</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="inherit_id" ref="craf_extrusion.craf_extrusion_shift_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_done']" position="after">
+                <button name="action_fill_from_baskets" type="object" string="Korzinkalardan to'ldirish"
+                        icon="fa-shopping-basket" invisible="state != 'draft' or not basket_load_ids"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_baskets" type="object" class="oe_stat_button" icon="fa-shopping-basket"
+                        invisible="not basket_count">
+                    <field name="basket_count" widget="statinfo" string="Korzinka"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='output']" position="before">
+                <page string="Korzinkalar" name="baskets">
+                    <div class="text-muted small mb-2">
+                        Har bir to'ldirilgan korzinka: kodi, 6 m va 5 m profil soni (ko'pi bilan 120 dona), tortilgan og'irlik.
+                        Tasdiqlashda profil chiqishi shu yerdan hisoblanadi.
+                    </div>
+                    <field name="basket_load_ids" readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="basket_id" options="{'no_create': True}"/>
+                            <field name="qty_6" sum="Jami"/>
+                            <field name="qty_5" sum="Jami"/>
+                            <field name="pcs_total" sum="Jami"/>
+                            <field name="kg_theory" sum="Jami"/>
+                            <field name="gross_kg" sum="Jami"/>
+                            <field name="net_kg" sum="Jami" optional="show"/>
+                            <field name="kg_diff" optional="show" decoration-danger="kg_diff &lt; -10 or kg_diff &gt; 10"/>
+                            <field name="state" optional="hide"/>
+                        </list>
+                        <kanban class="o_kanban_mobile">
+                            <templates>
+                                <t t-name="card">
+                                    <div class="d-flex align-items-center">
+                                        <field name="basket_id" class="fw-bold fs-5"/>
+                                        <span class="ms-auto"><field name="pcs_total" class="fw-bold"/> dona</span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        6 m: <field name="qty_6"/> · 5 m: <field name="qty_5"/> · <field name="kg_theory"/> kg
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+                        <form string="Korzinka">
+                            <group>
+                                <field name="basket_id" options="{'no_create': True}"/>
+                                <field name="qty_6"/>
+                                <field name="qty_5"/>
+                                <field name="pcs_total"/>
+                                <field name="kg_theory"/>
+                                <field name="gross_kg"/>
+                                <field name="net_kg"/>
+                            </group>
+                        </form>
+                    </field>
+                    <group class="mt-2">
+                        <group>
+                            <field name="basket_pcs"/>
+                            <field name="basket_kg"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_list_korzinka" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.list.korzinka</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="inherit_id" ref="craf_extrusion.craf_extrusion_shift_view_list"/>
+        <field name="arch" type="xml">
+            <field name="output_pcs" position="before">
+                <field name="basket_count" sum="Jami" string="Korzinka"/>
+            </field>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_foundry_melt_view_list" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.list</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="arch" type="xml">
+            <list string="Plavkalar" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="shift" optional="show"/>
+                <field name="equipment_id" optional="show"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="charge_metal" sum="Jami"/>
+                <field name="billet_qty" sum="Jami"/>
+                <field name="slag_qty" sum="Jami" optional="show"/>
+                <field name="burn_loss_qty" sum="Jami" optional="hide"/>
+                <field name="burn_loss_pct" avg="O'rtacha"/>
+                <field name="yield_pct" avg="O'rtacha" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_kanban" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.kanban</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center mb-1">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : (record.state.raw_value === 'draft' ? 'text-bg-info' : 'text-bg-secondary')"><field name="state"/></span>
+                        </div>
+                        <div class="text-muted small">
+                            <field name="date"/> · <field name="shift"/> · <field name="equipment_id"/>
+                        </div>
+                        <div class="d-flex mt-2 align-items-baseline">
+                            <div><span class="text-muted small">Quyma </span><field name="billet_qty" class="fw-bold"/> kg</div>
+                            <div class="ms-auto"><span class="text-muted small">угар </span><field name="burn_loss_pct" class="fw-bold"/> %</div>
+                        </div>
+                        <footer class="pt-1">
+                            <field name="employee_id" widget="many2one_avatar_employee"/>
+                            <span class="ms-auto text-muted small">metall <field name="charge_metal"/> kg</span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_form" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.form</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="arch" type="xml">
+            <form string="Plavka">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary"
+                            icon="fa-check" invisible="state != 'draft'"
+                            confirm="Plavka tasdiqlansa, shixta Литейка qoldig'idan yechiladi va quyma omborga kiradi. Davom etasizmi?"/>
+                    <button name="action_load_recipe" type="object" string="Retseptdan to'ldirish"
+                            icon="fa-list-ol" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_productions" type="object" class="oe_stat_button" icon="fa-cogs"
+                                invisible="not production_count">
+                            <field name="production_count" widget="statinfo" string="MRP buyurtma"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted">Plavka (quyma partiyasi)</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Plavka">
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="shift" readonly="state != 'draft'"/>
+                            <field name="equipment_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                            <field name="temperature" readonly="state != 'draft'"/>
+                            <field name="duration" readonly="state != 'draft'" widget="float_time"/>
+                        </group>
+                        <group string="Retsept va joylar">
+                            <field name="billet_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="billet_tmpl_id" invisible="1"/>
+                            <field name="bom_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="plan_qty" readonly="state != 'draft'"/>
+                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="location_dest_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="waste_location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Shixta" name="charge">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <kanban class="o_kanban_mobile">
+                                    <templates>
+                                        <t t-name="card">
+                                            <field name="product_id" class="fw-bold"/>
+                                            <div class="d-flex mt-1">
+                                                <span class="text-muted">Reja <field name="qty_plan"/></span>
+                                                <span class="ms-auto">Haqiqiy <field name="qty" class="fw-bold"/> kg</span>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form string="Shixta qatori">
+                                    <group>
+                                        <field name="product_id" options="{'no_create': True}"/>
+                                        <field name="available_qty" invisible="parent.state != 'draft'"/>
+                                        <field name="qty_plan"/>
+                                        <field name="qty"/>
+                                        <field name="is_metal"/>
+                                        <field name="state" invisible="1"/>
+                                    </group>
+                                </form>
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id" options="{'no_create': True}"/>
+                                    <field name="available_qty" decoration-danger="available_qty &lt; qty"
+                                           decoration-muted="available_qty &gt;= qty" optional="show"
+                                           column_invisible="parent.state != 'draft'"/>
+                                    <field name="qty_plan" sum="Reja"/>
+                                    <field name="qty" sum="Jami"/>
+                                    <field name="is_metal" widget="boolean_toggle" optional="show"/>
+                                    <field name="uom_id" optional="hide"/>
+                                    <field name="state" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Izoh" name="note">
+                            <field name="note" placeholder="Masalan: pech holati, qo'shimcha flyus, kechikish sababi…"/>
+                        </page>
+                    </notebook>
+                    <group>
+                        <group string="Natija">
+                            <field name="billet_qty" readonly="state != 'draft'" class="fw-bold"/>
+                            <field name="slag_qty" readonly="state != 'draft'"/>
+                            <field name="slag_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Ko'rsatkichlar">
+                            <field name="charge_total"/>
+                            <field name="charge_metal"/>
+                            <field name="burn_loss_qty"/>
+                            <field name="burn_loss_pct" decoration-danger="burn_loss_pct &gt; 3"
+                                   decoration-success="burn_loss_pct &gt; 0 and burn_loss_pct &lt;= 3"/>
+                            <field name="yield_pct"/>
+                            <field name="balance_text" invisible="not balance_text"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_search" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.search</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="arch" type="xml">
+            <search string="Plavkalar">
+                <field name="name"/>
+                <field name="equipment_id"/>
+                <field name="employee_id"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="high_loss" string="Угар &gt; 3%" domain="[('burn_loss_pct', '&gt;', 3)]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_equipment" string="Uskuna" context="{'group_by': 'equipment_id'}"/>
+                    <filter name="group_employee" string="Mas'ul" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_shift" string="Smena" context="{'group_by': 'shift'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_graph" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.graph</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="arch" type="xml">
+            <graph string="Quyma" type="bar">
+                <field name="date" interval="day"/>
+                <field name="billet_qty" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_pivot" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.pivot</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="arch" type="xml">
+            <pivot string="Plavkalar">
+                <field name="date" interval="day" type="row"/>
+                <field name="charge_metal" type="measure"/>
+                <field name="billet_qty" type="measure"/>
+                <field name="slag_qty" type="measure"/>
+                <field name="burn_loss_pct" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_craf_foundry_melt" model="ir.actions.act_window">
+        <field name="name">Plavkalar (Литейка)</field>
+        <field name="res_model">craf.foundry.melt</field>
+        <field name="view_mode">list,kanban,form,graph,pivot</field>
+        <field name="path">craf-plavka</field>
+        <field name="context">{'search_default_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Birinchi plavkani yozing</p>
+            <p>Retseptdan shixtani to'ldiring, haqiqiy sarfni, chiqqan quyma va шлакni kiriting, so'ng tasdiqlang.</p>
+        </field>
+    </record>
+</odoo>

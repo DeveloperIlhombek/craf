@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_kunlik" model="ir.actions.client">
+        <field name="name">Kunlik hisobot</field>
+        <field name="tag">craf_kunlik</field>
+        <field name="path">craf-kunlik</field>
+    </record>
+    <menuitem id="menu_craf_kunlik" name="Kunlik hisobot" parent="craf_profile.menu_craf_root"
+              action="action_craf_kunlik" sequence="2"/>
+
+    <record id="craf_foundry_melt_view_list_c1" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.list.c1</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_list"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="show" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new' and state == 'done'"/>
+            </field>
+        </field>
+    </record>
+    <record id="craf_foundry_melt_view_search_c1" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.search.c1</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_search"/>
+        <field name="arch" type="xml">
+            <filter name="done" position="after">
+                <filter name="c1_new" string="1C ga kiritilmagan" domain="[('state', '=', 'done'), ('c1_state', '=', 'new')]"/>
+            </filter>
+        </field>
+    </record>
+    <record id="craf_foundry_melt_view_form_c1" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.form.c1</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <span class="badge text-bg-success" invisible="c1_state != 'done'">1C ga kiritildi</span>
+                <span class="badge text-bg-warning" invisible="c1_state != 'new' or state != 'done'">1C ga kiritilmagan</span>
+                <field name="c1_state" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_list_c1" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.list.c1</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="inherit_id" ref="craf_extrusion.craf_extrusion_shift_view_list"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="show" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new' and state == 'done'"/>
+            </field>
+        </field>
+    </record>
+    <record id="craf_extrusion_shift_view_search_c1" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.search.c1</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="inherit_id" ref="craf_extrusion.craf_extrusion_shift_view_search"/>
+        <field name="arch" type="xml">
+            <filter name="done" position="after">
+                <filter name="c1_new" string="1C ga kiritilmagan" domain="[('state', '=', 'done'), ('c1_state', '=', 'new')]"/>
+            </filter>
+        </field>
+    </record>
+    <record id="craf_extrusion_shift_view_form_c1" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.form.c1</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="inherit_id" ref="craf_extrusion.craf_extrusion_shift_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <span class="badge text-bg-success" invisible="c1_state != 'done'">1C ga kiritildi</span>
+                <span class="badge text-bg-warning" invisible="c1_state != 'new' or state != 'done'">1C ga kiritilmagan</span>
+                <field name="c1_state" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_paint_batch_view_list_c1" model="ir.ui.view">
+        <field name="name">craf.paint.batch.list.c1</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="inherit_id" ref="craf_paint.craf_paint_batch_view_list"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="show" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new' and state == 'done'"/>
+            </field>
+        </field>
+    </record>
+    <record id="craf_paint_batch_view_search_c1" model="ir.ui.view">
+        <field name="name">craf.paint.batch.search.c1</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="inherit_id" ref="craf_paint.craf_paint_batch_view_search"/>
+        <field name="arch" type="xml">
+            <filter name="done" position="after">
+                <filter name="c1_new" string="1C ga kiritilmagan" domain="[('state', '=', 'done'), ('c1_state', '=', 'new')]"/>
+            </filter>
+        </field>
+    </record>
+    <record id="craf_paint_batch_view_form_c1" model="ir.ui.view">
+        <field name="name">craf.paint.batch.form.c1</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="inherit_id" ref="craf_paint.craf_paint_batch_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <span class="badge text-bg-success" invisible="c1_state != 'done'">1C ga kiritildi</span>
+                <span class="badge text-bg-warning" invisible="c1_state != 'new' or state != 'done'">1C ga kiritilmagan</span>
+                <field name="c1_state" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_chem_treatment_view_list_c1" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.list.c1</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="inherit_id" ref="craf_korzinka.craf_chem_treatment_view_list"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="show" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new' and state == 'done'"/>
+            </field>
+        </field>
+    </record>
+    <record id="craf_chem_treatment_view_search_c1" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.search.c1</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="inherit_id" ref="craf_korzinka.craf_chem_treatment_view_search"/>
+        <field name="arch" type="xml">
+            <filter name="done" position="after">
+                <filter name="c1_new" string="1C ga kiritilmagan" domain="[('state', '=', 'done'), ('c1_state', '=', 'new')]"/>
+            </filter>
+        </field>
+    </record>
+    <record id="craf_chem_treatment_view_form_c1" model="ir.ui.view">
+        <field name="name">craf.chem.treatment.form.c1</field>
+        <field name="model">craf.chem.treatment</field>
+        <field name="inherit_id" ref="craf_korzinka.craf_chem_treatment_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <span class="badge text-bg-success" invisible="c1_state != 'done'">1C ga kiritildi</span>
+                <span class="badge text-bg-warning" invisible="c1_state != 'new' or state != 'done'">1C ga kiritilmagan</span>
+                <field name="c1_state" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_list_view_craf_materials_min" model="ir.ui.view">
+        <field name="name">product.template.list.craf.materials.min</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="craf_profile.product_template_list_view_craf_materials"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="editable">bottom</attribute>
+                <attribute name="create">false</attribute>
+            </xpath>
+            <field name="default_code" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </field>
+            <field name="name" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </field>
+            <field name="qty_available" position="after">
+                <field name="craf_min_qty"/>
+            </field>
+            <field name="uom_id" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_template_form_view_craf_min" model="ir.ui.view">
+        <field name="name">product.template.form.craf.min</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="craf_profile.product_template_form_view_craf"/>
+        <field name="arch" type="xml">
+            <field name="craf_name_1c" position="after">
+                <field name="craf_min_qty"/>
+            </field>
+        </field>
+    </record>
+</odoo>

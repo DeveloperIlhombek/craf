@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="maintenance_equipment_form_craf" model="ir.ui.view">
+        <field name="name">maintenance.equipment.form.craf</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
+        <field name="arch" type="xml">
+            <field name="category_id" position="after">
+                <field name="craf_stage"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="maintenance_equipment_list_craf" model="ir.ui.view">
+        <field name="name">maintenance.equipment.list.craf</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="arch" type="xml">
+            <list string="Uskunalar" editable="bottom">
+                <field name="name"/>
+                <field name="craf_stage"/>
+                <field name="category_id"/>
+                <field name="maintenance_open_count" string="Ochiq ta'mirlar"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_craf_equipment" model="ir.actions.act_window">
+        <field name="name">Uskunalar</field>
+        <field name="res_model">maintenance.equipment</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('craf_stage', '!=', False)]</field>
+        <field name="context">{'default_craf_stage': 'press'}</field>
+        <field name="view_id" ref="maintenance_equipment_list_craf"/>
+    </record>
+</odoo>

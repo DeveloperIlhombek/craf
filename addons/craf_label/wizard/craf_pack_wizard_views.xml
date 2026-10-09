@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_pack_wizard_view_form" model="ir.ui.view">
+        <field name="name">craf.pack.wizard.form</field>
+        <field name="model">craf.pack.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Pachka yorlig'i">
+                <group>
+                    <group>
+                        <field name="product_id" options="{'no_create': True}"/>
+                        <field name="pcs_per_pack"/>
+                        <field name="pack_count"/>
+                        <field name="kg_actual"/>
+                    </group>
+                    <group>
+                        <field name="location_id" options="{'no_create': True}"/>
+                        <field name="origin" placeholder="masalan BY-26-0003"/>
+                        <field name="note"/>
+                        <field name="summary" readonly="1"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_create" type="object" string="Yaratish va chop etish"
+                            class="btn-primary" icon="fa-print"/>
+                    <button string="Bekor qilish" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_pack_wizard" model="ir.actions.act_window">
+        <field name="name">Pachka yorlig'i</field>
+        <field name="res_model">craf.pack.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

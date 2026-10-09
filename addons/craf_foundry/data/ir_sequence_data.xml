@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_craf_foundry_melt" model="ir.sequence">
+            <field name="name">Craf plavka</field>
+            <field name="code">craf.foundry.melt</field>
+            <field name="prefix">PL-%(y)s-</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

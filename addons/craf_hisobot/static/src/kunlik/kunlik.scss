@@ -1,0 +1,82 @@
+.o_craf_kunlik {
+    background-color: $o-webclient-background-color;
+
+    .o_ck_loading .o_ck_card {
+        opacity: 0.55;
+    }
+    .o_ck_card {
+        background-color: $o-view-background-color;
+        border: 1px solid rgba(11, 11, 11, 0.1);
+        border-radius: 8px;
+        padding: 14px 16px;
+    }
+    .o_ck_title {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    .o_ck_date {
+        max-width: 150px;
+    }
+    .o_ck_pill {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+    .o_ck_doc {
+        border: 1px solid rgba(11, 11, 11, 0.15);
+        background: #fff;
+        font-weight: 600;
+        &.o_ck_doc_draft {
+            border-style: dashed;
+            font-weight: 400;
+        }
+    }
+    .o_ck_c1_ok {
+        color: #0ca30c;
+    }
+    .o_ck_warn {
+        color: #d97f00;
+    }
+    .o_ck_block_title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #52514e;
+        margin: 4px 0 2px;
+    }
+    .o_ck_table {
+        font-size: 0.875rem;
+        td,
+        th {
+            font-variant-numeric: tabular-nums;
+        }
+    }
+    .o_ck_name {
+        max-width: 320px;
+    }
+    .o_ck_low td {
+        background-color: #fff4e5;
+    }
+    @media (max-width: 575.98px) {
+        .o_ck_card {
+            padding: 12px;
+        }
+        .o_ck_name {
+            max-width: 52vw;
+        }
+        h2 {
+            font-size: 1.35rem;
+        }
+    }
+}
+
+@media print {
+    .o_main_navbar,
+    .o_ck_toolbar,
+    .o_craf_kunlik .btn {
+        display: none !important;
+    }
+    .o_craf_kunlik {
+        overflow: visible !important;
+        height: auto !important;
+    }
+}

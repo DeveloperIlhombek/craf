@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_section_user,craf.profile.section user,model_craf_profile_section,base.group_user,1,0,0,0
+access_craf_section_manager,craf.profile.section manager,model_craf_profile_section,stock.group_stock_manager,1,1,1,1
+access_craf_color_user,craf.color user,model_craf_color,base.group_user,1,0,0,0
+access_craf_color_manager,craf.color manager,model_craf_color,stock.group_stock_manager,1,1,1,1
+access_craf_calculator_user,craf.calculator user,model_craf_calculator,base.group_user,1,1,1,1

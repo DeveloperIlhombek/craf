@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_foundry_melt_user,craf.foundry.melt user,model_craf_foundry_melt,base.group_user,1,0,0,0
+access_craf_foundry_melt_mrp,craf.foundry.melt mrp,model_craf_foundry_melt,mrp.group_mrp_user,1,1,1,1
+access_craf_foundry_melt_line_user,craf.foundry.melt.line user,model_craf_foundry_melt_line,base.group_user,1,0,0,0
+access_craf_foundry_melt_line_mrp,craf.foundry.melt.line mrp,model_craf_foundry_melt_line,mrp.group_mrp_user,1,1,1,1

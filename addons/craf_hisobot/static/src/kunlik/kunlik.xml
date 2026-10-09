@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_hisobot.ItemTable">
+        <div class="o_ck_block" t-if="rows and rows.length">
+            <div class="o_ck_block_title" t-esc="label"/>
+            <table class="table table-sm mb-2 o_ck_table">
+                <tbody>
+                    <tr t-foreach="rows" t-as="r" t-key="r.product_id">
+                        <td class="o_ck_name">
+                            <span class="text-muted small me-1" t-if="r.code" t-esc="r.code"/>
+                            <t t-esc="r.name"/>
+                        </td>
+                        <td class="text-end text-nowrap fw-bold"><t t-esc="fmt(r.qty)"/> <span class="fw-normal text-muted" t-esc="r.uom"/></td>
+                        <td class="text-end text-nowrap text-muted d-none d-sm-table-cell" t-if="r.uom !== 'kg'"><t t-esc="fmt(r.kg, 1)"/> kg</td>
+                        <td class="d-none d-sm-table-cell" t-else=""/>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </t>
+
+    <t t-name="craf_hisobot.Kunlik">
+        <div class="o_action o_craf_kunlik h-100 overflow-auto">
+            <div class="container-fluid py-2 py-md-3 px-2 px-sm-3 px-lg-4" t-att-class="{ 'o_ck_loading': state.loading }">
+                <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                    <div class="me-auto">
+                        <h2 class="mb-0">Kunlik hisobot</h2>
+                        <div class="text-muted small">Bo'limlar sarfi va chiqishi, xom-ashyo qoldig'i — 1C ga kiritish uchun</div>
+                    </div>
+                </div>
+                <t t-if="state.data">
+                    <t t-set="d" t-value="state.data"/>
+                    <div class="o_ck_toolbar d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Sana">
+                            <button class="btn btn-outline-secondary" t-on-click="() => this.go(d.prev)" title="Oldingi kun"><i class="fa fa-chevron-left"/></button>
+                            <input type="date" class="form-control form-control-sm o_ck_date" t-att-value="d.date" t-on-change="onDateChange"/>
+                            <button class="btn btn-outline-secondary" t-on-click="() => this.go(d.next)" title="Keyingi kun"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <button class="btn btn-sm btn-light" t-if="!d.is_today" t-on-click="() => this.today()">Bugun</button>
+                        <button class="btn btn-sm btn-light" t-on-click="() => this.downloadXlsx()"><i class="fa fa-file-excel-o"/> Excel</button>
+                        <button class="btn btn-sm btn-light d-none d-md-inline-block" t-on-click="() => this.print()"><i class="fa fa-print"/> Chop etish</button>
+                        <div class="ms-md-auto d-flex align-items-center gap-2">
+                            <span t-if="d.c1_new" class="badge text-bg-warning o_ck_pill"><i class="fa fa-exclamation-circle me-1"/>1C ga kiritilmagan: <t t-esc="d.c1_new"/> ta</span>
+                            <span t-else="" class="badge text-bg-success o_ck_pill"><i class="fa fa-check me-1"/>Hammasi 1C ga kiritilgan</span>
+                            <button class="btn btn-sm btn-primary" t-att-disabled="!d.c1_new" t-on-click="() => this.markC1()">
+                                <i class="fa fa-check-square-o"/> 1C ga kiritildi
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning py-2 d-flex align-items-center gap-2" t-if="d.low_count" role="alert">
+                        <i class="fa fa-exclamation-triangle"/>
+                        <span><b t-esc="d.low_count"/> ta xom-ashyo minimal qoldiqdan kam — pastdagi jadvalda belgilangan.</span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <t t-foreach="d.departments" t-as="dep" t-key="dep.key">
+                            <div class="col-12 col-xl-6">
+                                <div class="o_ck_card h-100">
+                                    <div class="d-flex align-items-start gap-2 mb-2">
+                                        <div class="me-auto">
+                                            <div class="o_ck_title" t-esc="dep.title"/>
+                                            <div class="small text-muted">
+                                                <t t-if="dep.done_count"><t t-esc="dep.done_count"/> bajarildi</t>
+                                                <t t-if="dep.draft_count"> · <t t-esc="dep.draft_count"/> qoralama</t>
+                                                <t t-if="!dep.done_count and !dep.draft_count">bu kunda yozuv yo'q</t>
+                                            </div>
+                                        </div>
+                                        <button t-if="dep.action" class="btn btn-sm btn-outline-primary text-nowrap" t-on-click="() => this.newDoc(dep)">
+                                            <i class="fa fa-plus"/> Yozuv
+                                        </button>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1 mb-2" t-if="dep.docs.length">
+                                        <t t-foreach="dep.docs" t-as="doc" t-key="doc.model + doc.id">
+                                            <button class="btn btn-sm o_ck_doc" t-on-click="() => this.openDoc(doc)"
+                                                    t-att-class="doc.state === 'done' ? 'o_ck_doc_done' : 'o_ck_doc_draft'">
+                                                <t t-esc="doc.name"/>
+                                                <span class="ms-1 small text-muted" t-if="doc.state !== 'done'" t-esc="doc.state_label"/>
+                                                <i t-if="doc.c1 === 'done'" class="fa fa-check-circle ms-1 o_ck_c1_ok" title="1C ga kiritildi"/>
+                                                <span t-if="doc.c1 === 'new' and doc.state === 'done'" class="ms-1 badge text-bg-warning" title="1C ga kiritilmagan">1C</span>
+                                            </button>
+                                        </t>
+                                    </div>
+                                    <div class="small text-muted mb-2" t-if="dep.extra.length" t-esc="dep.extra.join(' · ')"/>
+                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="'Sarf'"/><t t-set="rows" t-value="dep.used"/></t>
+                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="dep.key === 'ombor' ? 'Topshirildi' : 'Chiqish'"/><t t-set="rows" t-value="dep.made"/></t>
+                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="'Chiqindi va brak'"/><t t-set="rows" t-value="dep.waste"/></t>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <div class="o_ck_card mb-3">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <div class="o_ck_title me-auto">Xom-ashyo harakati — <t t-esc="d.date_label"/></div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="ck_low" t-att-checked="state.onlyLow" t-on-change="toggleLow"/>
+                                <label class="form-check-label small" for="ck_low">Faqat kam qolganlar</label>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0 o_ck_table o_ck_move">
+                                <thead>
+                                    <tr>
+                                        <th>Xom-ashyo</th>
+                                        <th class="text-end d-none d-sm-table-cell">Boshlang'ich</th>
+                                        <th class="text-end">Kirim</th>
+                                        <th class="text-end d-none d-md-table-cell">Ishlab chiq.dan</th>
+                                        <th class="text-end">Sarf</th>
+                                        <th class="text-end d-none d-md-table-cell">Boshqa</th>
+                                        <th class="text-end">Oxirgi</th>
+                                        <th class="text-end d-none d-sm-table-cell">Min.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="rawRows" t-as="r" t-key="r.product_id" t-att-class="r.low ? 'o_ck_low' : ''"
+                                        role="button" t-on-click="() => this.openProduct(r)">
+                                        <td class="o_ck_name">
+                                            <span class="text-muted small me-1 d-none d-sm-inline" t-esc="r.code"/><t t-esc="r.name"/>
+                                            <span class="text-muted small"> (<t t-esc="r.uom"/>)</span>
+                                        </td>
+                                        <td class="text-end d-none d-sm-table-cell" t-esc="fmt(r.opening)"/>
+                                        <td class="text-end" t-esc="fmt(r.in_supply)"/>
+                                        <td class="text-end d-none d-md-table-cell" t-esc="fmt(r.in_prod)"/>
+                                        <td class="text-end" t-esc="fmt(r.out_prod)"/>
+                                        <td class="text-end d-none d-md-table-cell" t-esc="fmt(r.out_other)"/>
+                                        <td class="text-end fw-bold text-nowrap">
+                                            <i t-if="r.low" class="fa fa-exclamation-triangle o_ck_warn me-1" title="Minimal qoldiqdan kam"/>
+                                            <t t-esc="fmtQty(r.closing)"/>
+                                        </td>
+                                        <td class="text-end text-muted d-none d-sm-table-cell" t-esc="fmt(r.min_qty, 0)"/>
+                                    </tr>
+                                    <tr t-if="!rawRows.length"><td colspan="8" class="text-muted">Ko'rsatiladigan qator yo'q</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Barcha sex va omborlar bo'yicha. Kirim — xarid va inventarizatsiya; ishlab chiqarishdan — stalba, chiqindilar;
+                            sarf — pech, press, kimyo va bo'yashga ketgan.
+                        </div>
+                    </div>
+
+                    <div class="o_ck_card mb-3">
+                        <div class="o_ck_title mb-2">Tayyor mahsulot harakati — <t t-esc="d.date_label"/></div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0 o_ck_table o_ck_move">
+                                <thead>
+                                    <tr>
+                                        <th>Mahsulot</th>
+                                        <th class="text-end">Boshlang'ich</th>
+                                        <th class="text-end">Kirdi</th>
+                                        <th class="text-end">Chiqdi</th>
+                                        <th class="text-end">Oxirgi</th>
+                                        <th class="text-end d-none d-sm-table-cell">Oxirgi, kg</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.finished" t-as="r" t-key="r.product_id" role="button" t-on-click="() => this.openProduct(r)">
+                                        <td class="o_ck_name"><span class="text-muted small me-1" t-esc="r.code"/><t t-esc="r.name"/></td>
+                                        <td class="text-end" t-esc="fmt(r.opening, 0)"/>
+                                        <td class="text-end" t-esc="fmt(r.in_supply + r.in_prod, 0)"/>
+                                        <td class="text-end" t-esc="fmt(r.out_prod + r.out_other, 0)"/>
+                                        <td class="text-end fw-bold" t-esc="fmtQty(r.closing, 0)"/>
+                                        <td class="text-end text-muted d-none d-sm-table-cell" t-esc="fmt(r.closing * (r.kg_per_pc || 0), 1)"/>
+                                    </tr>
+                                    <tr t-if="!d.finished.length"><td colspan="6" class="text-muted">Bu kunda tayyor mahsulot harakati yo'q</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+                <div t-elif="state.loading" class="text-muted p-5 text-center"><i class="fa fa-spinner fa-spin"/> Yuklanmoqda…</div>
+            </div>
+        </div>
+    </t>
+</templates>

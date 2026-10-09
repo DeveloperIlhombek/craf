@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="equipment_category_craf" model="maintenance.equipment.category">
+            <field name="name">Craf uskunalari</field>
+        </record>
+
+        <record id="equipment_pech_1" model="maintenance.equipment">
+            <field name="name">Eritish pechi №1</field>
+            <field name="category_id" ref="equipment_category_craf"/>
+            <field name="craf_stage">foundry</field>
+        </record>
+        <record id="equipment_pech_2" model="maintenance.equipment">
+            <field name="name">Eritish pechi №2</field>
+            <field name="category_id" ref="equipment_category_craf"/>
+            <field name="craf_stage">foundry</field>
+        </record>
+        <record id="equipment_press_1" model="maintenance.equipment">
+            <field name="name">Press №1</field>
+            <field name="category_id" ref="equipment_category_craf"/>
+            <field name="craf_stage">press</field>
+        </record>
+        <record id="equipment_press_2" model="maintenance.equipment">
+            <field name="name">Press №2</field>
+            <field name="category_id" ref="equipment_category_craf"/>
+            <field name="craf_stage">press</field>
+        </record>
+        <record id="equipment_paint_line" model="maintenance.equipment">
+            <field name="name">Kukun bo'yash liniyasi</field>
+            <field name="category_id" ref="equipment_category_craf"/>
+            <field name="craf_stage">paint</field>
+        </record>
+
+        <!-- Namuna xodimlar (prototip) -->
+        <record id="employee_foundry_1" model="hr.employee">
+            <field name="name">Botir Aliyev</field>
+            <field name="job_title">Литейка ustasi</field>
+        </record>
+        <record id="employee_press_1" model="hr.employee">
+            <field name="name">Sardor Karimov</field>
+            <field name="job_title">Press operatori</field>
+        </record>
+        <record id="employee_press_2" model="hr.employee">
+            <field name="name">Jasur Tursunov</field>
+            <field name="job_title">Press operatori</field>
+        </record>
+        <record id="employee_paint_1" model="hr.employee">
+            <field name="name">Dilshod Rahimov</field>
+            <field name="job_title">Bo'yash ustasi</field>
+        </record>
+    </data>
+</odoo>

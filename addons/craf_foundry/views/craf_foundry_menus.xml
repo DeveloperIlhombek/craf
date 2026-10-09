@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_craf_foundry_melt" name="Литейка (plavka)" parent="craf_production.menu_craf_production"
+              action="action_craf_foundry_melt" sequence="10"/>
+    <menuitem id="menu_craf_foundry_bom" name="Shixta retseptlari" parent="craf_profile.menu_craf_config"
+              action="mrp.mrp_bom_form_action" sequence="25"/>
+</odoo>

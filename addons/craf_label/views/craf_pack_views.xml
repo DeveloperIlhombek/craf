@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_pack_view_list" model="ir.ui.view">
+        <field name="name">craf.pack.list</field>
+        <field name="model">craf.pack</field>
+        <field name="arch" type="xml">
+            <list string="Pachkalar">
+                <field name="name"/>
+                <field name="date" widget="date"/>
+                <field name="product_id"/>
+                <field name="color_id" optional="show"/>
+                <field name="pcs" sum="Jami"/>
+                <field name="kg_theory" sum="Jami"/>
+                <field name="kg_actual" sum="Jami" optional="show"/>
+                <field name="kg_diff_pct" optional="hide"/>
+                <field name="location_id" optional="show"/>
+                <field name="origin" optional="show"/>
+                <field name="user_id" optional="hide" widget="many2one_avatar_user"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_pack_view_kanban" model="ir.ui.view">
+        <field name="name">craf.pack.kanban</field>
+        <field name="model">craf.pack</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center mb-1">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto text-muted small"><field name="date" widget="date"/></span>
+                        </div>
+                        <field name="product_id"/>
+                        <div class="d-flex mt-1 align-items-baseline">
+                            <span><field name="pcs" class="fw-bold"/> dona · <field name="kg_theory"/> kg</span>
+                            <span class="ms-auto text-muted small"><field name="location_id"/></span>
+                        </div>
+                        <footer class="pt-1 text-muted small">
+                            <field name="origin"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_pack_view_form" model="ir.ui.view">
+        <field name="name">craf.pack.form</field>
+        <field name="model">craf.pack</field>
+        <field name="arch" type="xml">
+            <form string="Pachka">
+                <header>
+                    <button name="action_print" type="object" string="Yorliqni chop etish"
+                            class="btn-primary" icon="fa-print" invisible="not id"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Arxiv" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Mahsulot">
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="default_code"/>
+                            <field name="section_id"/>
+                            <field name="color_id"/>
+                            <field name="length_m"/>
+                        </group>
+                        <group string="Miqdor">
+                            <field name="pcs"/>
+                            <field name="pcs_text" invisible="not id"/>
+                            <field name="kg_theory"/>
+                            <field name="kg_actual"/>
+                            <field name="kg_diff_pct" invisible="not kg_actual"/>
+                        </group>
+                        <group string="Qayerda">
+                            <field name="location_id" options="{'no_create': True}"/>
+                            <field name="origin"/>
+                        </group>
+                        <group string="Kim, qachon">
+                            <field name="date"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="note"/>
+                            <field name="qr_value" widget="url" invisible="not id"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_pack_view_search" model="ir.ui.view">
+        <field name="name">craf.pack.search</field>
+        <field name="model">craf.pack</field>
+        <field name="arch" type="xml">
+            <search string="Pachkalar">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="origin"/>
+                <field name="location_id"/>
+                <filter name="today" string="Bugun"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="no_weight" string="Tortilmagan" domain="[('kg_actual', '=', 0)]"/>
+                <separator/>
+                <filter name="archived" string="Arxiv" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_product" string="Mahsulot" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_location" string="Joylashuv" context="{'group_by': 'location_id'}"/>
+                    <filter name="group_color" string="Rang" context="{'group_by': 'color_id'}"/>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_pack" model="ir.actions.act_window">
+        <field name="name">Pachkalar</field>
+        <field name="res_model">craf.pack</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="path">craf-pachkalar</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Hali pachka yo'q</p>
+            <p>Mahsulot kartochkasidagi "Pachka yorlig'i" tugmasi yoki bo'yash / press hujjatidan pachkalar yarating.</p>
+        </field>
+    </record>
+</odoo>

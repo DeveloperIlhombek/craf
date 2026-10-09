@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="categ_semi_profile" model="product.category">
+            <field name="name">Yarim tayyor profil</field>
+        </record>
+        <record id="seq_craf_extrusion_shift" model="ir.sequence">
+            <field name="name">Craf press smenasi</field>
+            <field name="code">craf.extrusion.shift</field>
+            <field name="prefix">PR-%(y)s-</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

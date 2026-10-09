@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_zavod_transfer_view_form_label" model="ir.ui.view">
+        <field name="name">craf.zavod.transfer.form.label</field>
+        <field name="model">craf.zavod.transfer</field>
+        <field name="inherit_id" ref="craf_kochirish.craf_zavod_transfer_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/group[1]" position="before">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="fa fa-qrcode fa-lg" title="Skaner"/>
+                    <field name="scan_code" class="flex-grow-1"
+                           placeholder="Pachka QR kodini skanerlang yoki raqamini yozing (P26-000001)"/>
+                    <field name="pack_id" invisible="1" force_save="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

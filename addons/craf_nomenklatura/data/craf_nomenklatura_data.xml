@@ -1,0 +1,1746 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Toifalar: jadvaldagi kabi ikki bo'lim -->
+        <record id="categ_raw_root" model="product.category">
+            <field name="name">Xom-ashyo</field>
+        </record>
+        <record id="categ_raw" model="product.category">
+            <field name="name">Хом-ашё</field>
+            <field name="parent_id" ref="categ_raw_root"/>
+        </record>
+        <record id="categ_semi" model="product.category">
+            <field name="name">Полуфабрикаты</field>
+            <field name="parent_id" ref="categ_raw_root"/>
+        </record>
+        <record id="categ_finished" model="product.category">
+            <field name="name">Tayyor mahsulot</field>
+        </record>
+
+        <!-- Xom-ashyo: 9 ta, kg -->
+        <record id="xa_01" model="product.template">
+            <field name="name">Краска (9005)</field>
+            <field name="default_code">XA-01</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Краска (9005)</field>
+        </record>
+        <record id="xa_02" model="product.template">
+            <field name="name">Алюминиевые цилиндр РусАл</field>
+            <field name="default_code">XA-02</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Алюминиевые цилиндр РусАл</field>
+        </record>
+        <record id="xa_03" model="product.template">
+            <field name="name">POLITOKSAL AC 20</field>
+            <field name="default_code">XA-03</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">POLITOKSAL AC 20</field>
+        </record>
+        <record id="xa_04" model="product.template">
+            <field name="name">ALUPOL CR 51</field>
+            <field name="default_code">XA-04</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">ALUPOL CR 51</field>
+        </record>
+        <record id="xa_05" model="product.template">
+            <field name="name">ALUPOL AC 52</field>
+            <field name="default_code">XA-05</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">ALUPOL AC 52</field>
+        </record>
+        <record id="xa_06" model="product.template">
+            <field name="name">Краска ( 9016 )</field>
+            <field name="default_code">XA-06</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Краска ( 9016 )</field>
+        </record>
+        <record id="xa_07" model="product.template">
+            <field name="name">Краска ( J306 )</field>
+            <field name="default_code">XA-07</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Краска ( J306 )</field>
+        </record>
+        <record id="xa_08" model="product.template">
+            <field name="name">Краска ( 7016 ) MATT</field>
+            <field name="default_code">XA-08</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Краска ( 7016 ) MATT</field>
+        </record>
+        <record id="xa_09" model="product.template">
+            <field name="name">Алюминиевые цилиндр Литейка</field>
+            <field name="default_code">XA-09</field>
+            <field name="categ_id" ref="categ_raw"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Алюминиевые цилиндр Литейка</field>
+        </record>
+
+        <!-- Полуфабрикаты: 15 ta, kg -->
+        <record id="lt_01" model="product.template">
+            <field name="name">Алюминий А8</field>
+            <field name="default_code">PF-01</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Алюминий А8</field>
+        </record>
+        <record id="lt_02" model="product.template">
+            <field name="name">Титан</field>
+            <field name="default_code">PF-02</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Титан</field>
+        </record>
+        <record id="lt_03" model="product.template">
+            <field name="name">Бухоро Чушка Сим</field>
+            <field name="default_code">PF-03</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Бухоро Чушка Сим</field>
+        </record>
+        <record id="lt_04" model="product.template">
+            <field name="name">Магний</field>
+            <field name="default_code">PF-04</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Магний</field>
+        </record>
+        <record id="lt_05" model="product.template">
+            <field name="name">Кремний</field>
+            <field name="default_code">PF-05</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Кремний</field>
+        </record>
+        <record id="lt_06" model="product.template">
+            <field name="name">Питак Отход</field>
+            <field name="default_code">PF-06</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Питак Отход</field>
+        </record>
+        <record id="lt_07" model="product.template">
+            <field name="name">Брак Профиль Отход</field>
+            <field name="default_code">PF-07</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Брак Профиль Отход</field>
+        </record>
+        <record id="lt_08" model="product.template">
+            <field name="name">Порошковый Флюс</field>
+            <field name="default_code">PF-08</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Порошковый Флюс</field>
+        </record>
+        <record id="lt_09" model="product.template">
+            <field name="name">Талк</field>
+            <field name="default_code">PF-09</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Талк</field>
+        </record>
+        <record id="lt_10" model="product.template">
+            <field name="name">Огнеупорный Бетон</field>
+            <field name="default_code">PF-10</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Огнеупорный Бетон</field>
+        </record>
+        <record id="lt_11" model="product.template">
+            <field name="name">Литейка Отход</field>
+            <field name="default_code">PF-11</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Литейка Отход</field>
+        </record>
+        <record id="lt_12" model="product.template">
+            <field name="name">Сталба Отход</field>
+            <field name="default_code">PF-12</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Сталба Отход</field>
+        </record>
+        <record id="lt_13" model="product.template">
+            <field name="name">Бухоро Чушка Профил</field>
+            <field name="default_code">PF-13</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Бухоро Чушка Профил</field>
+        </record>
+        <record id="lt_14" model="product.template">
+            <field name="name">Алюминиевые Шлак</field>
+            <field name="default_code">PF-14</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Алюминиевые Шлак</field>
+        </record>
+        <record id="lt_15" model="product.template">
+            <field name="name">Бухоро Чушка Банка</field>
+            <field name="default_code">PF-15</field>
+            <field name="categ_id" ref="categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Бухоро Чушка Банка</field>
+        </record>
+
+        <!-- Ranglar -->
+        <record id="color_9016" model="craf.color">
+            <field name="name">9016 Белый</field>
+            <field name="code">9016</field>
+            <field name="sequence">10</field>
+            <field name="is_painted" eval="True"/>
+            <field name="paint_tmpl_id" ref="xa_06"/>
+        </record>
+        <record id="color_j306" model="craf.color">
+            <field name="name">J306 Антрацит</field>
+            <field name="code">J306</field>
+            <field name="sequence">20</field>
+            <field name="is_painted" eval="True"/>
+            <field name="paint_tmpl_id" ref="xa_07"/>
+        </record>
+        <record id="color_7016" model="craf.color">
+            <field name="name">7016 MATT</field>
+            <field name="code">7016M</field>
+            <field name="sequence">30</field>
+            <field name="is_painted" eval="True"/>
+            <field name="paint_tmpl_id" ref="xa_08"/>
+        </record>
+        <record id="color_8003" model="craf.color">
+            <field name="name">8003 Золотой Дуб</field>
+            <field name="code">8003</field>
+            <field name="sequence">40</field>
+            <field name="is_painted" eval="True"/>
+        </record>
+        <record id="color_raw" model="craf.color">
+            <field name="name">Bo'yalmagan</field>
+            <field name="code"></field>
+            <field name="sequence">50</field>
+            <field name="is_painted" eval="False"/>
+        </record>
+
+        <!-- Kesimlar (tur + seriya): kg/m keyin kiritiladi -->
+        <record id="sec_l" model="craf.profile.section">
+            <field name="name">L</field>
+            <field name="sequence">10</field>
+            <field name="profile_type">L</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_t" model="craf.profile.section">
+            <field name="name">T</field>
+            <field name="sequence">20</field>
+            <field name="profile_type">T</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_z" model="craf.profile.section">
+            <field name="name">Z</field>
+            <field name="sequence">30</field>
+            <field name="profile_type">Z</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_t_eko" model="craf.profile.section">
+            <field name="name">T Эко</field>
+            <field name="sequence">40</field>
+            <field name="profile_type">T</field>
+            <field name="series">Эко</field>
+        </record>
+        <record id="sec_t_bal" model="craf.profile.section">
+            <field name="name">T Бал</field>
+            <field name="sequence">50</field>
+            <field name="profile_type">T</field>
+            <field name="series">Бал</field>
+        </record>
+        <record id="sec_z_bal" model="craf.profile.section">
+            <field name="name">Z Бал</field>
+            <field name="sequence">60</field>
+            <field name="profile_type">Z</field>
+            <field name="series">Бал</field>
+        </record>
+        <record id="sec_z_eko" model="craf.profile.section">
+            <field name="name">Z Эко</field>
+            <field name="sequence">70</field>
+            <field name="profile_type">Z</field>
+            <field name="series">Эко</field>
+        </record>
+        <record id="sec_lamber" model="craf.profile.section">
+            <field name="name">Ламбер</field>
+            <field name="sequence">80</field>
+            <field name="profile_type">Ламбер</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_l_bal" model="craf.profile.section">
+            <field name="name">L Бал</field>
+            <field name="sequence">90</field>
+            <field name="profile_type">L</field>
+            <field name="series">Бал</field>
+        </record>
+        <record id="sec_sht104" model="craf.profile.section">
+            <field name="name">Штапик 104</field>
+            <field name="sequence">100</field>
+            <field name="profile_type">Штапик 104</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_sht105" model="craf.profile.section">
+            <field name="name">Штапик 105</field>
+            <field name="sequence">110</field>
+            <field name="profile_type">Штапик 105</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_kosa50" model="craf.profile.section">
+            <field name="name">Коса 50мм</field>
+            <field name="sequence">120</field>
+            <field name="profile_type">Коса</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_kosa80" model="craf.profile.section">
+            <field name="name">Коса 80мм</field>
+            <field name="sequence">130</field>
+            <field name="profile_type">Коса</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_kosa100" model="craf.profile.section">
+            <field name="name">Коса 100мм</field>
+            <field name="sequence">140</field>
+            <field name="profile_type">Коса</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_kosa120" model="craf.profile.section">
+            <field name="name">Коса 120мм</field>
+            <field name="sequence">150</field>
+            <field name="profile_type">Коса</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_kryshka" model="craf.profile.section">
+            <field name="name">Крышка</field>
+            <field name="sequence">160</field>
+            <field name="profile_type">Крышка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_prijim" model="craf.profile.section">
+            <field name="name">Прижим</field>
+            <field name="sequence">170</field>
+            <field name="profile_type">Прижим</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_soed" model="craf.profile.section">
+            <field name="name">Соединитель</field>
+            <field name="sequence">180</field>
+            <field name="profile_type">Соединитель</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_opora" model="craf.profile.section">
+            <field name="name">Опора</field>
+            <field name="sequence">190</field>
+            <field name="profile_type">Опора</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_jp" model="craf.profile.section">
+            <field name="name">Ёлка ЖП</field>
+            <field name="sequence">200</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_chip" model="craf.profile.section">
+            <field name="name">Чип Кулок</field>
+            <field name="sequence">210</field>
+            <field name="profile_type">Чип Кулок</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_gr90" model="craf.profile.section">
+            <field name="name">Градус 90</field>
+            <field name="sequence">220</field>
+            <field name="profile_type">Градус 90</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_t_alusam" model="craf.profile.section">
+            <field name="name">T ALUSAM</field>
+            <field name="sequence">230</field>
+            <field name="profile_type">T</field>
+            <field name="series">ALUSAM</field>
+        </record>
+        <record id="sec_z_alusam" model="craf.profile.section">
+            <field name="name">Z ALUSAM</field>
+            <field name="sequence">240</field>
+            <field name="profile_type">Z</field>
+            <field name="series">ALUSAM</field>
+        </record>
+        <record id="sec_yolka_tl20_3" model="craf.profile.section">
+            <field name="name">Ёлка Термо L 20.3mm</field>
+            <field name="sequence">250</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_tl10_7" model="craf.profile.section">
+            <field name="name">Ёлка Термо L 10.7mm</field>
+            <field name="sequence">260</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_ttb19_5" model="craf.profile.section">
+            <field name="name">Ёлка Термо T Бал 19.5mm</field>
+            <field name="sequence">270</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_ttb7_1" model="craf.profile.section">
+            <field name="name">Ёлка Термо T Бал 7.1mm</field>
+            <field name="sequence">280</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_tzb27_5" model="craf.profile.section">
+            <field name="name">Ёлка Термо Z Бал 27.5mm</field>
+            <field name="sequence">290</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_tzb7_1" model="craf.profile.section">
+            <field name="name">Ёлка Термо Z Бал 7.1mm</field>
+            <field name="sequence">300</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_samled" model="craf.profile.section">
+            <field name="name">Самлед Техно</field>
+            <field name="sequence">310</field>
+            <field name="profile_type">Самлед Техно</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_b3_6" model="craf.profile.section">
+            <field name="name">Ёлка 3.6mm Большой</field>
+            <field name="sequence">320</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_bisp" model="craf.profile.section">
+            <field name="name">Ёлка Большой Ispalnet</field>
+            <field name="sequence">330</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_yolka_balk" model="craf.profile.section">
+            <field name="name">Ёлка Балкон</field>
+            <field name="sequence">340</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_l_craf" model="craf.profile.section">
+            <field name="name">L CRAF</field>
+            <field name="sequence">350</field>
+            <field name="profile_type">L</field>
+            <field name="series">CRAF</field>
+        </record>
+        <record id="sec_t_craf" model="craf.profile.section">
+            <field name="name">T CRAF</field>
+            <field name="sequence">360</field>
+            <field name="profile_type">T</field>
+            <field name="series">CRAF</field>
+        </record>
+        <record id="sec_z_craf" model="craf.profile.section">
+            <field name="name">Z CRAF</field>
+            <field name="sequence">370</field>
+            <field name="profile_type">Z</field>
+            <field name="series">CRAF</field>
+        </record>
+        <record id="sec_t_bal_termo" model="craf.profile.section">
+            <field name="name">T Бал Термо</field>
+            <field name="sequence">380</field>
+            <field name="profile_type">T</field>
+            <field name="series">Бал Термо</field>
+        </record>
+        <record id="sec_t_termo" model="craf.profile.section">
+            <field name="name">T Термо</field>
+            <field name="sequence">390</field>
+            <field name="profile_type">T</field>
+            <field name="series">Термо</field>
+        </record>
+        <record id="sec_yolka_b" model="craf.profile.section">
+            <field name="name">Ёлка Большой</field>
+            <field name="sequence">400</field>
+            <field name="profile_type">Ёлка</field>
+            <field name="series"></field>
+        </record>
+        <record id="sec_t_ekonom" model="craf.profile.section">
+            <field name="name">T Эконом</field>
+            <field name="sequence">410</field>
+            <field name="profile_type">T</field>
+            <field name="series">Эконом</field>
+        </record>
+        <record id="sec_z_ekonom" model="craf.profile.section">
+            <field name="name">Z Эконом</field>
+            <field name="sequence">420</field>
+            <field name="profile_type">Z</field>
+            <field name="series">Эконом</field>
+        </record>
+
+        <!-- Tayyor mahsulotlar: 84 ta, шт -->
+        <record id="p_l_9016_6" model="product.template">
+            <field name="name">L ( 9016 ) Белый 2</field>
+            <field name="default_code">L-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">L ( 9016 ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_9016_6" model="product.template">
+            <field name="name">T ( 9016 ) Белый 2</field>
+            <field name="default_code">T-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( 9016 ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_9016_6" model="product.template">
+            <field name="name">Z ( 9016 ) Белый 2</field>
+            <field name="default_code">Z-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( 9016 ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_l_9016_5" model="product.template">
+            <field name="name">L ( 9016 ) Белый 5 мт 2</field>
+            <field name="default_code">L-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">L ( 9016 ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_9016_5" model="product.template">
+            <field name="name">T ( 9016 ) Белый 5 мт 2</field>
+            <field name="default_code">T-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">T ( 9016 ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_9016_5" model="product.template">
+            <field name="name">Z ( 9016 ) Белый 5 мт 2</field>
+            <field name="default_code">Z-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Z ( 9016 ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_eko_9016_6" model="product.template">
+            <field name="name">T Эко Белый 2</field>
+            <field name="default_code">T-EKO-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_eko"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T Эко Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_eko_9016_5" model="product.template">
+            <field name="name">T Эко Белый 5 мт 2</field>
+            <field name="default_code">T-EKO-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_eko"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">T Эко Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_bal_9016_6" model="product.template">
+            <field name="name">T ( Бал ) Белый 2</field>
+            <field name="default_code">T-BAL-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( Бал ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_bal_9016_5" model="product.template">
+            <field name="name">T ( Бал ) Белый 5 мт 2</field>
+            <field name="default_code">T-BAL-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_bal"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">T ( Бал ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_bal_9016_6" model="product.template">
+            <field name="name">Z ( Бал ) Белый 2</field>
+            <field name="default_code">Z-BAL-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( Бал ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_bal_9016_5" model="product.template">
+            <field name="name">Z ( Бал ) Белый 5 мт 2</field>
+            <field name="default_code">Z-BAL-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_bal"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Z ( Бал ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_eko_9016_6" model="product.template">
+            <field name="name">Z Эко Белый 2</field>
+            <field name="default_code">Z-EKO-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_eko"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z Эко Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_eko_9016_5" model="product.template">
+            <field name="name">Z Эко Белый 5 мт 2</field>
+            <field name="default_code">Z-EKO-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_eko"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Z Эко Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_lamber_9016_6" model="product.template">
+            <field name="name">Ламбер ( 9016 ) Белый 2</field>
+            <field name="default_code">LAMBER-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_lamber"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ламбер ( 9016 ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_bal_j306_6" model="product.template">
+            <field name="name">T ( Бал ) Антрацит 2</field>
+            <field name="default_code">T-BAL-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( Бал ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_z_bal_j306_6" model="product.template">
+            <field name="name">Z ( Бал ) Антрацит 2</field>
+            <field name="default_code">Z-BAL-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( Бал ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_lamber_j306_6" model="product.template">
+            <field name="name">Ламбер ( J306 ) Антрацит 2</field>
+            <field name="default_code">LAMBER-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_lamber"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ламбер ( J306 ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_l_bal_j306_6" model="product.template">
+            <field name="name">L ( Бал ) Антрацит 2</field>
+            <field name="default_code">L-BAL-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">L ( Бал ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_l_j306_6" model="product.template">
+            <field name="name">L ( J306 ) Антрацит 2</field>
+            <field name="default_code">L-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">L ( J306 ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_t_j306_6" model="product.template">
+            <field name="name">T ( J306 ) Антрацит 2</field>
+            <field name="default_code">T-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( J306 ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_z_j306_6" model="product.template">
+            <field name="name">Z ( J306 ) Антрацит 2</field>
+            <field name="default_code">Z-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( J306 ) Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_sht104_j306_6" model="product.template">
+            <field name="name">Штапик 104 Антрацит 2</field>
+            <field name="default_code">SHT104-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht104"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Штапик 104 Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_sht105_j306_6" model="product.template">
+            <field name="name">Штапик 105 Антрацит 2</field>
+            <field name="default_code">SHT105-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht105"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Штапик 105 Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa50_j306_6" model="product.template">
+            <field name="name">Коса 50мм. Антрацит</field>
+            <field name="default_code">KOSA50-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa50"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Коса 50мм. Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa80_j306_6" model="product.template">
+            <field name="name">Коса 80мм. Антрацит</field>
+            <field name="default_code">KOSA80-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa80"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Коса 80мм. Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa100_j306_6" model="product.template">
+            <field name="name">Коса 100мм. Антрацит</field>
+            <field name="default_code">KOSA100-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa100"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Коса 100мм. Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa120_j306_6" model="product.template">
+            <field name="name">Коса 120мм. Антрацит</field>
+            <field name="default_code">KOSA120-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa120"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Коса 120мм. Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kryshka_j306_6" model="product.template">
+            <field name="name">Крышка Антрацит</field>
+            <field name="default_code">KRYSHKA-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kryshka"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Крышка Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_prijim_xom_6" model="product.template">
+            <field name="name">Прижим ( не крашенные )</field>
+            <field name="default_code">PRIJIM-XOM-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_prijim"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Прижим ( не крашенные )</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_soed_xom_6" model="product.template">
+            <field name="name">Соединитель ( не крашенные )</field>
+            <field name="default_code">SOED-XOM-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_soed"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Соединитель ( не крашенные )</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_opora_xom_6" model="product.template">
+            <field name="name">Опора ( не крашенные )</field>
+            <field name="default_code">OPORA-XOM-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_opora"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Опора ( не крашенные )</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_yolka_jp_xom_6" model="product.template">
+            <field name="name">Ёлка ( ЖП ) ( не крашенные )</field>
+            <field name="default_code">YOLKA-JP-XOM-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_jp"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка ( ЖП ) ( не крашенные )</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_yolka_jp_xom_5" model="product.template">
+            <field name="name">Ёлка ( ЖП ) ( не крашенные ) 5мт</field>
+            <field name="default_code">YOLKA-JP-XOM-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_jp"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Ёлка ( ЖП ) ( не крашенные ) 5мт</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_kosa100_j306_5" model="product.template">
+            <field name="name">Коса 100мм. Антрацит 5мт</field>
+            <field name="default_code">KOSA100-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa100"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Коса 100мм. Антрацит 5мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa120_j306_5" model="product.template">
+            <field name="name">Коса 120мм. Антрацит 5мт</field>
+            <field name="default_code">KOSA120-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa120"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Коса 120мм. Антрацит 5мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa50_j306_5" model="product.template">
+            <field name="name">Коса 50мм. Антрацит 5мт</field>
+            <field name="default_code">KOSA50-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa50"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Коса 50мм. Антрацит 5мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kosa80_j306_5" model="product.template">
+            <field name="name">Коса 80мм. Антрацит 5мт</field>
+            <field name="default_code">KOSA80-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kosa80"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Коса 80мм. Антрацит 5мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_kryshka_j306_5" model="product.template">
+            <field name="name">Крышка Антрацит 5мт</field>
+            <field name="default_code">KRYSHKA-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_kryshka"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Крышка Антрацит 5мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_prijim_xom_5" model="product.template">
+            <field name="name">Прижим ( не крашенные ) 5мт</field>
+            <field name="default_code">PRIJIM-XOM-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_prijim"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Прижим ( не крашенные ) 5мт</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_soed_xom_5" model="product.template">
+            <field name="name">Соединитель ( не крашенные ) 5мт</field>
+            <field name="default_code">SOED-XOM-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_soed"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Соединитель ( не крашенные ) 5мт</field>
+            <field name="craf_color_id" ref="color_raw"/>
+        </record>
+        <record id="p_chip_j306_6" model="product.template">
+            <field name="name">Чип Кулок Антрацит 2</field>
+            <field name="default_code">CHIP-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_chip"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Чип Кулок Антрацит 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_chip_j306_5" model="product.template">
+            <field name="name">Чип Кулок Антрацит 5 мт 2</field>
+            <field name="default_code">CHIP-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_chip"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Чип Кулок Антрацит 5 мт 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_sht104_9016_6" model="product.template">
+            <field name="name">Штапик 104 Белый 2</field>
+            <field name="default_code">SHT104-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht104"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Штапик 104 Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_sht105_9016_6" model="product.template">
+            <field name="name">Штапик 105 Белый 2</field>
+            <field name="default_code">SHT105-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht105"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Штапик 105 Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_7016m_6" model="product.template">
+            <field name="name">T ( 7016 ) MATT</field>
+            <field name="default_code">T-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_z_7016m_6" model="product.template">
+            <field name="name">Z ( 7016 ) MATT</field>
+            <field name="default_code">Z-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_sht104_7016m_6" model="product.template">
+            <field name="name">Штапик 104 ( 7016 ) MATT</field>
+            <field name="default_code">SHT104-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht104"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Штапик 104 ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_sht105_7016m_6" model="product.template">
+            <field name="name">Штапик 105 ( 7016 ) MATT</field>
+            <field name="default_code">SHT105-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht105"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Штапик 105 ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_t_bal_7016m_6" model="product.template">
+            <field name="name">T ( Бал ) ( 7016 ) MATT</field>
+            <field name="default_code">T-BAL-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( Бал ) ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_z_bal_7016m_6" model="product.template">
+            <field name="name">Z ( Бал ) ( 7016 ) MATT</field>
+            <field name="default_code">Z-BAL-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_bal"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( Бал ) ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_chip_7016m_6" model="product.template">
+            <field name="name">Чип Кулок ( 7016 ) MATT</field>
+            <field name="default_code">CHIP-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_chip"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Чип Кулок ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_lamber_9016_5" model="product.template">
+            <field name="name">Ламбер ( 9016 ) Белый 5 мт 2</field>
+            <field name="default_code">LAMBER-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_lamber"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Ламбер ( 9016 ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_l_7016m_6" model="product.template">
+            <field name="name">L ( 7016 ) MATT</field>
+            <field name="default_code">L-7016M-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">L ( 7016 ) MATT</field>
+            <field name="craf_color_id" ref="color_7016"/>
+        </record>
+        <record id="p_chip_9016_6" model="product.template">
+            <field name="name">Чип Кулок ( 9016 ) Белый 2</field>
+            <field name="default_code">CHIP-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_chip"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Чип Кулок ( 9016 ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_chip_9016_5" model="product.template">
+            <field name="name">Чип Кулок ( 9016 ) Белый 5 мт 2</field>
+            <field name="default_code">CHIP-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_chip"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Чип Кулок ( 9016 ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_gr90_9016_6" model="product.template">
+            <field name="name">Градус 90 * ( 9016 ) Белый 2</field>
+            <field name="default_code">GR90-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_gr90"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Градус 90 * ( 9016 ) Белый 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_gr90_9016_5" model="product.template">
+            <field name="name">Градус 90 * ( 9016 ) Белый 5 мт 2</field>
+            <field name="default_code">GR90-9016-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_gr90"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Градус 90 * ( 9016 ) Белый 5 мт 2</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_l_bal_j306_5" model="product.template">
+            <field name="name">L ( Бал ) Антрацит 5мт 2</field>
+            <field name="default_code">L-BAL-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l_bal"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">L ( Бал ) Антрацит 5мт 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_t_alusam_9016_6" model="product.template">
+            <field name="name">T ( 9016 ) Белый ALUSAM</field>
+            <field name="default_code">T-ALUSAM-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_alusam"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( 9016 ) Белый ALUSAM</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_alusam_9016_6" model="product.template">
+            <field name="name">Z ( 9016 ) Белый ALUSAM</field>
+            <field name="default_code">Z-ALUSAM-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_alusam"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( 9016 ) Белый ALUSAM</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_yolka_tl20_3_6" model="product.template">
+            <field name="name">Ёлка Термо L 20.3mm</field>
+            <field name="default_code">YOLKA-TL20.3-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_tl20_3"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Термо L 20.3mm</field>
+        </record>
+        <record id="p_yolka_tl10_7_6" model="product.template">
+            <field name="name">Ёлка Термо L 10.7mm</field>
+            <field name="default_code">YOLKA-TL10.7-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_tl10_7"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Термо L 10.7mm</field>
+        </record>
+        <record id="p_yolka_ttb19_5_6" model="product.template">
+            <field name="name">Ёлка Термо T Бал 19.5mm</field>
+            <field name="default_code">YOLKA-TTB19.5-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_ttb19_5"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Термо T Бал 19.5mm</field>
+        </record>
+        <record id="p_yolka_ttb7_1_6" model="product.template">
+            <field name="name">Ёлка Термо T Бал 7.1mm</field>
+            <field name="default_code">YOLKA-TTB7.1-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_ttb7_1"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Термо T Бал 7.1mm</field>
+        </record>
+        <record id="p_yolka_tzb27_5_6" model="product.template">
+            <field name="name">Ёлка Термо Z Бал 27.5mm</field>
+            <field name="default_code">YOLKA-TZB27.5-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_tzb27_5"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Термо Z Бал 27.5mm</field>
+        </record>
+        <record id="p_yolka_tzb7_1_6" model="product.template">
+            <field name="name">Ёлка Термо Z Бал 7.1mm</field>
+            <field name="default_code">YOLKA-TZB7.1-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_tzb7_1"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Термо Z Бал 7.1mm</field>
+        </record>
+        <record id="p_samled_5" model="product.template">
+            <field name="name">Самлед Техно 5М</field>
+            <field name="default_code">SAMLED-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_samled"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Самлед Техно 5М</field>
+        </record>
+        <record id="p_yolka_b3_6_6" model="product.template">
+            <field name="name">Ёлка 3.6mm ( Большой )</field>
+            <field name="default_code">YOLKA-B3.6-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_b3_6"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка 3.6mm ( Большой )</field>
+        </record>
+        <record id="p_yolka_bisp_6" model="product.template">
+            <field name="name">Ёлка ( Большой ) Ispalnet</field>
+            <field name="default_code">YOLKA-BISP-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_bisp"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка ( Большой ) Ispalnet</field>
+        </record>
+        <record id="p_yolka_balk_6" model="product.template">
+            <field name="name">Ёлка Балкон</field>
+            <field name="default_code">YOLKA-BALK-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_balk"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка Балкон</field>
+        </record>
+        <record id="p_l_craf_9016_6" model="product.template">
+            <field name="name">L ( 9016 ) Белый CRAF</field>
+            <field name="default_code">L-CRAF-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l_craf"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">L ( 9016 ) Белый CRAF</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_craf_9016_6" model="product.template">
+            <field name="name">T ( 9016 ) Белый CRAF</field>
+            <field name="default_code">T-CRAF-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_craf"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( 9016 ) Белый CRAF</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_z_craf_9016_6" model="product.template">
+            <field name="name">Z ( 9016 ) Белый CRAF</field>
+            <field name="default_code">Z-CRAF-9016-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_craf"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z ( 9016 ) Белый CRAF</field>
+            <field name="craf_color_id" ref="color_9016"/>
+        </record>
+        <record id="p_t_bal_termo_j306_6" model="product.template">
+            <field name="name">T ( Бал ) Антрацит Термо 2</field>
+            <field name="default_code">T-BAL-TERMO-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_bal_termo"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( Бал ) Антрацит Термо 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_t_termo_j306_6" model="product.template">
+            <field name="name">T Антрацит Термо 2</field>
+            <field name="default_code">T-TERMO-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_termo"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T Антрацит Термо 2</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_t_8003_6" model="product.template">
+            <field name="name">T ( 8003 ) Золотой Дуб</field>
+            <field name="default_code">T-8003-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T ( 8003 ) Золотой Дуб</field>
+            <field name="craf_color_id" ref="color_8003"/>
+        </record>
+        <record id="p_yolka_b_6" model="product.template">
+            <field name="name">Ёлка ( Большой )</field>
+            <field name="default_code">YOLKA-B-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_yolka_b"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Ёлка ( Большой )</field>
+        </record>
+        <record id="p_l_j306_5" model="product.template">
+            <field name="name">L ( J306 ) Антрацит 5 мт</field>
+            <field name="default_code">L-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_l"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">L ( J306 ) Антрацит 5 мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_sht104_j306_5" model="product.template">
+            <field name="name">Штапик 104 ( J306 ) Антрацит 5 мт</field>
+            <field name="default_code">SHT104-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_sht104"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Штапик 104 ( J306 ) Антрацит 5 мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_t_ekonom_j306_6" model="product.template">
+            <field name="name">T Эконом ( J306 ) Антрацит</field>
+            <field name="default_code">T-EKONOM-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_t_ekonom"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">T Эконом ( J306 ) Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_z_ekonom_j306_6" model="product.template">
+            <field name="name">Z Эконом ( J306 ) Антрацит</field>
+            <field name="default_code">Z-EKONOM-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z_ekonom"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Z Эконом ( J306 ) Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_gr90_j306_6" model="product.template">
+            <field name="name">Градус 90 * ( J306 ) Антрацит</field>
+            <field name="default_code">GR90-J306-6</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_gr90"/>
+            <field name="craf_length_m">6.0</field>
+            <field name="craf_name_1c">Градус 90 * ( J306 ) Антрацит</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+        <record id="p_z_j306_5" model="product.template">
+            <field name="name">Z ( J306 ) Антрацит 5 мт</field>
+            <field name="default_code">Z-J306-5</field>
+            <field name="categ_id" ref="categ_finished"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_section_id" ref="sec_z"/>
+            <field name="craf_length_m">5.0</field>
+            <field name="craf_name_1c">Z ( J306 ) Антрацит 5 мт</field>
+            <field name="craf_color_id" ref="color_j306"/>
+        </record>
+
+    </data>
+</odoo>

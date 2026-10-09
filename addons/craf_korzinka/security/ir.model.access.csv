@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_basket_user,craf.basket user,model_craf_basket,base.group_user,1,0,0,0
+access_craf_basket_stock,craf.basket stock,model_craf_basket,stock.group_stock_user,1,1,1,0
+access_craf_basket_manager,craf.basket manager,model_craf_basket,stock.group_stock_manager,1,1,1,1
+access_craf_basket_load_user,craf.basket.load user,model_craf_basket_load,base.group_user,1,0,0,0
+access_craf_basket_load_mrp,craf.basket.load mrp,model_craf_basket_load,mrp.group_mrp_user,1,1,1,1
+access_craf_chem_treatment_user,craf.chem.treatment user,model_craf_chem_treatment,base.group_user,1,0,0,0
+access_craf_chem_treatment_mrp,craf.chem.treatment mrp,model_craf_chem_treatment,mrp.group_mrp_user,1,1,1,1
+access_craf_chem_treatment_line_user,craf.chem.treatment.line user,model_craf_chem_treatment_line,base.group_user,1,0,0,0
+access_craf_chem_treatment_line_mrp,craf.chem.treatment.line mrp,model_craf_chem_treatment_line,mrp.group_mrp_user,1,1,1,1

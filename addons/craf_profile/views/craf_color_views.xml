@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_color_view_list" model="ir.ui.view">
+        <field name="name">craf.color.list</field>
+        <field name="model">craf.color</field>
+        <field name="arch" type="xml">
+            <list string="Ranglar" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_painted"/>
+                <field name="paint_tmpl_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_craf_color" model="ir.actions.act_window">
+        <field name="name">Ranglar</field>
+        <field name="res_model">craf.color</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

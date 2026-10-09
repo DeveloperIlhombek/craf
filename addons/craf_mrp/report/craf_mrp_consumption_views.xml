@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_mrp_consumption_view_list" model="ir.ui.view">
+        <field name="name">craf.mrp.consumption.list</field>
+        <field name="model">craf.mrp.consumption</field>
+        <field name="arch" type="xml">
+            <list string="Xom-ashyo sarfi" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="picking_type_id"/>
+                <field name="origin" optional="show"/>
+                <field name="production_id" optional="hide"/>
+                <field name="finished_product_id" optional="show"/>
+                <field name="product_id"/>
+                <field name="qty_norm" sum="Jami"/>
+                <field name="qty_actual" sum="Jami"/>
+                <field name="qty_diff" sum="Jami" decoration-danger="qty_diff &gt; 0.005" decoration-success="qty_diff &lt; -0.005"/>
+                <field name="uom_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_mrp_consumption_view_pivot" model="ir.ui.view">
+        <field name="name">craf.mrp.consumption.pivot</field>
+        <field name="model">craf.mrp.consumption</field>
+        <field name="arch" type="xml">
+            <pivot string="Xom-ashyo sarfi" disable_linking="0">
+                <field name="product_id" type="row"/>
+                <field name="picking_type_id" type="col"/>
+                <field name="qty_norm" type="measure"/>
+                <field name="qty_actual" type="measure"/>
+                <field name="qty_diff" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="craf_mrp_consumption_view_graph" model="ir.ui.view">
+        <field name="name">craf.mrp.consumption.graph</field>
+        <field name="model">craf.mrp.consumption</field>
+        <field name="arch" type="xml">
+            <graph string="Xom-ashyo sarfi" type="bar">
+                <field name="product_id"/>
+                <field name="qty_actual" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="craf_mrp_consumption_view_search" model="ir.ui.view">
+        <field name="name">craf.mrp.consumption.search</field>
+        <field name="model">craf.mrp.consumption</field>
+        <field name="arch" type="xml">
+            <search string="Xom-ashyo sarfi">
+                <field name="product_id"/>
+                <field name="finished_product_id"/>
+                <field name="origin"/>
+                <field name="picking_type_id"/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="month" string="Shu oy"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <separator/>
+                <filter name="over" string="Me'yordan ortiq" domain="[('qty_diff', '&gt;', 0.005)]"/>
+                <filter name="no_norm" string="Me'yori yo'q" domain="[('qty_norm', '=', 0)]"/>
+                <group>
+                    <filter name="group_stage" string="Bosqich" context="{'group_by': 'picking_type_id'}"/>
+                    <filter name="group_product" string="Xom-ashyo" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_finished" string="Chiqgan mahsulot" context="{'group_by': 'finished_product_id'}"/>
+                    <filter name="group_day" string="Kun" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_month" string="Oy" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_mrp_consumption" model="ir.actions.act_window">
+        <field name="name">Xom-ashyo sarfi</field>
+        <field name="res_model">craf.mrp.consumption</field>
+        <field name="view_mode">pivot,list,graph</field>
+        <field name="path">craf-sarf</field>
+        <field name="context">{'search_default_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">Hali sarf yo'q</p>
+            <p>Plavka, press yoki bo'yash hujjati tasdiqlansa, uning haqiqiy sarfi me'yor bilan shu yerda chiqadi.</p>
+        </field>
+    </record>
+</odoo>

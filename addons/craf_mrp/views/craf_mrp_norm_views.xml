@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_mrp_norm_view_form" model="ir.ui.view">
+        <field name="name">craf.mrp.norm.form</field>
+        <field name="model">craf.mrp.norm</field>
+        <field name="arch" type="xml">
+            <form string="Ishlab chiqarish me'yorlari" create="false" delete="false">
+                <header>
+                    <button name="action_generate_boms" type="object" string="BoM larni qayta hisoblash"
+                            class="btn-primary" icon="fa-refresh"
+                            confirm="Barcha profillar va quyma uchun Craf BoM lari shu me'yorlar bo'yicha qayta hisoblanadi. Qo'lda kiritilgan BoM larga tegilmaydi. Davom etasizmi?"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_boms" type="object" class="oe_stat_button" icon="fa-flask">
+                            <field name="bom_count" widget="statinfo" string="Craf BoM"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>Ishlab chiqarish me'yorlari</h1>
+                        <div class="text-muted">
+                            Bu qiymatlardan har bir mahsulotning BoM i (xom-ashyo sarfi va bosqich vaqtlari) hisoblanadi.
+                            Prototip qiymatlari — zavodning haqiqiy ko'rsatkichlari bilan almashtiring.
+                        </div>
+                    </div>
+                    <group>
+                        <group string="Press">
+                            <field name="press_yield_pct"/>
+                            <field name="press_rest_pct"/>
+                            <field name="press_scrap_pct"/>
+                            <field name="press_kg_h"/>
+                        </group>
+                        <group string="Bo'yash">
+                            <field name="powder_g_m2"/>
+                            <field name="paint_defect_pct"/>
+                            <field name="chem_ac20"/>
+                            <field name="chem_cr51"/>
+                            <field name="chem_ac52"/>
+                            <field name="paint_m2_h"/>
+                        </group>
+                        <group string="Литейка va qadoqlash">
+                            <field name="foundry_kg_h"/>
+                            <field name="pack_min"/>
+                            <div class="text-muted small" colspan="2">
+                                Shixta tarkibi: Sozlamalar → Shixta retseptlari (quyma BoM i).
+                            </div>
+                        </group>
+                        <group string="Bosqichlar (operatsiya turlari)">
+                            <field name="foundry_type_id" options="{'no_create': True}"/>
+                            <field name="press_type_id" options="{'no_create': True}"/>
+                            <field name="press_pack_type_id" options="{'no_create': True}"/>
+                            <field name="paint_type_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Ish markazlari">
+                            <field name="wc_foundry_id" options="{'no_create': True}"/>
+                            <field name="wc_press_id" options="{'no_create': True}"/>
+                            <field name="wc_press_alt_id" options="{'no_create': True}"/>
+                            <field name="wc_paint_id" options="{'no_create': True}"/>
+                            <field name="wc_pack_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Oxirgi hisoblash">
+                            <field name="last_run"/>
+                            <field name="last_result" nolabel="1" colspan="2" class="text-muted"/>
+                        </group>
+                    </group>
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_mrp_norm" model="ir.actions.server">
+        <field name="name">Ishlab chiqarish me'yorlari</field>
+        <field name="model_id" ref="model_craf_mrp_norm"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open()</field>
+    </record>
+</odoo>

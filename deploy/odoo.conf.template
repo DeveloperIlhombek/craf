@@ -1,0 +1,25 @@
+[options]
+; install.sh bu fayldan config/odoo.conf ni yaratadi (__...__ qiymatlar almashtiriladi).
+; config/odoo.conf git ga kirmaydi — unda master parol bor.
+addons_path = /mnt/extra-addons
+data_dir = /var/lib/odoo
+admin_passwd = __ADMIN_PASSWD__
+
+; faqat bitta baza: craf; ma'lumotlar bazasi menejeri yopiq (xavfsizlik)
+dbfilter = ^__DB_NAME__$
+list_db = False
+
+; Caddy orqasida
+proxy_mode = True
+
+; ishchi jarayonlar (install.sh CPU va RAM ga qarab tanlaydi)
+workers = __WORKERS__
+max_cron_threads = 1
+gevent_port = 8072
+limit_memory_soft = 1073741824
+limit_memory_hard = 1610612736
+limit_time_cpu = 600
+limit_time_real = 1200
+limit_request = 65536
+
+log_level = info

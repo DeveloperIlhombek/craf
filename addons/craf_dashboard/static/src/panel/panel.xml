@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_dashboard.Panel">
+        <div class="o_action o_craf_dash h-100 overflow-auto">
+            <div class="container-fluid py-2 py-md-3 px-2 px-sm-3 px-lg-4" t-att-class="{ 'o_craf_refetch': state.loading and state.data }">
+                <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+                    <div class="me-auto">
+                        <h2 class="mb-0">Craf panel</h2>
+                        <div class="text-muted small" t-if="state.data">
+                            <t t-esc="periodText"/> · ishlab chiqarish, qoldiq va chiqish koeffitsienti
+                        </div>
+                    </div>
+                </div>
+                <!-- Davr filtri: bitta qator, hamma narsadan yuqorida -->
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <div class="btn-group" role="group" aria-label="Davr">
+                        <t t-foreach="periods" t-as="p" t-key="p[0]">
+                            <button type="button" class="btn btn-sm"
+                                    t-att-class="state.period === p[0] ? 'btn-primary' : 'btn-outline-secondary'"
+                                    t-att-aria-pressed="state.period === p[0] ? 'true' : 'false'"
+                                    t-on-click="() => this.setPeriod(p[0])" t-esc="p[1]"/>
+                        </t>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" t-on-click="() => this.load()" title="Yangilash">
+                        <i class="fa fa-refresh"/><span class="d-none d-sm-inline"> Yangilash</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light" t-on-click="() => this.openMap()" title="Zavod xaritasi">
+                        <i class="fa fa-map-o"/><span class="d-none d-sm-inline"> Zavod xaritasi</span>
+                    </button>
+                </div>
+
+                <t t-if="state.data">
+                    <!-- Bosh ko'rsatkich + bosqichlar -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-xl-4">
+                            <div class="o_craf_card h-100 o_craf_hero">
+                                <div class="o_craf_label">Tayyor profil chiqdi</div>
+                                <div class="o_craf_hero_value">
+                                    <t t-esc="fmt(kpi.finished_kg)"/> <span class="o_craf_unit">kg</span>
+                                </div>
+                                <div class="text-muted">
+                                    <t t-esc="fmt(kpi.finished_pcs)"/> dona ·
+                                    <t t-esc="fmt(kpi.packs)"/> pachka yorlig'i
+                                </div>
+                                <div class="mt-3 small text-muted">
+                                    Bo'yalgan va bo'yashsiz sotiladigan profillar, tanlangan davr bo'yicha.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-8">
+                            <div class="row g-3 h-100">
+                                <div class="col-12 col-md-6 col-xxl-3">
+                                    <div class="o_craf_card h-100">
+                                        <div class="o_craf_label">Литейка — quyma</div>
+                                        <div class="o_craf_value"><t t-esc="fmt(kpi.billet_kg)"/> kg</div>
+                                        <div class="o_craf_sub"><t t-esc="kpi.melt_count"/> plavka · metall <t t-esc="fmt(kpi.metal_kg)"/> kg</div>
+                                        <div class="o_craf_status" t-att-class="stLoss.cls">
+                                            <i t-att-class="'fa ' + stLoss.icon" role="img" t-att-aria-label="stLoss.text"/>
+                                            угар <b><t t-esc="fmt(kpi.burn_loss_pct, 2)"/>%</b>
+                                            <div class="o_craf_norm">me'yor ≤ <t t-esc="fmt(norms.burn_loss, 0)"/>% · <t t-esc="stLoss.text"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-xxl-3">
+                                    <div class="o_craf_card h-100">
+                                        <div class="o_craf_label">Press — profil</div>
+                                        <div class="o_craf_value"><t t-esc="fmt(kpi.press_out_kg)"/> kg</div>
+                                        <div class="o_craf_sub"><t t-esc="kpi.shift_count"/> smena · <t t-esc="fmt(kpi.press_pcs)"/> dona</div>
+                                        <div class="o_craf_status" t-att-class="stYield.cls">
+                                            <i t-att-class="'fa ' + stYield.icon" role="img" t-att-aria-label="stYield.text"/>
+                                            chiqish <b><t t-esc="fmt(kpi.press_yield_pct, 1)"/>%</b>
+                                            <div class="o_craf_norm">me'yor ≥ <t t-esc="fmt(norms.press_yield, 0)"/>% · <t t-esc="stYield.text"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-xxl-3">
+                                    <div class="o_craf_card h-100">
+                                        <div class="o_craf_label">Bo'yash</div>
+                                        <div class="o_craf_value"><t t-esc="fmt(kpi.paint_ok_pcs)"/> dona</div>
+                                        <div class="o_craf_sub"><t t-esc="fmt(kpi.paint_kg)"/> kg · kukun <t t-esc="fmt(kpi.powder_kg, 1)"/> kg</div>
+                                        <div class="o_craf_status" t-att-class="stDefect.cls">
+                                            <i t-att-class="'fa ' + stDefect.icon" role="img" t-att-aria-label="stDefect.text"/>
+                                            brak <b><t t-esc="fmt(kpi.defect_pct, 2)"/>%</b>
+                                            <div class="o_craf_norm">me'yor ≤ <t t-esc="fmt(norms.defect, 0)"/>% · <t t-esc="stDefect.text"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-xxl-3">
+                                    <div class="o_craf_card h-100">
+                                        <div class="o_craf_label">Sotuv</div>
+                                        <div class="o_craf_value"><t t-esc="compact(kpi.sales_amount)"/> <t t-esc="kpi.currency"/></div>
+                                        <div class="o_craf_sub"><t t-esc="kpi.orders"/> tasdiqlangan buyurtma</div>
+                                        <div class="o_craf_status o_craf_st_none">
+                                            <i class="fa fa-shopping-cart" role="img" aria-label="Sotuv"/>
+                                            <span class="text-muted">Sotuv ilovasidagi buyurtmalar</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kunlik grafik -->
+                    <div class="o_craf_card mb-3">
+                        <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+                            <div class="o_craf_card_title me-auto">Kunlik ishlab chiqarish, kg</div>
+                            <div class="o_craf_legend d-flex flex-wrap gap-3">
+                                <t t-foreach="seriesTotals" t-as="s" t-key="s.key">
+                                    <span class="d-inline-flex align-items-center gap-1">
+                                        <span class="o_craf_swatch" t-att-style="'background:' + s.color"/>
+                                        <t t-esc="s.label"/>
+                                        <span class="text-muted">· <t t-esc="fmt(s.total)"/></span>
+                                    </span>
+                                </t>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-light ms-auto ms-md-0" t-on-click="() => this.toggleTable()">
+                                <i t-att-class="state.showTable ? 'fa fa-bar-chart' : 'fa fa-table'"/>
+                                <t t-esc="state.showTable ? ' Grafik' : ' Jadval'"/>
+                            </button>
+                        </div>
+                        <t t-if="!state.showTable">
+                            <div class="o_craf_chart position-relative" t-ref="chartBox">
+                                <svg t-att-viewBox="'0 0 ' + chart.W + ' ' + chart.H" t-att-width="chart.W" t-att-height="chart.H" role="img"
+                                     aria-label="Kunlik ishlab chiqarish grafigi" t-on-mouseleave="() => this.onLeave()">
+                                    <t t-foreach="ticks" t-as="tk" t-key="tk_index">
+                                        <line t-att-x1="chart.L" t-att-x2="chart.W - chart.R" t-att-y1="tk.y" t-att-y2="tk.y"
+                                              t-att-class="tk_index === 0 ? 'o_craf_base' : 'o_craf_grid'"/>
+                                        <text t-att-x="chart.L - 8" t-att-y="tk.y + 4" text-anchor="end" class="o_craf_axis" t-esc="tk.label"/>
+                                    </t>
+                                    <t t-foreach="groups" t-as="g" t-key="g.i">
+                                        <rect t-if="state.hover === g.i" t-att-x="g.hitX + 2" t-att-y="chart.T" t-att-width="g.hitW - 4"
+                                              t-att-height="chart.H - chart.T - chart.B" class="o_craf_hover_band"/>
+                                        <t t-foreach="g.bars" t-as="b" t-key="b.key">
+                                            <path t-if="b.path" t-att-d="b.path" t-att-fill="b.color"/>
+                                        </t>
+                                        <text t-if="g.showLabel" t-att-x="g.cx" t-att-y="chart.H - 10" text-anchor="middle"
+                                              class="o_craf_axis" t-esc="g.day.label"/>
+                                        <rect t-att-x="g.hitX" t-att-y="chart.T" t-att-width="g.hitW"
+                                              t-att-height="chart.H - chart.T - chart.B + 20" fill="transparent"
+                                              tabindex="0" t-on-mouseenter="() => this.onHover(g.i)" t-on-click="() => this.onHover(g.i)"
+                                              t-on-focus="() => this.onHover(g.i)" t-on-blur="() => this.onLeave()"/>
+                                    </t>
+                                </svg>
+                                <div class="o_craf_tooltip" t-att-style="tooltipStyle" t-if="hoverGroup">
+                                    <div class="fw-bold mb-1" t-esc="hoverGroup.day.label"/>
+                                    <t t-foreach="series" t-as="s" t-key="s.key">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="o_craf_linekey" t-att-style="'background:' + s.color"/>
+                                            <b t-esc="fmt(hoverGroup.day[s.key]) + ' kg'"/>
+                                            <span class="text-muted" t-esc="s.label"/>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div t-if="!hasSeries" class="o_craf_empty text-muted">Bu davrda tasdiqlangan hujjat yo'q</div>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="table-responsive">
+                                <table class="table table-sm o_craf_table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Sana</th>
+                                            <t t-foreach="series" t-as="s" t-key="s.key"><th class="text-end" t-esc="s.label + ', kg'"/></t>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.data.series" t-as="d" t-key="d.date">
+                                            <tr>
+                                                <td t-esc="d.label"/>
+                                                <t t-foreach="series" t-as="s" t-key="s.key"><td class="text-end" t-esc="fmt(d[s.key])"/></t>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <!-- Zavod nuqtalaridagi qoldiq -->
+                        <div class="col-12 col-xl-6">
+                            <div class="o_craf_card h-100">
+                                <div class="o_craf_card_title mb-2">Hozir zavodda, kg</div>
+                                <t t-foreach="zoneRows" t-as="z" t-key="z.id">
+                                    <div class="o_craf_zone_row" role="button" t-on-click="() => this.openZone(z)"
+                                         t-att-title="z.name + ': ' + fmt(z.kg) + ' kg'">
+                                        <div class="o_craf_zone_name text-truncate" t-esc="z.name"/>
+                                        <div class="o_craf_track">
+                                            <div class="o_craf_bar" t-att-style="'width:' + z.width + '%'"/>
+                                        </div>
+                                        <div class="o_craf_zone_val">
+                                            <t t-esc="fmt(z.kg)"/>
+                                            <span class="text-muted small d-none d-sm-inline" t-if="z.pcs"> · <t t-esc="fmt(z.pcs)"/> шт</span>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                        <!-- Kam qolgan tayyor mahsulotlar -->
+                        <div class="col-12 col-xl-6">
+                            <div class="o_craf_card h-100">
+                                <div class="o_craf_card_title mb-2">Eng kam qolgan tayyor profillar</div>
+                                <div class="table-responsive">
+                                <table class="table table-sm table-hover o_craf_table mb-0">
+                                    <thead><tr><th>Mahsulot</th><th class="text-end">Dona</th><th class="text-end d-none d-sm-table-cell">Pachka</th></tr></thead>
+                                    <tbody>
+                                        <t t-foreach="state.data.low_stock" t-as="row" t-key="row.id">
+                                            <tr role="button" t-on-click="() => this.openProduct(row)">
+                                                <td class="text-truncate o_craf_prod_name" t-esc="row.name"/>
+                                                <td class="text-end" t-att-class="row.pcs &lt;= 0 ? 'text-danger fw-bold' : ''" t-esc="fmt(row.pcs)"/>
+                                                <td class="text-end text-muted d-none d-sm-table-cell" t-esc="row.text"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-8">
+                            <div class="o_craf_card h-100">
+                                <div class="o_craf_card_title mb-2">Oxirgi hujjatlar</div>
+                                <div class="table-responsive">
+                                <table class="table table-sm table-hover o_craf_table mb-0">
+                                    <thead><tr><th class="d-none d-sm-table-cell">Bosqich</th><th>Raqam</th><th>Sana</th><th>Natija</th></tr></thead>
+                                    <tbody>
+                                        <t t-foreach="state.data.recent" t-as="r" t-key="r.model + r.id">
+                                            <tr role="button" t-on-click="() => this.openRecord(r.model, r.id)">
+                                                <td class="d-none d-sm-table-cell" t-esc="r.stage"/>
+                                                <td class="fw-bold text-nowrap" t-esc="r.name"/>
+                                                <td t-esc="r.date"/>
+                                                <td class="text-muted" t-esc="r.text"/>
+                                            </tr>
+                                        </t>
+                                        <tr t-if="!state.data.recent.length"><td colspan="4" class="text-muted">Hali tasdiqlangan hujjat yo'q</td></tr>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-4">
+                            <div class="o_craf_card h-100">
+                                <div class="o_craf_card_title mb-2">Tasdiqlanmagan hujjatlar</div>
+                                <t t-foreach="state.data.drafts" t-as="dr" t-key="dr.model">
+                                    <div class="o_craf_draft_row" role="button" t-on-click="() => this.openDrafts(dr)">
+                                        <span t-esc="dr.label"/>
+                                        <span class="badge rounded-pill" t-att-class="dr.count ? 'text-bg-warning' : 'text-bg-light'" t-esc="dr.count"/>
+                                    </div>
+                                </t>
+                                <div class="small text-muted mt-2">Qoralama hujjatlar omborga ta'sir qilmaydi — tasdiqlang yoki bekor qiling.</div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+                <div t-elif="state.loading" class="text-muted p-5 text-center"><i class="fa fa-spinner fa-spin"/> Yuklanmoqda…</div>
+            </div>
+        </div>
+    </t>
+</templates>

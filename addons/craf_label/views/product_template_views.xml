@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_view_craf_label" model="ir.ui.view">
+        <field name="name">product.template.form.craf.label</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="craf_profile.product_template_form_view_craf"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_craf_calculator']" position="after">
+                <button name="action_craf_pack_wizard" type="object" string="Pachka yorlig'i"
+                        class="btn-secondary ms-2" icon="fa-qrcode" invisible="not id or not craf_section_id"/>
+                <button name="action_craf_view_packs" type="object" string="Pachkalar ro'yxati" class="btn-link ms-2"
+                        icon="fa-cubes" invisible="not craf_pack_count"/>
+                <field name="craf_pack_count" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_paint_batch_view_form_korzinka" model="ir.ui.view">
+        <field name="name">craf.paint.batch.form.korzinka</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="inherit_id" ref="craf_paint.craf_paint_batch_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_done']" position="after">
+                <button name="action_send_to_stock" type="object" string="Omborga topshirish" class="btn-primary"
+                        icon="fa-truck" invisible="state != 'done' or stock_picking_id"
+                        confirm="Bo'yalgan mahsulot Qadoqlashdan Tayyor mahsulot omboriga o'tadi. Davom etasizmi?"/>
+                <button name="action_add_ready_baskets" type="object" string="Tayyor korzinkalar"
+                        icon="fa-shopping-basket" invisible="state != 'draft'"/>
+                <button name="action_fill_from_baskets" type="object" string="Korzinkalardan to'ldirish"
+                        icon="fa-download" invisible="state != 'draft' or not load_ids"/>
+            </xpath>
+            <xpath expr="//field[@name='location_dest_id']" position="after">
+                <field name="stock_picking_id" invisible="not stock_picking_id"/>
+                <field name="stock_state" invisible="state != 'done'" widget="badge"
+                       decoration-success="stock_state == 'done'" decoration-warning="stock_state == 'no'"/>
+            </xpath>
+            <xpath expr="//page[@name='lines']" position="before">
+                <page string="Korzinkalar" name="baskets">
+                    <div class="text-muted small mb-2">
+                        Kimyoviy ishlovdan o'tgan korzinkalarni tanlang, so'ng "Korzinkalardan to'ldirish" — profillar o'zi tushadi.
+                    </div>
+                    <field name="load_ids" readonly="state != 'draft'" options="{'no_create': True}">
+                        <list>
+                            <field name="basket_id"/>
+                            <field name="content"/>
+                            <field name="pcs_total" sum="Jami"/>
+                            <field name="kg_theory" sum="Jami"/>
+                            <field name="treatment_id" optional="show"/>
+                        </list>
+                        <kanban class="o_kanban_mobile">
+                            <templates>
+                                <t t-name="card">
+                                    <field name="basket_id" class="fw-bold"/>
+                                    <field name="content" class="text-muted small"/>
+                                    <div><field name="pcs_total"/> dona</div>
+                                </t>
+                            </templates>
+                        </kanban>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

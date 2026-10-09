@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_craf_extrusion_shift" name="Press smenalari" parent="craf_production.menu_craf_production"
+              action="action_craf_extrusion_shift" sequence="20"/>
+    <menuitem id="menu_craf_semi_profiles" name="Bo'yalmagan profillar" parent="craf_production.menu_craf_production"
+              action="action_craf_semi_profiles" sequence="40"/>
+</odoo>

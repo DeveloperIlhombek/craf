@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_kochirish.XaritaKochirish" t-inherit="craf_zavod.Xarita" t-inherit-mode="extension">
+        <xpath expr="//button[contains(@t-on-click, 'openZone')]" position="before">
+            <button class="btn btn-primary btn-sm text-nowrap ms-auto" t-on-click="() => this.openTransfer(z)">
+                <i class="fa fa-exchange me-1"/>Ko'chirish
+            </button>
+        </xpath>
+        <xpath expr="//button[contains(@t-on-click, 'openZone')]" position="attributes">
+            <attribute name="class" add="text-nowrap" separator=" "/>
+        </xpath>
+        <xpath expr="//tr[@t-foreach='z.top']/td[2]" position="after">
+            <td class="text-end align-middle" style="width: 36px;">
+                <button class="btn btn-link btn-sm p-0" title="Shu mahsulotni ko'chirish"
+                        t-on-click.stop="() => this.openTransfer(z, item)">
+                    <i class="fa fa-exchange"/>
+                </button>
+            </td>
+        </xpath>
+    </t>
+</templates>

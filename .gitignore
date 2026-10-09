@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Maxfiy sozlamalar — hech qachon git ga qo'shilmaydi
+.env
+deploy/.env
+deploy/config/
+*.conf
+!deploy/odoo.conf.template
+
+# Zaxira nusxalar va arxivlar
+backups/
+zaxira/
+*.zip
+*.tgz
+*.dump
+*.sql
+
+# Muharrir / tizim
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

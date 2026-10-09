@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_profile_section_view_list" model="ir.ui.view">
+        <field name="name">craf.profile.section.list</field>
+        <field name="model">craf.profile.section</field>
+        <field name="arch" type="xml">
+            <list string="Kesimlar">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="profile_type" optional="show"/>
+                <field name="series" optional="show"/>
+                <field name="kg_per_m"/>
+                <field name="perimeter_m" optional="hide"/>
+                <field name="die_code" optional="show"/>
+                <field name="product_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_profile_section_view_form" model="ir.ui.view">
+        <field name="name">craf.profile.section.form</field>
+        <field name="model">craf.profile.section</field>
+        <field name="arch" type="xml">
+            <form string="Kesim">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_products" type="object" class="oe_stat_button" icon="fa-cubes">
+                            <field name="product_count" widget="statinfo" string="Mahsulot"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Arxivlangan" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="drawing" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="masalan: T Бал"/></h1>
+                    </div>
+                    <group>
+                        <group string="Kesim">
+                            <field name="profile_type"/>
+                            <field name="series"/>
+                            <field name="die_code"/>
+                        </group>
+                        <group string="Og'irlik">
+                            <field name="kg_per_m"/>
+                            <field name="perimeter_m"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Izoh..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_profile_section_view_search" model="ir.ui.view">
+        <field name="name">craf.profile.section.search</field>
+        <field name="model">craf.profile.section</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="profile_type"/>
+                <field name="series"/>
+                <filter name="no_weight" string="kg/m kiritilmagan" domain="[('kg_per_m', '=', 0)]"/>
+                <separator/>
+                <filter name="archived" string="Arxivlangan" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_type" string="Tur" context="{'group_by': 'profile_type'}"/>
+                    <filter name="group_series" string="Seriya" context="{'group_by': 'series'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_profile_section" model="ir.actions.act_window">
+        <field name="name">Kesimlar</field>
+        <field name="res_model">craf.profile.section</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Birinchi profil kesimini qo'shing</p>
+            <p>Kesim = tur + seriya (masalan T Бал). Har bir kesimga kg/m kiritilsa, kalkulyator ishlaydi.</p>
+        </field>
+    </record>
+</odoo>

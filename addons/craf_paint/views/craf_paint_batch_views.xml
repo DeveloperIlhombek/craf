@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_paint_batch_view_list" model="ir.ui.view">
+        <field name="name">craf.paint.batch.list</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="arch" type="xml">
+            <list string="Bo'yash smenalari" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="shift" optional="show"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="color_id"/>
+                <field name="pcs_in" sum="Jami"/>
+                <field name="pcs_ok" sum="Jami"/>
+                <field name="pcs_defect" sum="Jami"/>
+                <field name="defect_pct" avg="O'rtacha"/>
+                <field name="kg_ok" sum="Jami" optional="show"/>
+                <field name="area_total" sum="Jami" optional="hide"/>
+                <field name="powder_qty" sum="Jami" optional="show"/>
+                <field name="powder_diff_pct" avg="O'rtacha" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_paint_batch_view_kanban" model="ir.ui.view">
+        <field name="name">craf.paint.batch.kanban</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center mb-1">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : (record.state.raw_value === 'draft' ? 'text-bg-info' : 'text-bg-secondary')"><field name="state"/></span>
+                        </div>
+                        <div class="text-muted small">
+                            <field name="date"/> · <field name="shift"/>
+                        </div>
+                        <div class="mt-1"><span class="text-muted small">Rang </span><field name="color_id" class="fw-bold"/></div>
+                        <div class="d-flex mt-1 align-items-baseline">
+                            <div><field name="pcs_ok" class="fw-bold"/> dona · <field name="kg_ok"/> kg</div>
+                            <div class="ms-auto"><span class="text-muted small">brak </span><field name="defect_pct" class="fw-bold"/> %</div>
+                        </div>
+                        <footer class="pt-1">
+                            <field name="employee_id" widget="many2one_avatar_employee"/>
+                            <span class="ms-auto text-muted small">kukun <field name="powder_qty"/> kg</span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_paint_batch_view_form" model="ir.ui.view">
+        <field name="name">craf.paint.batch.form</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="arch" type="xml">
+            <form string="Bo'yash smenasi">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary"
+                            icon="fa-check" invisible="state != 'draft'"
+                            confirm="Tasdiqlansa, profil, kukun va kimyo Bo'yash sexi qoldig'idan yechiladi, bo'yalgan profil Qadoqlashga o'tadi. Davom etasizmi?"/>
+                    <button name="action_fill_norms" type="object" string="Normadan to'ldirish" icon="fa-flask"
+                            invisible="state != 'draft'"/>
+                    <button name="action_make_packs" type="object" string="Pachka yorliqlari" icon="fa-qrcode"
+                            class="btn-primary" invisible="state != 'done' or not has_pack_items"/>
+                    <field name="has_pack_items" invisible="1"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_productions" type="object" class="oe_stat_button" icon="fa-cogs"
+                                invisible="not production_count">
+                            <field name="production_count" widget="statinfo" string="MRP buyurtma"/>
+                        </button>
+                        <button name="action_view_packs" type="object" class="oe_stat_button" icon="fa-cubes"
+                                invisible="not pack_count">
+                            <field name="pack_count" widget="statinfo" string="Pachka"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted">Bo'yash smenasi</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Smena">
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="shift" readonly="state != 'draft'"/>
+                            <field name="equipment_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                            <field name="duration" readonly="state != 'draft'" widget="float_time"/>
+                        </group>
+                        <group string="Rang va joylar">
+                            <field name="color_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="powder_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="location_dest_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="waste_location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Profillar" name="lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <kanban class="o_kanban_mobile">
+                                    <templates>
+                                        <t t-name="card">
+                                            <field name="semi_product_id" class="text-muted small"/>
+                                            <field name="product_id" class="fw-bold"/>
+                                            <div class="d-flex mt-1 align-items-baseline gap-2">
+                                                <span>kirdi <field name="pcs_in" class="fw-bold"/></span>
+                                                <span>brak <field name="pcs_defect" class="fw-bold"/></span>
+                                                <span class="ms-auto">bo'yaldi <field name="pcs_ok" class="fw-bold"/></span>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form string="Bo'yash qatori">
+                                    <group>
+                                        <field name="semi_product_id" options="{'no_create': True}"/>
+                                        <field name="product_id" options="{'no_create': True}"/>
+                                        <field name="available_qty" invisible="parent.state != 'draft'"/>
+                                        <field name="pcs_in"/>
+                                        <field name="pcs_defect"/>
+                                        <field name="pcs_ok"/>
+                                        <field name="kg_ok"/>
+                                        <field name="area_m2"/>
+                                        <field name="state" invisible="1"/>
+                                    </group>
+                                </form>
+                                <list editable="bottom">
+                                    <field name="semi_product_id" options="{'no_create': True}"/>
+                                    <field name="product_id" options="{'no_create': True}"
+                                           decoration-danger="not product_id"/>
+                                    <field name="available_qty" optional="show" column_invisible="parent.state != 'draft'"
+                                           decoration-danger="available_qty &lt; pcs_in"/>
+                                    <field name="pcs_in" sum="Jami"/>
+                                    <field name="pcs_defect" sum="Jami"/>
+                                    <field name="pcs_ok" sum="Jami"/>
+                                    <field name="kg_ok" sum="Jami" optional="show"/>
+                                    <field name="area_m2" sum="Jami" optional="show"/>
+                                    <field name="state" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Kimyo" name="chem">
+                            <field name="chem_line_ids" readonly="state != 'draft'">
+                                <kanban class="o_kanban_mobile">
+                                    <templates>
+                                        <t t-name="card">
+                                            <field name="product_id" class="fw-bold"/>
+                                            <div class="d-flex mt-1">
+                                                <span class="text-muted">norma <field name="qty_norm"/></span>
+                                                <span class="ms-auto">sarf <field name="qty" class="fw-bold"/> kg</span>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form string="Kimyo">
+                                    <group>
+                                        <field name="product_id" options="{'no_create': True}"/>
+                                        <field name="qty_norm"/>
+                                        <field name="qty"/>
+                                    </group>
+                                </form>
+                                <list editable="bottom">
+                                    <field name="product_id" options="{'no_create': True}"/>
+                                    <field name="qty_norm" sum="Jami"/>
+                                    <field name="qty" sum="Jami"/>
+                                    <field name="uom_id" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Izoh" name="note">
+                            <field name="note" placeholder="Masalan: pech harorati, rang farqi, qayta bo'yash…"/>
+                        </page>
+                    </notebook>
+                    <group>
+                        <group string="Kukun bo'yoq">
+                            <field name="powder_norm" readonly="state != 'draft'"/>
+                            <field name="powder_norm_qty"/>
+                            <field name="powder_qty" readonly="state != 'draft'" class="fw-bold"/>
+                            <field name="powder_diff_pct" decoration-danger="powder_diff_pct &gt; 10"
+                                   decoration-success="powder_diff_pct &lt;= 0 and powder_qty"/>
+                        </group>
+                        <group string="Ko'rsatkichlar">
+                            <field name="pcs_in"/>
+                            <field name="pcs_ok"/>
+                            <field name="kg_ok"/>
+                            <field name="area_total"/>
+                            <field name="defect_pct" decoration-danger="defect_pct &gt; 2"
+                                   decoration-success="defect_pct &lt;= 2 and pcs_in"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_paint_batch_view_search" model="ir.ui.view">
+        <field name="name">craf.paint.batch.search</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="arch" type="xml">
+            <search string="Bo'yash smenalari">
+                <field name="name"/>
+                <field name="color_id"/>
+                <field name="employee_id"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="high_defect" string="Brak &gt; 2%" domain="[('defect_pct', '&gt;', 2)]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_color" string="Rang" context="{'group_by': 'color_id'}"/>
+                    <filter name="group_employee" string="Mas'ul" context="{'group_by': 'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="craf_paint_batch_view_graph" model="ir.ui.view">
+        <field name="name">craf.paint.batch.graph</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="arch" type="xml">
+            <graph string="Bo'yash" type="bar">
+                <field name="date" interval="day"/>
+                <field name="color_id"/>
+                <field name="pcs_ok" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="craf_paint_batch_view_pivot" model="ir.ui.view">
+        <field name="name">craf.paint.batch.pivot</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="arch" type="xml">
+            <pivot string="Bo'yash">
+                <field name="color_id" type="row"/>
+                <field name="pcs_ok" type="measure"/>
+                <field name="pcs_defect" type="measure"/>
+                <field name="powder_qty" type="measure"/>
+                <field name="area_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_craf_paint_batch" model="ir.actions.act_window">
+        <field name="name">Bo'yash smenalari</field>
+        <field name="res_model">craf.paint.batch</field>
+        <field name="view_mode">list,kanban,form,graph,pivot</field>
+        <field name="path">craf-boyash</field>
+        <field name="context">{'search_default_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Birinchi bo'yash smenasini yozing</p>
+            <p>Rangni tanlang, bo'yalmagan profillarni va donasini kiriting — bo'yalgan mahsulot o'zi topiladi.</p>
+        </field>
+    </record>
+</odoo>

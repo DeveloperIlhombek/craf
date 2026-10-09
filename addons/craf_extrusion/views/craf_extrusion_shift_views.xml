@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_extrusion_shift_view_list" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.list</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="arch" type="xml">
+            <list string="Press smenalari" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="shift" optional="show"/>
+                <field name="equipment_id" optional="show"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="section_id"/>
+                <field name="billet_qty" sum="Jami"/>
+                <field name="output_pcs" sum="Jami"/>
+                <field name="output_kg" sum="Jami"/>
+                <field name="rest_qty" sum="Jami" optional="hide"/>
+                <field name="scrap_qty" sum="Jami" optional="show"/>
+                <field name="yield_pct" avg="O'rtacha"/>
+                <field name="productivity" avg="O'rtacha" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_kanban" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.kanban</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center mb-1">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : (record.state.raw_value === 'draft' ? 'text-bg-info' : 'text-bg-secondary')"><field name="state"/></span>
+                        </div>
+                        <div class="text-muted small">
+                            <field name="date"/> · <field name="shift"/> · <field name="equipment_id"/>
+                        </div>
+                        <div class="mt-1"><span class="text-muted small">Matritsa </span><field name="section_id" class="fw-bold"/></div>
+                        <div class="d-flex mt-1 align-items-baseline">
+                            <div><field name="output_pcs" class="fw-bold"/> dona · <field name="output_kg"/> kg</div>
+                            <div class="ms-auto"><span class="text-muted small">chiqish </span><field name="yield_pct" class="fw-bold"/> %</div>
+                        </div>
+                        <footer class="pt-1">
+                            <field name="employee_id" widget="many2one_avatar_employee"/>
+                            <span class="ms-auto text-muted small">quyma <field name="billet_qty"/> kg</span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_form" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.form</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="arch" type="xml">
+            <form string="Press smenasi">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary"
+                            icon="fa-check" invisible="state != 'draft'"
+                            confirm="Smena tasdiqlansa, quyma Press sexi qoldig'idan yechiladi va profillar keyingi bosqichga o'tadi. Davom etasizmi?"/>
+                    <button name="action_make_packs" type="object" string="Pachka yorliqlari" icon="fa-qrcode"
+                            invisible="state != 'done' or not has_pack_items"/>
+                    <field name="has_pack_items" invisible="1"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_productions" type="object" class="oe_stat_button" icon="fa-cogs"
+                                invisible="not production_count">
+                            <field name="production_count" widget="statinfo" string="MRP buyurtma"/>
+                        </button>
+                        <button name="action_view_packs" type="object" class="oe_stat_button" icon="fa-cubes"
+                                invisible="not pack_count">
+                            <field name="pack_count" widget="statinfo" string="Pachka"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted">Press smenasi</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Smena">
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="shift" readonly="state != 'draft'"/>
+                            <field name="equipment_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                            <field name="duration" readonly="state != 'draft'" widget="float_time"/>
+                        </group>
+                        <group string="Matritsa va quyma">
+                            <field name="section_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="die_code" invisible="not die_code"/>
+                            <field name="kg_per_m"/>
+                            <field name="billet_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="melt_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <label for="billet_qty"/>
+                            <div class="o_row">
+                                <field name="billet_qty" readonly="state != 'draft'" class="fw-bold"/>
+                                <span class="text-muted" invisible="state != 'draft'">
+                                    bor: <field name="billet_available" class="oe_inline"/> kg
+                                </span>
+                            </div>
+                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Chiqish (profil)" name="output">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <kanban class="o_kanban_mobile">
+                                    <templates>
+                                        <t t-name="card">
+                                            <field name="product_id" class="fw-bold"/>
+                                            <div class="d-flex mt-1 align-items-baseline">
+                                                <span><field name="pcs" class="fw-bold"/> dona</span>
+                                                <span class="ms-2 text-muted small"><field name="packs_text"/></span>
+                                                <span class="ms-auto"><field name="kg"/> kg</span>
+                                            </div>
+                                            <div class="text-muted small">→ <field name="location_dest_id"/></div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form string="Chiqish qatori">
+                                    <group>
+                                        <field name="product_id" options="{'no_create': True}"
+                                               domain="[('craf_section_id', '=', parent.section_id), ('craf_color_id.is_painted', '=', False)]"/>
+                                        <field name="length_m"/>
+                                        <field name="pcs"/>
+                                        <field name="packs_text"/>
+                                        <field name="metres"/>
+                                        <field name="kg"/>
+                                        <field name="location_dest_id" options="{'no_create': True}"/>
+                                        <field name="state" invisible="1"/>
+                                    </group>
+                                </form>
+                                <list editable="bottom">
+                                    <field name="product_id" options="{'no_create': True}"
+                                           domain="[('craf_section_id', '=', parent.section_id), ('craf_color_id.is_painted', '=', False)]"/>
+                                    <field name="length_m" optional="show"/>
+                                    <field name="pcs" sum="Jami"/>
+                                    <field name="packs_text" optional="show"/>
+                                    <field name="metres" sum="Jami" optional="show"/>
+                                    <field name="kg" sum="Jami"/>
+                                    <field name="location_dest_id" options="{'no_create': True}"/>
+                                    <field name="state" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Izoh" name="note">
+                            <field name="note" placeholder="Masalan: matritsa almashtirildi, to'xtash sababi…"/>
+                        </page>
+                    </notebook>
+                    <group>
+                        <group string="Qoldiq va brak">
+                            <field name="rest_qty" readonly="state != 'draft'"/>
+                            <field name="scrap_qty" readonly="state != 'draft'"/>
+                            <field name="rest_product_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   groups="base.group_no_one"/>
+                            <field name="scrap_product_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   groups="base.group_no_one"/>
+                            <field name="waste_location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Ko'rsatkichlar">
+                            <field name="output_pcs"/>
+                            <field name="output_kg"/>
+                            <field name="yield_pct" decoration-danger="yield_pct &lt; 75 and yield_pct &gt; 0"
+                                   decoration-success="yield_pct &gt;= 80"/>
+                            <field name="loss_qty" decoration-warning="loss_qty &gt; 5 or loss_qty &lt; -5"/>
+                            <field name="productivity"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_search" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.search</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="arch" type="xml">
+            <search string="Press smenalari">
+                <field name="name"/>
+                <field name="section_id"/>
+                <field name="equipment_id"/>
+                <field name="employee_id"/>
+                <field name="melt_ids"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="low_yield" string="Chiqish &lt; 80%" domain="[('yield_pct', '&lt;', 80), ('state', '=', 'done')]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_section" string="Matritsa" context="{'group_by': 'section_id'}"/>
+                    <filter name="group_equipment" string="Press" context="{'group_by': 'equipment_id'}"/>
+                    <filter name="group_employee" string="Operator" context="{'group_by': 'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_graph" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.graph</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="arch" type="xml">
+            <graph string="Press chiqishi" type="bar">
+                <field name="date" interval="day"/>
+                <field name="output_kg" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="craf_extrusion_shift_view_pivot" model="ir.ui.view">
+        <field name="name">craf.extrusion.shift.pivot</field>
+        <field name="model">craf.extrusion.shift</field>
+        <field name="arch" type="xml">
+            <pivot string="Press smenalari">
+                <field name="section_id" type="row"/>
+                <field name="billet_qty" type="measure"/>
+                <field name="output_kg" type="measure"/>
+                <field name="yield_pct" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_craf_extrusion_shift" model="ir.actions.act_window">
+        <field name="name">Press smenalari</field>
+        <field name="res_model">craf.extrusion.shift</field>
+        <field name="view_mode">list,kanban,form,graph,pivot</field>
+        <field name="path">craf-press</field>
+        <field name="context">{'search_default_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Birinchi press smenasini yozing</p>
+            <p>Matritsani tanlang — shu kesimning bo'yalmagan profillari qatorga tushadi. Dona, quyma sarfi, qoldiq va brakni kiriting.</p>
+        </field>
+    </record>
+
+    <record id="action_craf_semi_profiles" model="ir.actions.act_window">
+        <field name="name">Yarim tayyor profillar</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('craf_profile.product_template_list_view_craf')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('craf_profile.product_template_kanban_view_craf')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('product.product_template_form_view')})]"/>
+        <field name="domain">[('craf_color_id.is_painted', '=', False), ('craf_section_id', '!=', False)]</field>
+    </record>
+</odoo>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Hisobot jadvallari: pachka ko'rinishi va jami qatori -->
+    <t t-inherit="craf_hisobot.ItemTable" t-inherit-mode="extension">
+        <xpath expr="//tbody/tr/td[2]" position="inside">
+            <div class="fw-normal small text-muted" t-if="r.packs" t-esc="r.packs"/>
+        </xpath>
+        <xpath expr="//tbody" position="after">
+            <t t-set="tot" t-value="itemTotals(rows)"/>
+            <tfoot t-if="rows.length > 1">
+                <tr class="o_ck_tfoot">
+                    <td class="text-muted">Jami</td>
+                    <td class="text-end text-nowrap fw-bold">
+                        <t t-if="tot.hasPcs"><t t-esc="fmt(tot.pcs, 0)"/> <span class="fw-normal text-muted">dona</span></t>
+                        <t t-else=""><t t-esc="fmt(tot.kg, 1)"/> <span class="fw-normal text-muted">kg</span></t>
+                    </td>
+                    <td class="text-end text-nowrap text-muted d-none d-sm-table-cell"><t t-if="tot.hasPcs"><t t-esc="fmt(tot.kg, 1)"/> kg</t></td>
+                </tr>
+            </tfoot>
+        </xpath>
+    </t>
+
+    <t t-inherit="craf_hisobot.Kunlik" t-inherit-mode="extension">
+        <xpath expr="//h2" position="replace">
+            <h2 class="mb-0">Kunlik hisobot va kalkulyator</h2>
+        </xpath>
+        <xpath expr="//div[hasclass('o_ck_toolbar')]" position="after">
+            <t t-call="craf_kalkulyator.Calc"/>
+        </xpath>
+    </t>
+
+    <t t-name="craf_kalkulyator.Calc">
+        <div class="o_ck_card o_ck_calc mb-3">
+            <div class="d-flex align-items-start gap-2 mb-2">
+                <div class="me-auto">
+                    <div class="o_ck_title"><i class="fa fa-calculator me-1"/>Kalkulyator — bo'lim yozuvini 1C ga</div>
+                    <div class="small text-muted">Bo'lim yozib berganini kiriting: pachka + dona yoki o'ram + kg. Jami dona va kg hisoblanadi.</div>
+                </div>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.calcToggle()" t-att-title="calc.collapsed ? 'Ochish' : 'Yig\'ish'">
+                    <i t-att-class="calc.collapsed ? 'fa fa-chevron-down' : 'fa fa-chevron-up'"/>
+                </button>
+            </div>
+            <t t-if="!calc.collapsed">
+                <div class="o_ck_calc_deps d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Bo'lim">
+                    <t t-foreach="calcDeps" t-as="dep" t-key="dep.key">
+                        <button class="btn btn-sm" t-att-class="calc.dep === dep.key ? 'btn-primary' : 'btn-outline-secondary'"
+                                t-on-click="() => this.calcSetDep(dep.key)">
+                            <span class="d-none d-sm-inline" t-esc="dep.label"/><span class="d-sm-none" t-esc="dep.short"/>
+                        </button>
+                    </t>
+                </div>
+                <datalist id="o_ck_calc_dl">
+                    <t t-foreach="calcOptions" t-as="p" t-key="p.id"><option t-att-value="p.label"/></t>
+                </datalist>
+                <div class="o_ck_calc_head d-none d-md-grid">
+                    <span>Mahsulot</span><span>Pachka / o'ram</span><span>Dona / kg</span><span class="text-end">1C uchun</span><span/>
+                </div>
+                <t t-foreach="calcResults" t-as="item" t-key="item.row.key">
+                    <t t-set="row" t-value="item.row"/>
+                    <t t-set="res" t-value="item.res"/>
+                    <t t-set="u" t-value="calcUnits(row)"/>
+                    <div class="o_ck_calc_row" t-att-class="{ 'o_ck_calc_bad': res.error or res.missing }">
+                        <div class="o_ck_calc_c_prod">
+                            <input class="form-control form-control-sm o_ck_calc_prod" list="o_ck_calc_dl" autocomplete="off"
+                                   placeholder="Mahsulot: kod yoki nom…" t-att-value="row.text"
+                                   t-on-input="(ev) => this.calcOnText(row, ev)" t-on-change="(ev) => this.calcOnTextChange(row, ev)"
+                                   t-on-keydown="(ev) => this.calcOnKey(row, 'text', ev)"/>
+                            <div class="o_ck_calc_hint">
+                                <t t-if="res.p">
+                                    <t t-if="!row.edit">
+                                        <span t-att-class="res.missing ? 'text-danger' : (res.noUnit ? 'o_ck_warn' : '')" t-esc="res.hint"/>
+                                        <a href="#" class="ms-1" title="Mahsulotga saqlash" t-on-click.prevent="() => this.calcStartEdit(row)"><i class="fa fa-pencil"/></a>
+                                    </t>
+                                    <span t-else="" class="d-inline-flex flex-wrap align-items-center gap-1">
+                                        1 <t t-esc="res.p.uom === 'kg' ? (res.p.pkg_name || 'o\'ram') : 'pachka'"/> =
+                                        <input type="number" min="0" step="any" class="form-control form-control-sm o_ck_calc_unit"
+                                               t-att-value="row.editVal" t-on-input="(ev) => { row.editVal = ev.target.value; }"/>
+                                        <t t-esc="res.p.uom === 'kg' ? 'kg' : 'dona'"/>
+                                        <button class="btn btn-sm btn-primary py-0" t-on-click="() => this.calcSaveUnit(row)">Saqlash</button>
+                                        <button class="btn btn-sm btn-link py-0" t-on-click="() => { row.edit = false; }">Bekor</button>
+                                    </span>
+                                </t>
+                                <span t-elif="res.error" class="text-danger" t-esc="res.error"/>
+                            </div>
+                        </div>
+                        <div class="o_ck_calc_c_a input-group input-group-sm">
+                            <input type="number" inputmode="decimal" min="0" step="any" class="form-control text-end"
+                                   t-att-value="row.a" t-on-input="(ev) => this.calcSet(row, 'a', ev)"
+                                   t-on-keydown="(ev) => this.calcOnKey(row, 'a', ev)"/>
+                            <span class="input-group-text" t-esc="u.a"/>
+                        </div>
+                        <div class="o_ck_calc_c_b input-group input-group-sm">
+                            <span class="input-group-text o_ck_plus">+</span>
+                            <input type="number" inputmode="decimal" min="0" step="any" class="form-control text-end"
+                                   t-att-value="row.b" t-on-input="(ev) => this.calcSet(row, 'b', ev)"
+                                   t-on-keydown="(ev) => this.calcOnKey(row, 'b', ev)"/>
+                            <span class="input-group-text" t-esc="u.b"/>
+                        </div>
+                        <div class="o_ck_calc_c_res">
+                            <t t-if="res.ok">
+                                <div class="fw-bold text-nowrap">= <t t-esc="fmtQty(res.qty, res.unit === 'kg' ? 3 : 0)"/> <t t-esc="res.unit"/></div>
+                                <div class="small text-muted text-nowrap" t-if="res.unit !== 'kg'">
+                                    <t t-esc="fmtQty(res.kg, 1)"/> kg<t t-if="res.packs"> · <t t-esc="res.packs"/></t>
+                                </div>
+                            </t>
+                            <span t-else="" class="text-muted">—</span>
+                        </div>
+                        <button class="btn btn-sm btn-link text-muted o_ck_calc_c_del" title="Qatorni o'chirish"
+                                t-on-click="() => this.calcRemove(row)"><i class="fa fa-times"/></button>
+                    </div>
+                </t>
+
+                <t t-set="tot" t-value="calcTotals"/>
+                <div class="o_ck_calc_total d-flex flex-wrap align-items-center gap-2 mt-2">
+                    <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.calcAdd(true)"><i class="fa fa-plus"/> Qator</button>
+                    <div class="ms-auto d-flex flex-wrap gap-3 justify-content-end">
+                        <div t-if="tot.pcs or !tot.kgOnly" class="o_ck_stat">
+                            <div class="o_ck_stat_label">Jami profil</div>
+                            <div><b><t t-esc="fmtQty(tot.pcs, 0)"/> dona</b> <span class="text-muted">· <t t-esc="fmtQty(tot.pcsKg, 1)"/> kg</span></div>
+                        </div>
+                        <div t-if="tot.kgOnly" class="o_ck_stat">
+                            <div class="o_ck_stat_label">Jami xom-ashyo</div>
+                            <div><b><t t-esc="fmtQty(tot.kgOnly, 2)"/> kg</b></div>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-set="summary" t-value="calcSummary"/>
+                <div t-if="summary.length and summary.length !== tot.count" class="mt-2">
+                    <div class="o_ck_block_title">1C uchun (bir xil mahsulotlar birlashtirildi)</div>
+                    <table class="table table-sm mb-0 o_ck_table">
+                        <tbody>
+                            <tr t-foreach="summary" t-as="s" t-key="s.p.id">
+                                <td class="o_ck_name"><span class="text-muted small me-1" t-esc="s.p.code"/><t t-esc="s.p.name"/></td>
+                                <td class="text-end text-nowrap fw-bold"><t t-esc="fmtQty(s.qty, s.unit === 'kg' ? 3 : 0)"/> <span class="fw-normal text-muted" t-esc="s.unit"/></td>
+                                <td class="text-end text-nowrap text-muted d-none d-sm-table-cell"><t t-if="s.unit !== 'kg'"><t t-esc="fmtQty(s.kg, 1)"/> kg</t></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button class="btn btn-sm btn-secondary" t-att-disabled="!tot.count" t-on-click="() => this.calcCopy()">
+                        <i class="fa fa-clipboard"/> Nusxa olish (1C)
+                    </button>
+                    <button t-if="calc.dep === 'boyash'" class="btn btn-sm btn-primary" t-att-disabled="!tot.count or calc.busy"
+                            t-on-click="() => this.calcWrite()">
+                        <i class="fa fa-file-text-o"/> Bo'yash hujjatiga yozish
+                    </button>
+                    <button t-if="calc.dep === 'pech'" class="btn btn-sm btn-primary" t-att-disabled="!tot.count or calc.busy"
+                            t-on-click="() => this.calcWrite()">
+                        <i class="fa fa-file-text-o"/> Pech hujjatiga yozish
+                    </button>
+                    <button class="btn btn-sm btn-light ms-auto" t-on-click="() => this.calcClear()"><i class="fa fa-eraser"/> Tozalash</button>
+                </div>
+                <div class="small text-muted mt-2" t-if="calc.dep === 'boyash'">
+                    Bo'yalgan profil qatorlari shu kunning qoralama Bo'yash hujjatiga (rang bo'yicha) "Qadoqlandi: pachka + dona" bo'lib yoziladi; kukun — o'sha hujjatning kukun sarfiga.
+                </div>
+                <div class="small text-muted mt-2" t-if="calc.dep === 'pech'">
+                    Xom-ashyo qatorlari shu kunning qoralama plavkasiga (Pech) kg bo'lib yoziladi.
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

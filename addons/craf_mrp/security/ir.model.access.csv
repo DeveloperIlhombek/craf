@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_mrp_norm_user,craf.mrp.norm user,model_craf_mrp_norm,base.group_user,1,0,0,0
+access_craf_mrp_norm_manager,craf.mrp.norm manager,model_craf_mrp_norm,mrp.group_mrp_manager,1,1,1,0
+access_craf_mrp_consumption_user,craf.mrp.consumption user,model_craf_mrp_consumption,mrp.group_mrp_user,1,0,0,0

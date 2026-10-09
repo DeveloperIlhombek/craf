@@ -1,0 +1,15 @@
+# SITE_ADDRESS: domen (masalan craf.example.uz) — HTTPS sertifikat avtomatik olinadi;
+# domen bo'lmasa ":80" — server IP manzili orqali oddiy HTTP.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	request_body {
+		max_size 200MB
+	}
+
+	# Odoo jonli xabarlar (bus/websocket) — gevent porti
+	@websocket path /websocket*
+	reverse_proxy @websocket odoo:8072
+
+	reverse_proxy odoo:8069
+}
