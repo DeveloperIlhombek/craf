@@ -1,5 +1,10 @@
-# Craf — VPS uchun: PostgreSQL 17 + Odoo 19 + Caddy (HTTPS)
+# Craf — VPS uchun: PostgreSQL 17 + Odoo 19 (+ ixtiyoriy Caddy)
 # Ishga tushirish: deploy/install.sh (u .env va config/odoo.conf ni yaratadi)
+#
+# Ikki rejim (.env dagi COMPOSE_PROFILES):
+#   nginx  — serverda nginx bor (boshqa saytlar bilan): Odoo faqat 127.0.0.1:8069/8072 da,
+#            tashqariga nginx + certbot orqali chiqadi (COMPOSE_PROFILES bo'sh)
+#   caddy  — bo'sh server: Caddy 80/443 ni egallaydi, HTTPS avtomatik (COMPOSE_PROFILES=caddy)
 name: craf
 
 services:
@@ -18,6 +23,7 @@ services:
       timeout: 5s
       retries: 10
     shm_size: 256mb
+    mem_limit: ${DB_MEM_LIMIT:-1g}
 
   odoo:
     image: odoo:19.0
@@ -35,12 +41,15 @@ services:
       - ./config:/etc/odoo:ro
       - odoo-data:/var/lib/odoo
       - ../backups:/backups
-    expose:
-      - "8069"
-      - "8072"
+    # faqat shu serverning ichida (nginx/Caddy orqali tashqariga chiqadi)
+    ports:
+      - "127.0.0.1:${ODOO_PORT:-8069}:8069"
+      - "127.0.0.1:${ODOO_WS_PORT:-8072}:8072"
+    mem_limit: ${ODOO_MEM_LIMIT:-2560m}
 
   caddy:
     image: caddy:2
+    profiles: ["caddy"]
     restart: unless-stopped
     depends_on:
       - odoo

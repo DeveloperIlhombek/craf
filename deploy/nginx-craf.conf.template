@@ -1,0 +1,54 @@
+# Craf (Odoo 19) — install.sh yaratadi: /etc/nginx/sites-available/craf.conf
+# HTTPS qismini certbot (--nginx) qo'shadi. Boshqa saytlarga tegmaydi:
+# nomlar (upstream, map) faqat craf_ bilan boshlanadi.
+
+upstream craf_odoo {
+    server 127.0.0.1:__ODOO_PORT__;
+}
+upstream craf_odoo_ws {
+    server 127.0.0.1:__ODOO_WS_PORT__;
+}
+map $http_upgrade $craf_connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 80;
+    server_name __DOMAIN__;
+
+    client_max_body_size 200m;
+    proxy_read_timeout 720s;
+    proxy_connect_timeout 720s;
+    proxy_send_timeout 720s;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+
+    access_log /var/log/nginx/craf.access.log;
+    error_log  /var/log/nginx/craf.error.log;
+
+    # Odoo jonli xabarlar (bus / websocket)
+    location /websocket {
+        proxy_pass http://craf_odoo_ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $craf_connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location / {
+        proxy_redirect off;
+        proxy_pass http://craf_odoo;
+    }
+
+    gzip on;
+    gzip_types text/css text/plain text/xml application/xml application/json application/javascript;
+}

@@ -40,17 +40,23 @@ so'ng Odoo → Ilovalar → modul → Yangilash.
 
 ### 1. O'rnatish
 
-Serverga SSH orqali kiring va bitta buyruq:
+DNS da domen uchun A yozuv qo'shing (masalan `craf.mentorme.uz -> 13.140.177.217`), so'ng serverga SSH orqali kirib:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DeveloperIlhombek/craf/master/deploy/install.sh | sudo bash -s -- craf.example.uz
+curl -fsSL https://raw.githubusercontent.com/DeveloperIlhombek/craf/master/deploy/install.sh | sudo bash -s -- craf.mentorme.uz
 ```
 
-Domen bo'lmasa, oxiridagi `craf.example.uz` ni yozmang — sayt `http://SERVER_IP` da ochiladi.
+Skript rejimni o'zi tanlaydi:
 
-Skript: Docker o'rnatadi, kodni `/opt/craf` ga oladi, tasodifiy parollar bilan `deploy/.env` va
-`deploy/config/odoo.conf` yaratadi, PostgreSQL 17 + Odoo 19 + Caddy (HTTPS) ni ishga tushiradi
-va har kungi zaxirani (02:30) yoqadi.
+- **Serverda nginx bor** (boshqa saytlar bilan umumiy server): Odoo faqat `127.0.0.1:8069/8072` da ishlaydi,
+  nginx ga faqat bitta yangi fayl qo'shiladi — `/etc/nginx/sites-available/craf.conf` (avval `nginx -t` bilan
+  tekshiriladi, xato bo'lsa olib tashlanadi), SSL — `certbot --nginx`. Boshqa saytlar, konteynerlar va bazalarga tegilmaydi.
+  Konteynerlarga xotira chegarasi qo'yilgan (Odoo 2,5 GB, PostgreSQL 1 GB), workers = 2.
+- **Bo'sh server**: Caddy 80/443 ni oladi, HTTPS avtomatik; domen bo'lmasa `http://SERVER_IP`.
+
+Skript yana: kodni `/opt/craf` ga oladi, tasodifiy parollar bilan `deploy/.env` va `deploy/config/odoo.conf`
+yaratadi, PostgreSQL 17 + Odoo 19 ni ishga tushiradi va har kungi zaxirani (02:30) yoqadi.
+Qayta ishga tushirish xavfsiz (masalan DNS keyin ulansa — SSL o'shanda olinadi).
 
 ### 2. Bazani kompyuterdan ko'chirish
 
@@ -90,7 +96,7 @@ Avval zaxira oladi, keyin `git pull`, barcha `craf_*` modullarni yangilaydi va O
 
 - `deploy/.env` va `deploy/config/odoo.conf` git ga kirmaydi (parollar shu yerda, faqat serverda).
 - Ma'lumotlar bazasi menejeri yopiq (`list_db = False`), faqat `craf` bazasi ochiladi.
-- PostgreSQL tashqariga ochilmagan; tashqarida faqat 80/443 portlar (Caddy).
+- PostgreSQL tashqariga ochilmagan; Odoo faqat 127.0.0.1 da; tashqarida faqat 80/443 (nginx yoki Caddy).
 - Odoo administrator parolini kuchli qiling; ixtiyoriy — Odoo da ikki bosqichli kirish (2FA).
 
 ### Foydali buyruqlar
