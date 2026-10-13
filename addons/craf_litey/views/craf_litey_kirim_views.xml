@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_litey_kirim_view_form" model="ir.ui.view">
+        <field name="name">craf.litey.kirim.form</field>
+        <field name="model">craf.litey.kirim</field>
+        <field name="arch" type="xml">
+            <form string="Литейка: kirim">
+                <group>
+                    <group>
+                        <field name="date"/>
+                        <field name="vehicle" placeholder="01 A 123 BC"/>
+                        <field name="partner_id" options="{'no_create_edit': True}"/>
+                    </group>
+                    <group>
+                        <field name="location_id" options="{'no_create': True}"/>
+                        <field name="note"/>
+                    </group>
+                </group>
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="product_id" options="{'no_create': True}"/>
+                        <field name="qty_text" placeholder="1381+2527"/>
+                        <field name="qty" sum="Jami"/>
+                        <field name="uom_name" string=""/>
+                        <field name="price_unit" optional="show"/>
+                        <field name="amount" sum="Jami" optional="show"/>
+                    </list>
+                </field>
+                <div class="text-end text-muted" invisible="not amount_total">
+                    Jami summa: <field name="amount_total" class="oe_inline fw-bold"/>
+                </div>
+                <footer>
+                    <button name="action_confirm" type="object" string="Kirimni yozish" class="btn-primary" icon="fa-check"/>
+                    <button string="Bekor" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_litey_kirim" model="ir.actions.act_window">
+        <field name="name">Литейка: kirim</field>
+        <field name="res_model">craf.litey.kirim</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

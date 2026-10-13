@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Литейка sarf buyumlari: metall emas, угар hisobiga kirmaydi -->
+        <record id="categ_litey_aux" model="product.category">
+            <field name="name">Литейка sarf buyumlari</field>
+            <field name="parent_id" ref="craf_nomenklatura.categ_raw_root"/>
+        </record>
+
+        <record id="uom_roll" model="uom.uom">
+            <field name="name">рул</field>
+            <field name="relative_factor">1.0</field>
+            <field name="relative_uom_id" ref="uom.product_uom_unit"/>
+        </record>
+
+        <!-- Excel va daftardagi, Odoo da yo'q bo'lgan metall shixta -->
+        <record id="pf_16" model="product.template">
+            <field name="name">Брикет Отход (вторичка)</field>
+            <field name="default_code">PF-16</field>
+            <field name="categ_id" ref="craf_nomenklatura.categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Брикет Отход</field>
+        </record>
+        <record id="pf_17" model="product.template">
+            <field name="name">Брикет Отход (русал)</field>
+            <field name="default_code">PF-17</field>
+            <field name="categ_id" ref="craf_nomenklatura.categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Брикет Отход (русал)</field>
+        </record>
+        <record id="pf_18" model="product.template">
+            <field name="name">Питак Отход (русал)</field>
+            <field name="default_code">PF-18</field>
+            <field name="categ_id" ref="craf_nomenklatura.categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Питак Отход (русал)</field>
+        </record>
+        <record id="pf_19" model="product.template">
+            <field name="name">Алюминий Диск</field>
+            <field name="default_code">PF-19</field>
+            <field name="categ_id" ref="craf_nomenklatura.categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Алюминий Диск</field>
+        </record>
+
+        <!-- Sarf buyumlari (dona, rulon) -->
+        <record id="ls_01" model="product.template">
+            <field name="name">Керамический Фильтр</field>
+            <field name="default_code">LS-01</field>
+            <field name="categ_id" ref="categ_litey_aux"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Керамический Фильтр</field>
+            <field name="craf_not_metal" eval="True"/>
+        </record>
+        <record id="ls_02" model="product.template">
+            <field name="name">Пробка</field>
+            <field name="default_code">LS-02</field>
+            <field name="categ_id" ref="categ_litey_aux"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Пробка</field>
+            <field name="craf_not_metal" eval="True"/>
+        </record>
+        <record id="ls_03" model="product.template">
+            <field name="name">Стекловата</field>
+            <field name="default_code">LS-03</field>
+            <field name="categ_id" ref="categ_litey_aux"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom_roll"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+            <field name="craf_name_1c">Стекловата</field>
+            <field name="craf_not_metal" eval="True"/>
+        </record>
+    </data>
+</odoo>

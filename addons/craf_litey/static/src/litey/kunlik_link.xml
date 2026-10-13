@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="craf_hisobot.Kunlik" t-inherit-mode="extension">
+        <xpath expr="//button[@t-on-click='() => this.newDoc(dep)']" position="before">
+            <button t-if="dep.key === 'pech'" class="btn btn-sm btn-light text-nowrap"
+                    t-on-click="() => this.actionService.doAction('craf_litey.action_craf_litey')">
+                <i class="fa fa-table"/> Литейка
+            </button>
+        </xpath>
+    </t>
+</templates>

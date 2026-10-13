@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_litey.Litey">
+        <div class="o_action o_craf_litey h-100 overflow-auto">
+            <div class="container-fluid py-2 py-md-3 px-2 px-sm-3 px-lg-4" t-att-class="{ 'o_cl_loading': state.loading }">
+                <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                    <div class="me-auto">
+                        <h2 class="mb-0">Литейка hisoboti</h2>
+                        <div class="text-muted small">Qoldiq → plavkaga sarf → chiqqan stalba → otxod va шлак</div>
+                    </div>
+                </div>
+                <t t-if="state.data">
+                    <t t-set="d" t-value="state.data"/>
+                    <div class="o_cl_toolbar d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Davr">
+                            <button class="btn btn-outline-secondary" t-on-click="() => this.shift(-1)" title="Oldingi davr"><i class="fa fa-chevron-left"/></button>
+                            <input type="date" class="form-control form-control-sm o_cl_date" t-att-value="d.date_from" t-on-change="onFrom" aria-label="Boshlanish"/>
+                            <input type="date" class="form-control form-control-sm o_cl_date" t-att-value="d.date_to" t-on-change="onTo" aria-label="Tugash"/>
+                            <button class="btn btn-outline-secondary" t-on-click="() => this.shift(1)" title="Keyingi davr"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Tayyor davrlar">
+                            <button class="btn btn-light" t-on-click="() => this.preset('today')">Bugun</button>
+                            <button class="btn btn-light" t-on-click="() => this.preset('7')">7 kun</button>
+                            <button class="btn btn-light" t-on-click="() => this.preset('30')">30 kun</button>
+                            <button class="btn btn-light" t-on-click="() => this.preset('month')">Shu oy</button>
+                        </div>
+                        <button class="btn btn-sm btn-light" t-on-click="() => this.downloadXlsx()"><i class="fa fa-file-excel-o"/> Excel</button>
+                        <button class="btn btn-sm btn-light d-none d-md-inline-block" t-on-click="() => this.print()"><i class="fa fa-print"/> Chop etish</button>
+                        <div class="ms-md-auto d-flex flex-wrap gap-2">
+                            <button class="btn btn-sm btn-primary" t-on-click="() => this.newMelt()"><i class="fa fa-plus"/> Plavka</button>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.newKirim()"><i class="fa fa-truck"/> Kirim</button>
+                            <button class="btn btn-sm btn-light" t-on-click="() => this.inventory()" title="Qoldiqni sanash va tuzatish"><i class="fa fa-balance-scale"/> Sanash</button>
+                            <button class="btn btn-sm btn-light" t-on-click="() => this.importExcel()" title="Excel jadvalidagi qoldiq bilan taqqoslash va yuklash"><i class="fa fa-upload"/> Excel qoldig'i</button>
+                            <button class="btn btn-sm btn-light d-none d-lg-inline-block" t-on-click="() => this.openMelts()"><i class="fa fa-list"/> Plavkalar</button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger py-2 d-flex align-items-center gap-2" t-if="d.negative_count" role="alert">
+                        <i class="fa fa-exclamation-triangle"/>
+                        <span><b t-esc="d.negative_count"/> ta material qoldig'i manfiy — kirim yozilmagan yoki qoldiq tuzatilmagan.</span>
+                    </div>
+                    <div class="alert alert-warning py-2 d-flex align-items-center gap-2" t-if="d.low_count" role="alert">
+                        <i class="fa fa-exclamation-circle"/>
+                        <span><b t-esc="d.low_count"/> ta material minimal qoldiqdan kam.</span>
+                    </div>
+
+                    <!-- Ko'rsatkichlar -->
+                    <div class="row g-2 mb-3 o_cl_kpis">
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="o_cl_card o_cl_kpi">
+                                <div class="o_cl_kpi_label">Plavkalar</div>
+                                <div class="o_cl_kpi_value"><t t-esc="d.kpi.melts"/></div>
+                                <div class="small text-muted" t-if="d.kpi.drafts"><t t-esc="d.kpi.drafts"/> ta qoralama</div>
+                                <div class="small text-muted" t-else=""><t t-esc="d.label"/></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="o_cl_card o_cl_kpi">
+                                <div class="o_cl_kpi_label">Pechga solindi (metall)</div>
+                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.metal, 0)"/> <small>kg</small></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="o_cl_card o_cl_kpi">
+                                <div class="o_cl_kpi_label">Stalba chiqdi</div>
+                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.billet, 0)"/> <small>kg</small></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="o_cl_card o_cl_kpi">
+                                <div class="o_cl_kpi_label">Otxod (ст + лит)</div>
+                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.waste, 0)"/> <small>kg</small></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="o_cl_card o_cl_kpi">
+                                <div class="o_cl_kpi_label">Шлак</div>
+                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.slag, 0)"/> <small>kg</small></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <div class="o_cl_card o_cl_kpi">
+                                <div class="o_cl_kpi_label">Угар</div>
+                                <div class="o_cl_kpi_value" t-att-class="lossClass(kpiLossState)">
+                                    <t t-if="d.kpi.metal"><t t-esc="num(d.kpi.loss_pct, 2)"/> <small>%</small></t>
+                                    <t t-else="">—</t>
+                                </div>
+                                <div class="small text-muted" t-if="d.kpi.metal"><t t-esc="fmt(d.kpi.loss, 0)"/> kg</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mb-0 o_cl_tabs">
+                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'harakat' }" t-on-click.prevent="() => this.setTab('harakat')">Qoldiq va harakat</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'kunlik' }" t-on-click.prevent="() => this.setTab('kunlik')">Kunlik qoldiq (Excel)</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'plavka' }" t-on-click.prevent="() => this.setTab('plavka')">Plavkalar <span class="badge text-bg-light" t-esc="d.melts.length"/></a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'kirim' }" t-on-click.prevent="() => this.setTab('kirim')">Kirimlar <span class="badge text-bg-light" t-esc="d.receipts.length"/></a></li>
+                    </ul>
+
+                    <!-- 1) Harakat -->
+                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'harakat'">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <div class="small text-muted me-auto">
+                                <t t-esc="d.label"/> · boshlang'ich + kirim + ishlab chiqarishdan − sarf ± tuzatish = oxirgi. Qatorni bosing — harakatlar ro'yxati.
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="cl_active" t-att-checked="state.onlyActive" t-on-change="toggleActive"/>
+                                <label class="form-check-label small" for="cl_active">Faqat harakatlanganlar</label>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0 o_cl_table">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th class="text-end d-none d-sm-table-cell">Boshlang'ich</th>
+                                        <th class="text-end">Kirim</th>
+                                        <th class="text-end" title="Plavkadan chiqqan: stalba, Сталба/Литейка отход, шлак">Plavkadan</th>
+                                        <th class="text-end d-none d-md-table-cell" title="Pressdan va boshqa ishlab chiqarishdan qaytgan otxod">Pressdan</th>
+                                        <th class="text-end">Plavkaga sarf</th>
+                                        <th class="text-end d-none d-md-table-cell" title="Press va boshqa bo'limlarga sarf">Boshqa sarf</th>
+                                        <th class="text-end d-none d-lg-table-cell">Tuzatish</th>
+                                        <th class="text-end">Oxirgi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="movementRows" t-as="r" t-key="r.product_id" role="button"
+                                        t-att-class="{ o_cl_low: r.low, o_cl_neg: r.negative }" t-on-click="() => this.openMoves(r)">
+                                        <td class="o_cl_name">
+                                            <t t-esc="r.excel_name"/>
+                                            <span class="text-muted small"> (<t t-esc="r.uom"/>)</span>
+                                        </td>
+                                        <td class="text-end d-none d-sm-table-cell" t-esc="fmt(r.opening)"/>
+                                        <td class="text-end" t-esc="fmt(r.kirim)"/>
+                                        <td class="text-end o_cl_in" t-esc="fmt(r.chiqish_plavka)"/>
+                                        <td class="text-end o_cl_in d-none d-md-table-cell" t-esc="fmt(r.chiqish_boshqa)"/>
+                                        <td class="text-end o_cl_out" t-esc="fmt(r.sarf_plavka)"/>
+                                        <td class="text-end o_cl_out d-none d-md-table-cell" t-esc="fmt(r.sarf_boshqa)"/>
+                                        <td class="text-end d-none d-lg-table-cell" t-esc="fmt(r.tuzatish + r.boshqa)"/>
+                                        <td class="text-end fw-bold" t-esc="fmt(r.closing)"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2) Kunlik qoldiq (Excel Лист1) -->
+                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'kunlik'">
+                        <div class="small text-muted mb-2">Har kun oxiridagi qoldiq — Excel jadvalingiz (Лист1) ko'rinishida. <span class="o_cl_produced_note">Rangli qatorlar</span> — shu kuni chiqqan miqdor.</div>
+                        <div class="table-responsive o_cl_matrix_wrap">
+                            <table class="table table-sm mb-0 o_cl_table o_cl_matrix">
+                                <thead>
+                                    <tr>
+                                        <th class="o_cl_sticky">Наименование</th>
+                                        <th>Ед.</th>
+                                        <th t-foreach="d.days" t-as="day" t-key="day.date" class="text-end"
+                                            t-att-class="{ o_cl_sunday: day.weekday === 6 }" t-att-title="day.full" t-esc="day.label"/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.matrix" t-as="row" t-key="row.key" t-att-class="{ o_cl_produced: row.kind === 'produced' }">
+                                        <td class="o_cl_sticky o_cl_name" t-esc="row.label"/>
+                                        <td class="text-muted small" t-esc="row.uom"/>
+                                        <td t-foreach="row.values" t-as="v" t-key="v_index" class="text-end text-nowrap"
+                                            t-att-class="{ 'text-danger': v &lt; -0.005 }" t-esc="fmt(v)"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3) Plavkalar (daftar) -->
+                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'plavka'">
+                        <div class="small text-muted mb-2" t-if="d.melts.length">Har bir plavka — ishchi daftaridagi kabi. Raqam ustiga kelsangiz, tortishlar ko'rinadi; qatorni bosing — hujjat ochiladi.</div>
+                        <div class="text-muted py-3" t-if="!d.melts.length">Bu davrda plavka yo'q. <a href="#" t-on-click.prevent="() => this.newMelt()">Plavka yozish</a></div>
+                        <div class="table-responsive o_cl_matrix_wrap" t-if="d.melts.length">
+                            <table class="table table-sm table-hover mb-0 o_cl_table o_cl_melts">
+                                <thead>
+                                    <tr>
+                                        <th class="o_cl_sticky">Plavka</th>
+                                        <th t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end o_cl_col" t-att-title="c.name" t-esc="c.short"/>
+                                        <th class="text-end o_cl_sum">Kirdi</th>
+                                        <th class="text-end o_cl_sum">Stalba</th>
+                                        <th class="text-end">Uzunl., m</th>
+                                        <th class="text-end">Ст-от</th>
+                                        <th class="text-end">Лит-от</th>
+                                        <th class="text-end">Шлак</th>
+                                        <th class="text-end o_cl_sum">Угар</th>
+                                        <th t-foreach="d.aux_cols" t-as="c" t-key="c.product_id" class="text-end o_cl_col o_cl_aux" t-att-title="c.name" t-esc="c.short"/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.melts" t-as="m" t-key="m.id" role="button" t-on-click="() => this.openMelt(m)"
+                                        t-att-class="{ o_cl_draft: m.state === 'draft' }">
+                                        <td class="o_cl_sticky text-nowrap">
+                                            <b t-esc="m.date_label"/>
+                                            <span class="text-muted small"> <t t-esc="m.pech"/><t t-if="m.day_no"> · <t t-esc="m.day_no"/></t></span>
+                                            <div class="small text-muted"><t t-esc="m.name"/><t t-if="m.state === 'draft'"> · qoralama</t></div>
+                                        </td>
+                                        <td t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end" t-att-title="meltText(m, c)">
+                                            <t t-esc="fmt(meltQty(m, c))"/><sup t-if="meltText(m, c)" class="text-muted">+</sup>
+                                        </td>
+                                        <td class="text-end fw-bold o_cl_sum" t-esc="fmt(m.charge_metal, 0)"/>
+                                        <td class="text-end fw-bold o_cl_sum" t-esc="fmt(m.billet_qty, 0)"/>
+                                        <td class="text-end" t-esc="fmt(m.billet_length, 2)"/>
+                                        <td class="text-end" t-esc="fmt(m.cut_waste_qty)"/>
+                                        <td class="text-end" t-esc="fmt(m.foundry_waste_qty)"/>
+                                        <td class="text-end" t-esc="fmt(m.slag_qty)"/>
+                                        <td class="text-end text-nowrap o_cl_sum" t-att-class="lossClass(m.balance_state)" t-att-title="m.note">
+                                            <t t-esc="fmt(m.loss_qty, 0)"/><span class="small"> · <t t-esc="num(m.loss_pct, 2)"/>%</span>
+                                        </td>
+                                        <td t-foreach="d.aux_cols" t-as="c" t-key="c.product_id" class="text-end o_cl_aux" t-esc="fmt(meltQty(m, c), 2)"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 4) Kirimlar -->
+                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'kirim'">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="small text-muted me-auto">Mashina bo'yicha kirimlar (Excel Лист2 o'rniga)</div>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.newKirim()"><i class="fa fa-plus"/> Kirim</button>
+                        </div>
+                        <div class="text-muted py-3" t-if="!d.receipts.length">Bu davrda kirim yozilmagan.</div>
+                        <div class="table-responsive" t-if="d.receipts.length">
+                            <table class="table table-sm table-hover mb-0 o_cl_table">
+                                <thead>
+                                    <tr>
+                                        <th>Sana</th><th>Mashina</th><th class="d-none d-md-table-cell">Yetkazib beruvchi</th>
+                                        <th>Material</th><th class="text-end">Miqdor</th>
+                                        <th class="text-end d-none d-sm-table-cell">Narx</th><th class="text-end">Summa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.receipts" t-as="r" t-key="r_index" role="button" t-on-click="() => this.openPicking(r)">
+                                        <td class="text-nowrap"><t t-esc="r.date_label"/><div class="small text-muted" t-esc="r.name"/></td>
+                                        <td t-esc="r.vehicle or '—'"/>
+                                        <td class="d-none d-md-table-cell" t-esc="r.partner or '—'"/>
+                                        <td t-esc="r.product"/>
+                                        <td class="text-end text-nowrap"><t t-esc="fmt(r.qty)"/> <span class="text-muted small" t-esc="r.uom"/></td>
+                                        <td class="text-end d-none d-sm-table-cell" t-esc="fmt(r.price, 0)"/>
+                                        <td class="text-end" t-esc="fmt(r.amount, 0)"/>
+                                    </tr>
+                                </tbody>
+                                <tfoot t-if="d.receipt_total">
+                                    <tr class="fw-bold">
+                                        <td>Jami</td><td/><td class="d-none d-md-table-cell"/><td/><td/>
+                                        <td class="d-none d-sm-table-cell"/><td class="text-end" t-esc="fmt(d.receipt_total, 0)"/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

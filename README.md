@@ -24,8 +24,9 @@ Odoo 19 Community + o'z modullarimiz (`addons/`).
 | `craf_korzinka` | Korzinkalar (≤120 dona), kimyoviy ishlov, omborga topshirish |
 | `craf_hisobot` | Kunlik hisobot (1C uchun): bo'limlar sarfi va chiqishi, xom-ashyo harakati, Excel, "1C ga kiritildi" |
 | `craf_kalkulyator` | Hisobot ichidagi kalkulyator: pachka/qop → jami dona va kg; bo'yash/pech hujjatiga yozish |
+| `craf_litey` | Литейка: plavka ishchi daftari ko'rinishida (993+600+351 tortishlar, sarf buyumlari, stalba kg/uzunlik, Сталба/Литейка отход, шлак, balans va угар nazorati); Литейка hisoboti — qoldiq → sarf → stalba → otxod, kunlik qoldiq (Excel ko'rinishi), kirim (mashina raqami), Excel eksport va Excel qoldig'ini yuklash |
 
-`craf_kalkulyator` o'rnatilsa, qolgan barcha Craf modullari bog'liqlik orqali o'rnatiladi.
+`craf_litey` o'rnatilsa, qolgan barcha Craf modullari bog'liqlik orqali o'rnatiladi.
 
 ## Kompyuterda (Windows, Docker Desktop)
 
@@ -83,7 +84,7 @@ Kodni GitHub ga yuborgandan keyin serverda:
 sudo /opt/craf/deploy/update.sh
 ```
 
-Avval zaxira oladi, keyin `git pull`, barcha `craf_*` modullarni yangilaydi va Odoo ni qayta ishga tushiradi.
+Avval zaxira oladi, keyin `git pull`, o'rnatilgan `craf_*` modullarni yangilaydi, `addons/` ga yangi qo'shilgan modullarni (masalan `craf_litey`) o'rnatadi va Odoo ni qayta ishga tushiradi.
 
 ### Zaxira
 
