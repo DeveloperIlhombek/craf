@@ -15,11 +15,18 @@ NEW=$(git rev-parse HEAD)
 echo "Kod: ${OLD:0:7} -> ${NEW:0:7}"
 
 docker compose pull -q
-# Barcha craf_* modullar (o'rnatilmaganlari e'tiborsiz qoladi)
-MODULES=$(cd ../addons && ls -d craf_*/ | tr -d '/' | paste -sd, -)
+# O'rnatilgan craf_* modullar yangilanadi (-u), addons/ ga yangi qo'shilganlari o'rnatiladi (-i)
+INSTALLED=$(docker compose exec -T db psql -U "$DB_USER" -d "$DB_NAME" -Atc \
+  "select name from ir_module_module where name like 'craf\_%' and state = 'installed' order by name" | tr -d '\r' | paste -sd, -)
+NEW=$(cd ../addons && for m in $(ls -d craf_*/ | tr -d '/'); do
+        case ",$INSTALLED," in *",$m,"*) ;; *) echo "$m" ;; esac
+      done | paste -sd, -)
+ARGS=()
+[ -n "$INSTALLED" ] && ARGS+=(-u "$INSTALLED")
+[ -n "$NEW" ] && { ARGS+=(-i "$NEW"); echo "Yangi modullar o'rnatiladi: $NEW"; }
 docker compose stop odoo
 docker compose run --rm --no-deps -T --entrypoint sh odoo -c \
-  'odoo -c /etc/odoo/odoo.conf --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" -d "$1" -u "$2" --stop-after-init --no-http' \
-  sh "$DB_NAME" "$MODULES"
+  'db="$1"; shift; exec odoo -c /etc/odoo/odoo.conf --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" -d "$db" "$@" --stop-after-init --no-http' \
+  sh "$DB_NAME" "${ARGS[@]}"
 docker compose up -d
 echo "Tayyor."

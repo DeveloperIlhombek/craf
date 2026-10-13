@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_litey_kirim,craf.litey.kirim,model_craf_litey_kirim,stock.group_stock_user,1,1,1,1
+access_craf_litey_kirim_line,craf.litey.kirim.line,model_craf_litey_kirim_line,stock.group_stock_user,1,1,1,1
+access_craf_litey_import,craf.litey.import,model_craf_litey_import,stock.group_stock_manager,1,1,1,1
+access_craf_litey_import_line,craf.litey.import.line,model_craf_litey_import_line,stock.group_stock_manager,1,1,1,1

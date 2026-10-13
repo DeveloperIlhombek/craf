@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Plavka formasi: ishchi daftari ko'rinishida -->
+    <record id="craf_foundry_melt_view_form_litey" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.form.litey</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_form"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_done']" position="attributes">
+                <attribute name="confirm">Plavka tasdiqlansa: shixta va sarf buyumlari Литейка qoldig'idan yechiladi, stalba omborga, otxod Литейка ga, шлак chiqindiga kiradi. Davom etasizmi?</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_load_recipe']" position="attributes">
+                <attribute name="string">Namuna retseptdan</attribute>
+                <attribute name="class">btn-secondary</attribute>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_litey_pickings" type="object" class="oe_stat_button" icon="fa-exchange"
+                        invisible="not picking_ids">
+                    <div class="o_stat_info"><span class="o_stat_text">Avto ko'chirish</span></div>
+                </button>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]/h1" position="after">
+                <field name="craf_title" class="text-muted" readonly="1"/>
+            </xpath>
+
+            <!-- Yuqori: chapda plavka, o'ngda chiqqan mahsulot (daftarning pastki qismi) -->
+            <xpath expr="//field[@name='equipment_id']" position="attributes">
+                <attribute name="string">Pech</attribute>
+            </xpath>
+            <xpath expr="//field[@name='shift']" position="before">
+                <field name="day_no" readonly="state != 'draft'"/>
+            </xpath>
+            <xpath expr="//field[@name='billet_product_id']/.." position="before">
+                <group name="litey_output" string="Chiqdi">
+                    <field name="billet_length" readonly="state != 'draft'"/>
+                    <field name="billet_count" readonly="state != 'draft'"/>
+                    <field name="billet_kg_per_m" invisible="not billet_kg_per_m"/>
+                    <field name="foundry_waste_qty" readonly="state != 'draft'"/>
+                </group>
+            </xpath>
+            <xpath expr="//group[@name='litey_output']" position="inside">
+                <xpath expr="//field[@name='billet_qty']" position="move"/>
+                <xpath expr="//field[@name='cut_waste_qty']" position="move"/>
+                <xpath expr="//field[@name='slag_qty']" position="move"/>
+            </xpath>
+            <xpath expr="//group[@name='litey_output']/field[@name='billet_qty']" position="attributes">
+                <attribute name="string">Stalba og'irligi, kg</attribute>
+                <attribute name="class">fw-bold</attribute>
+            </xpath>
+            <xpath expr="//group[@name='litey_output']/field[@name='billet_qty']" position="after">
+                <xpath expr="//field[@name='billet_length']" position="move"/>
+                <xpath expr="//field[@name='billet_count']" position="move"/>
+                <xpath expr="//field[@name='billet_kg_per_m']" position="move"/>
+            </xpath>
+            <xpath expr="//group[@name='litey_output']/field[@name='cut_waste_qty']" position="attributes">
+                <attribute name="string">Сталба отход, kg</attribute>
+            </xpath>
+            <xpath expr="//group[@name='litey_output']/field[@name='cut_waste_qty']" position="after">
+                <xpath expr="//field[@name='foundry_waste_qty']" position="move"/>
+            </xpath>
+
+            <!-- Daftar: shixta to'liq kenglikda, pastida sarf buyumlari va balans -->
+            <xpath expr="//page[@name='charge']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//notebook" position="before">
+                <div class="o_horizontal_separator mt-3 mb-2 text-uppercase fw-bold small">Shixta — pechga solindi</div>
+                <field name="charge_line_ids" readonly="state != 'draft'" nolabel="1"
+                       context="{'default_is_metal': True}">
+                    <list editable="bottom" decoration-muted="qty == 0">
+                        <field name="sequence" widget="handle"/>
+                        <field name="product_id" options="{'no_create': True}" context="{'display_default_code': False}"
+                               domain="[('is_storable', '=', True), ('craf_section_id', '=', False), ('craf_not_metal', '=', False)]"/>
+                        <field name="qty_text" placeholder="993+600+351"/>
+                        <field name="bags" optional="hide" readonly="not pkg_kg and not bags"/>
+                        <field name="pkg_kg" column_invisible="1"/>
+                        <field name="qty" string="Jami, kg" sum="Jami"/>
+                        <field name="available_all" optional="show" decoration-danger="available_all &lt; qty"
+                               decoration-muted="available_all &gt;= qty" column_invisible="parent.state != 'draft'"/>
+                        <field name="is_metal" column_invisible="1"/>
+                        <field name="state" column_invisible="1"/>
+                    </list>
+                    <kanban class="o_kanban_mobile">
+                        <templates>
+                            <t t-name="card">
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <field name="product_id" class="fw-bold" context="{'display_default_code': False}"/>
+                                    <span class="ms-auto text-nowrap"><field name="qty" class="fw-bold fs-5"/> kg</span>
+                                </div>
+                                <field name="qty_text" class="text-muted small"/>
+                            </t>
+                        </templates>
+                    </kanban>
+                    <form string="Shixta qatori">
+                        <group>
+                            <field name="product_id" options="{'no_create': True}" context="{'display_default_code': False}"
+                                   domain="[('is_storable', '=', True), ('craf_section_id', '=', False), ('craf_not_metal', '=', False)]"/>
+                            <field name="qty_text" placeholder="993+600+351"/>
+                            <field name="qty" string="Jami, kg"/>
+                            <field name="available_all"/>
+                            <field name="is_metal" invisible="1"/>
+                            <field name="state" invisible="1"/>
+                        </group>
+                    </form>
+                </field>
+                <div class="row g-3 mt-1">
+                    <div class="col-12 col-lg-6">
+                        <div class="o_horizontal_separator mt-0 mb-2 text-uppercase fw-bold small">Sarf buyumlari</div>
+                        <field name="aux_line_ids" readonly="state != 'draft'" nolabel="1"
+                               context="{'default_is_metal': False}">
+                            <list editable="bottom" decoration-muted="qty == 0">
+                                <field name="sequence" widget="handle"/>
+                                <field name="product_id" options="{'no_create': True}" context="{'display_default_code': False}"
+                                       domain="[('is_storable', '=', True), ('craf_section_id', '=', False), ('craf_not_metal', '=', True)]"/>
+                                <field name="qty" string="Miqdor"/>
+                                <field name="uom_name" string="Birlik"/>
+                                <field name="is_metal" column_invisible="1"/>
+                                <field name="state" column_invisible="1"/>
+                            </list>
+                            <kanban class="o_kanban_mobile">
+                                <templates>
+                                    <t t-name="card">
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <field name="product_id" context="{'display_default_code': False}"/>
+                                            <span class="ms-auto text-nowrap"><field name="qty" class="fw-bold"/> <field name="uom_name"/></span>
+                                        </div>
+                                    </t>
+                                </templates>
+                            </kanban>
+                            <form string="Sarf buyumi">
+                                <group>
+                                    <field name="product_id" options="{'no_create': True}" context="{'display_default_code': False}"
+                                           domain="[('is_storable', '=', True), ('craf_section_id', '=', False), ('craf_not_metal', '=', True)]"/>
+                                    <field name="qty" string="Miqdor"/>
+                                    <field name="uom_name"/>
+                                    <field name="is_metal" invisible="1"/>
+                                    <field name="state" invisible="1"/>
+                                </group>
+                            </form>
+                        </field>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="o_horizontal_separator mt-0 mb-2 text-uppercase fw-bold small">Balans</div>
+                        <field name="balance_html" nolabel="1"/>
+                        <field name="balance_note" nolabel="1" readonly="state != 'draft'" class="mt-2"
+                               invisible="balance_state not in ('bad', 'warn') and not balance_note"
+                               placeholder="Balans izohi: nima uchun угар me'yordan tashqarida (masalan: pechda oldingi plavkadan metall qolgan)"/>
+                        <field name="balance_state" invisible="1"/>
+                        <field name="picking_ids" invisible="1"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <!-- Texnik qism: joylar, retsept va ko'rsatkichlar alohida sahifada -->
+            <xpath expr="//page[@name='note']" position="before">
+                <page string="Joylar va retsept" name="litey_places">
+                    <group name="litey_places_group"/>
+                </page>
+            </xpath>
+            <xpath expr="//group[@name='litey_places_group']" position="inside">
+                <xpath expr="//field[@name='billet_product_id']/.." position="move"/>
+                <xpath expr="//field[@name='charge_total']/.." position="move"/>
+            </xpath>
+            <xpath expr="//field[@name='location_dest_id']" position="after">
+                <field name="reuse_location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+            </xpath>
+            <xpath expr="//field[@name='slag_product_id']/.." position="attributes">
+                <attribute name="string">Chiqish mahsulotlari</attribute>
+                <attribute name="groups">base.group_no_one</attribute>
+            </xpath>
+            <xpath expr="//field[@name='slag_product_id']" position="after">
+                <field name="foundry_waste_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+            </xpath>
+            <xpath expr="//field[@name='balance_text']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='yield_pct']" position="after">
+                <field name="output_total"/>
+                <field name="waste_total"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_list_litey" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.list.litey</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_list"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger">balance_state == 'bad'</attribute>
+            </xpath>
+            <field name="equipment_id" position="after">
+                <field name="day_no" string="№" optional="show"/>
+            </field>
+            <field name="billet_qty" position="after">
+                <field name="billet_length" optional="hide"/>
+            </field>
+            <field name="slag_qty" position="before">
+                <field name="foundry_waste_qty" sum="Jami" optional="show"/>
+            </field>
+            <field name="burn_loss_pct" position="after">
+                <field name="balance_state" widget="badge" optional="show" string="Balans"
+                       decoration-success="balance_state == 'ok'" decoration-warning="balance_state == 'warn'"
+                       decoration-danger="balance_state == 'bad'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_search_litey" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.search.litey</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_search"/>
+        <field name="arch" type="xml">
+            <filter name="high_loss" position="after">
+                <filter name="balance_bad" string="Balans me'yordan tashqari" domain="[('balance_state', '=', 'bad')]"/>
+            </filter>
+        </field>
+    </record>
+
+    <record id="craf_foundry_melt_view_kanban_litey" model="ir.ui.view">
+        <field name="name">craf.foundry.melt.kanban.litey</field>
+        <field name="model">craf.foundry.melt</field>
+        <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='shift']" position="after">
+                <t t-if="record.day_no.raw_value"> · <field name="day_no"/>-plavka</t>
+            </xpath>
+        </field>
+    </record>
+</odoo>

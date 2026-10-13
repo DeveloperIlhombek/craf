@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_litey" model="ir.actions.client">
+        <field name="name">Литейка hisoboti</field>
+        <field name="tag">craf_litey</field>
+        <field name="path">craf-litey</field>
+    </record>
+    <menuitem id="menu_craf_litey" name="Литейка hisoboti" parent="craf_profile.menu_craf_root"
+              action="action_craf_litey" sequence="3"/>
+    <menuitem id="menu_craf_litey_import" name="Excel qoldig'ini yuklash (Литейка)" parent="craf_profile.menu_craf_config"
+              action="action_craf_litey_import" sequence="60" groups="stock.group_stock_manager"/>
+</odoo>

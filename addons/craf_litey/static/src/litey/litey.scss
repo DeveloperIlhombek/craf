@@ -1,0 +1,166 @@
+.o_craf_litey {
+    background-color: $o-webclient-background-color;
+
+    .o_cl_loading .o_cl_card {
+        opacity: 0.55;
+    }
+    .o_cl_card {
+        background-color: $o-view-background-color;
+        border: 1px solid rgba(11, 11, 11, 0.1);
+        border-radius: 8px;
+        padding: 14px 16px;
+    }
+    .o_cl_tabcard {
+        border-top-left-radius: 0;
+        border-top: 0;
+    }
+    .o_cl_tabs .nav-link {
+        font-weight: 500;
+    }
+    .o_cl_tabs .nav-link.active {
+        background-color: $o-view-background-color;
+    }
+    .o_cl_date {
+        max-width: 140px;
+    }
+    .o_cl_kpi {
+        height: 100%;
+        padding: 10px 14px;
+    }
+    .o_cl_kpi_label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #52514e;
+    }
+    .o_cl_kpi_value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+        small {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: #6c6b68;
+        }
+    }
+    .o_cl_warn {
+        color: #b26a00;
+    }
+    .o_cl_table {
+        font-size: 0.875rem;
+        td,
+        th {
+            font-variant-numeric: tabular-nums;
+        }
+        thead th {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+    }
+    .o_cl_name {
+        max-width: 280px;
+    }
+    .o_cl_in {
+        color: #1d6b2f;
+    }
+    .o_cl_out {
+        color: #8a3b12;
+    }
+    .o_cl_low td {
+        background-color: #fff4e5;
+    }
+    .o_cl_neg td {
+        background-color: #fde8e8;
+    }
+    .o_cl_matrix_wrap {
+        max-height: 70vh;
+    }
+    .o_cl_matrix,
+    .o_cl_melts {
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: $o-view-background-color;
+            z-index: 2;
+        }
+        .o_cl_sticky {
+            position: sticky;
+            left: 0;
+            background-color: $o-view-background-color;
+            z-index: 1;
+            min-width: 170px;
+            box-shadow: 1px 0 0 rgba(11, 11, 11, 0.08);
+        }
+        thead .o_cl_sticky {
+            z-index: 3;
+        }
+    }
+    .o_cl_produced td {
+        background-color: #eef5ff;
+        font-style: italic;
+    }
+    .o_cl_produced td.o_cl_sticky {
+        background-color: #eef5ff;
+    }
+    .o_cl_produced_note {
+        background-color: #eef5ff;
+        padding: 0 4px;
+        border-radius: 3px;
+    }
+    .o_cl_sunday {
+        color: #b3261e;
+    }
+    .o_cl_melts thead th.o_cl_col {
+        white-space: normal;
+        min-width: 64px;
+        max-width: 96px;
+        font-size: 0.74rem;
+        line-height: 1.15;
+        vertical-align: bottom;
+    }
+    .o_cl_sum {
+        background-color: rgba(11, 11, 11, 0.025);
+    }
+    .o_cl_aux {
+        color: #6c6b68;
+    }
+    .o_cl_draft td {
+        color: #6c6b68;
+        font-style: italic;
+    }
+    @media (max-width: 575.98px) {
+        .o_cl_card {
+            padding: 12px;
+        }
+        .o_cl_kpi_value {
+            font-size: 1.2rem;
+        }
+        .o_cl_name {
+            max-width: 46vw;
+        }
+        .o_cl_matrix .o_cl_sticky,
+        .o_cl_melts .o_cl_sticky {
+            min-width: 120px;
+        }
+        h2 {
+            font-size: 1.35rem;
+        }
+    }
+}
+
+@media print {
+    .o_main_navbar,
+    .o_cl_toolbar,
+    .o_cl_tabs,
+    .o_craf_litey .btn {
+        display: none !important;
+    }
+    .o_craf_litey {
+        overflow: visible !important;
+        height: auto !important;
+    }
+    .o_craf_litey .o_cl_matrix_wrap {
+        max-height: none;
+    }
+}
