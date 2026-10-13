@@ -119,7 +119,8 @@ fi
 # ---------------------------------------------------------------- konteynerlar
 say "Docker obrazlari (birinchi marta bir necha daqiqa)"
 docker compose pull -q
-ODOO_ID=$(docker compose run --rm --no-deps -T --entrypoint sh odoo -c 'echo "$(id -u):$(id -g)"' | tr -d '\r' | tail -n1)
+# </dev/null: "curl | bash" bilan ishga tushirilganda konteyner skriptning qolgan qismini stdin dan o'qib olmasin
+ODOO_ID=$(docker compose run --rm --no-deps -T --entrypoint sh odoo -c 'echo "$(id -u):$(id -g)"' </dev/null | tr -d '\r' | tail -n1)
 chown "$ODOO_ID" config/odoo.conf ../backups
 chmod 640 config/odoo.conf
 
@@ -184,7 +185,7 @@ else
 fi
 
 # ---------------------------------------------------------------- yakun
-DB_EXISTS=$(docker compose exec -T db psql -U "$DB_USER" -d postgres -Atc "select 1 from pg_database where datname='$DB_NAME'" | tr -d '\r')
+DB_EXISTS=$(docker compose exec -T db psql -U "$DB_USER" -d postgres -Atc "select 1 from pg_database where datname='$DB_NAME'" </dev/null | tr -d '\r')
 say "Tayyor: $URL"
 if [ "$DB_EXISTS" != "1" ]; then
   cat <<EOF
