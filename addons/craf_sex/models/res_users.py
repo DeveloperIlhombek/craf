@@ -17,7 +17,7 @@ class ResUsers(models.Model):
 
     def _craf_role_home(self):
         """Bosh sahifa roli bo'yicha (faqat bosh sahifa qo'lda tanlanmagan bo'lsa):
-        Direktor → Panel, Hisobchi → Kunlik hisobot, Sex ishchisi → o'z sexi."""
+        Direktor → Zavod paneli, Omborchi → Kunlik hisobot, Sex ishchisi → o'z sexi."""
         refs = {
             "director": "craf_dashboard.action_craf_dashboard",
             "accountant": "craf_hisobot.action_craf_kunlik",
@@ -26,9 +26,10 @@ class ResUsers(models.Model):
         }
         actions = {k: self.env.ref(v, raise_if_not_found=False) for k, v in refs.items()}
         managed = {a.id for a in actions.values() if a}
-        loader = self.env.ref("craf_sotuv.action_craf_yuklash", raise_if_not_found=False)
-        if loader:
-            managed.add(loader.id)
+        for ref in ("craf_sotuv.action_craf_yuklash", "craf_sotuv.action_craf_sotuv"):
+            sale_action = self.env.ref(ref, raise_if_not_found=False)
+            if sale_action:
+                managed.add(sale_action.id)
         for user in self.sudo():
             if user.share or (user.action_id and user.action_id.id not in managed):
                 continue
@@ -42,6 +43,13 @@ class ResUsers(models.Model):
                 continue
             if actions.get(key) and user.action_id != actions[key]:
                 user.action_id = actions[key].id
+
+    @api.model
+    def _craf_apply_homes(self):
+        """Modul yangilanganda: bosh sahifasi tanlanmagan foydalanuvchilarga rol bo'yicha bosh sahifa."""
+        users = self.sudo().search([("share", "=", False)])
+        users._craf_loader_home()
+        users._craf_role_home()
 
     @api.model_create_multi
     def create(self, vals_list):

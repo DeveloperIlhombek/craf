@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Davomatlar ilovasi: omborchi — barcha xodimlar davomati, direktor — administrator -->
+    <record id="craf_sex.group_craf_accountant" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('hr_attendance.group_hr_attendance_user'))]"/>
+    </record>
+    <record id="craf_sex.group_craf_director" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('hr_attendance.group_hr_attendance_manager'))]"/>
+    </record>
+</odoo>

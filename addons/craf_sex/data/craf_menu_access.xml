@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Kim qaysi Craf sahifasini ko'radi (menyular Odoo ning o'z ilovalarida joylashgan).
+         Ilovaning o'zi (Inventarizatsiya, Ishlab chiqarish, Sotish, Hisob-faktura) Odoo guruhlari bilan yopiladi;
+         bu yerda faqat ilova ichidagi Craf sahifalari. -->
+
+    <!-- Zavod paneli: direktor va omborchi -->
+    <record id="craf_dashboard.menu_craf_dashboard" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+
+    <!-- Inventarizatsiya -->
+    <record id="craf_hisobot.menu_craf_kunlik" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_zavod.menu_craf_zavod_xarita" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_label.menu_craf_pack" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_profile.menu_craf_profiles" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_profile.menu_craf_materials" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_extrusion.menu_craf_semi_profiles" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_litey.menu_craf_litey_count" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+
+    <!-- Sotish: sotuv hujjatlari va berilgan mahsulotlarni omborchi ham ko'radi -->
+    <record id="craf_sotuv.menu_craf_sale_orders" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sotuv.group_craf_seller'), ref('craf_sex.group_craf_accountant')])]"/>
+    </record>
+    <record id="craf_sotuv.menu_craf_sale_lines" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sotuv.group_craf_seller'), ref('craf_sex.group_craf_accountant')])]"/>
+    </record>
+
+    <!-- Odoo ilovalari: Texnik xizmat — sex ishchisi, omborchi, direktor; Ilovalar (modul o'rnatish) — faqat administrator -->
+    <record id="maintenance.menu_maintenance_title" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_worker'), ref('base.group_system')])]"/>
+    </record>
+    <record id="base.menu_management" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_system')])]"/>
+    </record>
+
+    <!-- Ishlab chiqarish → Sexlar: sex ishchisi (omborchi va direktor ham) -->
+    <record id="craf_production.menu_craf_production" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_worker'), ref('base.group_system')])]"/>
+    </record>
+
+    <!-- mavjud foydalanuvchilarga rol bo'yicha bosh sahifa -->
+    <function model="res.users" name="_craf_apply_homes"/>
+</odoo>

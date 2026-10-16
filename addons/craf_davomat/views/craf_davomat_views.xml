@@ -5,8 +5,11 @@
         <field name="tag">craf_davomat</field>
         <field name="path">craf-davomat</field>
     </record>
-    <menuitem id="menu_craf_davomat" name="Davomat" parent="craf_profile.menu_craf_root" action="action_craf_davomat"
-              sequence="6" groups="craf_sex.group_craf_accountant,base.group_system"/>
+    <!-- Davomatlar ilovasi → «Zavod davomati»: tabel, KPI, terminallar -->
+    <menuitem id="menu_craf_davomat_root" name="Zavod davomati" parent="hr_attendance.menu_hr_attendance_root"
+              sequence="1" groups="craf_sex.group_craf_accountant,base.group_system"/>
+    <menuitem id="menu_craf_davomat" name="Kun, tabel, KPI" parent="menu_craf_davomat_root" action="action_craf_davomat"
+              sequence="1" groups="craf_sex.group_craf_accountant,base.group_system"/>
 
     <!-- terminallar -->
     <record id="craf_davomat_device_view_list" model="ir.ui.view">
@@ -123,11 +126,11 @@
         <field name="view_mode">list</field>
     </record>
 
-    <menuitem id="menu_craf_davomat_devices" name="Davomat terminallari" parent="craf_profile.menu_craf_config"
+    <menuitem id="menu_craf_davomat_devices" name="Davomat terminallari" parent="menu_craf_davomat_root"
               action="action_craf_davomat_device" sequence="60" groups="craf_sex.group_craf_accountant,base.group_system"/>
-    <menuitem id="menu_craf_davomat_schedules" name="Ish jadvallari" parent="craf_profile.menu_craf_config"
+    <menuitem id="menu_craf_davomat_schedules" name="Ish jadvallari" parent="menu_craf_davomat_root"
               action="action_craf_davomat_schedule" sequence="61" groups="craf_sex.group_craf_accountant,base.group_system"/>
-    <menuitem id="menu_craf_davomat_logs" name="Terminal yozuvlari" parent="craf_profile.menu_craf_config"
+    <menuitem id="menu_craf_davomat_logs" name="Terminal yozuvlari" parent="menu_craf_davomat_root"
               action="action_craf_davomat_log" sequence="62" groups="craf_sex.group_craf_accountant,base.group_system"/>
 
     <!-- xodim kartasi -->

@@ -1,6 +1,6 @@
 {
     "name": "Craf: pul — narx, to'lov, qarz",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Narxlar (1 kg / 1 dona), «Berildi» da mijozga hisob-faktura, Литейка kirimida yetkazib beruvchi "
                "hisob-fakturasi, to'lovlar (naqd, plastik, bank), qarzlar va akt sverka — telefon uchun sahifa",
     "description": """

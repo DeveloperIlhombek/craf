@@ -13,18 +13,18 @@
         <field name="context">{'craf_tab': 'load'}</field>
     </record>
 
-    <menuitem id="menu_craf_sotuv_root" name="Sotuv" parent="craf_profile.menu_craf_root" sequence="4"
-              groups="craf_sotuv.group_craf_loader"/>
-    <menuitem id="menu_craf_sotuv" name="Buyurtma" parent="menu_craf_sotuv_root"
-              action="action_craf_sotuv" sequence="10" groups="craf_sotuv.group_craf_seller"/>
-    <menuitem id="menu_craf_yuklash" name="Yuklash" parent="menu_craf_sotuv_root"
-              action="action_craf_yuklash" sequence="15" groups="craf_sotuv.group_craf_loader"/>
-    <menuitem id="menu_craf_sale_orders" name="Sotuv hujjatlari" parent="menu_craf_sotuv_root"
-              action="action_craf_sale_orders" sequence="20" groups="craf_sotuv.group_craf_seller"/>
-    <menuitem id="menu_craf_sale_lines" name="Berilgan mahsulotlar" parent="menu_craf_sotuv_root"
-              action="action_craf_sale_lines" sequence="30" groups="craf_sotuv.group_craf_seller"/>
-    <menuitem id="menu_craf_sotuv_alias" name="Sotuv qisqartmalari" parent="craf_profile.menu_craf_config"
-              action="action_craf_sotuv_alias" sequence="60" groups="craf_sotuv.group_craf_seller"/>
-    <menuitem id="menu_craf_sale_points" name="Sotuv joylari" parent="craf_profile.menu_craf_config"
-              action="action_craf_sale_points" sequence="61" groups="craf_sotuv.group_craf_seller"/>
+    <!-- Sotish → Buyurtmalar: sotuvchi sahifasi va hujjatlar;
+         Inventarizatsiya → Operatsiyalar: yuklovchi sahifasi (yuklovchi Sotish ilovasini ko'rmaydi). -->
+    <menuitem id="menu_craf_sotuv" name="Yangi buyurtma (Craf)" parent="sale.sale_order_menu"
+              action="action_craf_sotuv" sequence="1" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_sale_orders" name="Sotuv hujjatlari (Craf)" parent="sale.sale_order_menu"
+              action="action_craf_sale_orders" sequence="25" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_sale_lines" name="Berilgan mahsulotlar" parent="sale.sale_order_menu"
+              action="action_craf_sale_lines" sequence="26" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_yuklash" name="Yuklash" parent="stock.menu_stock_warehouse_mgmt"
+              action="action_craf_yuklash" sequence="1" groups="craf_sotuv.group_craf_loader"/>
+    <menuitem id="menu_craf_sotuv_alias" name="Sotuv qisqartmalari" parent="sale.menu_sale_config"
+              action="action_craf_sotuv_alias" sequence="60"/>
+    <menuitem id="menu_craf_sale_points" name="Sotuv joylari" parent="stock.menu_warehouse_config"
+              action="action_craf_sale_points" sequence="60"/>
 </odoo>

@@ -1,6 +1,6 @@
 {
     "name": "Craf Press",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Press smena hisoboti: matritsa, quyma sarfi, profil chiqishi, qoldiq va brak",
     "description": """
 Press smenasi:

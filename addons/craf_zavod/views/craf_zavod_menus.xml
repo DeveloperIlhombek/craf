@@ -4,6 +4,6 @@
         <field name="name">Zavod xaritasi</field>
         <field name="tag">craf_zavod_xarita</field>
     </record>
-    <menuitem id="menu_craf_zavod_xarita" name="Zavod xaritasi" parent="craf_profile.menu_craf_root"
-              action="action_craf_zavod_xarita" sequence="5"/>
+    <menuitem id="menu_craf_zavod_xarita" name="Zavod xaritasi" parent="stock.menu_stock_warehouse_mgmt"
+              action="action_craf_zavod_xarita" sequence="0"/>
 </odoo>

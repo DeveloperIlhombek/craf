@@ -5,8 +5,8 @@
         <field name="tag">craf_sex</field>
         <field name="path">craf-sex</field>
     </record>
-    <menuitem id="menu_craf_sex" name="Sexlar" parent="craf_profile.menu_craf_root"
-              action="action_craf_sex" sequence="4"/>
+    <menuitem id="menu_craf_sex" name="Sex sahifasi" parent="craf_production.menu_craf_production"
+              action="action_craf_sex" sequence="1"/>
 
     <record id="view_users_form_craf_sex" model="ir.ui.view">
         <field name="name">res.users.form.craf.sex</field>

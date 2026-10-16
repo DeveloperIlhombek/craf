@@ -1,6 +1,6 @@
 {
     "name": "Craf Ishlab chiqarish (asos)",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Литейка, press va bo'yash hujjatlari uchun umumiy asos: smena, uskuna, operator, MRP buyurtmasi",
     "description": """
 Umumiy asos (craf_foundry, craf_extrusion, craf_paint shu modulga tayanadi):

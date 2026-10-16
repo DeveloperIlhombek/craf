@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_root" name="Craf" sequence="5"
-              web_icon="craf_profile,static/description/icon.png"/>
-    <menuitem id="menu_craf_calculator" name="Kalkulyator" parent="menu_craf_root"
-              action="action_craf_calculator" sequence="10"/>
-    <menuitem id="menu_craf_profiles" name="Profillar" parent="menu_craf_root"
+    <!-- Alohida "Craf" ilovasi yo'q: hamma narsa Odoo ning o'z ilovalarida.
+         Inventarizatsiya → Mahsulotlar: profillar, xom-ashyo;
+         Inventarizatsiya → Sozlamalar → Mahsulotlar: kesimlar, ranglar. -->
+    <menuitem id="menu_craf_calculator" name="Kalkulyator" parent="stock.menu_stock_inventory_control"
+              action="action_craf_calculator" sequence="40"/>
+    <menuitem id="menu_craf_profiles" name="Profillar" parent="stock.menu_stock_inventory_control"
               action="action_craf_profiles" sequence="20"/>
-    <menuitem id="menu_craf_materials" name="Xom-ashyo" parent="menu_craf_root"
-              action="action_craf_materials" sequence="30"/>
-    <menuitem id="menu_craf_config" name="Sozlamalar" parent="menu_craf_root" sequence="90"/>
-    <menuitem id="menu_craf_sections" name="Kesimlar" parent="menu_craf_config"
-              action="action_craf_profile_section" sequence="10"/>
-    <menuitem id="menu_craf_colors" name="Ranglar" parent="menu_craf_config"
-              action="action_craf_color" sequence="20"/>
+    <menuitem id="menu_craf_materials" name="Xom-ashyo" parent="stock.menu_stock_inventory_control"
+              action="action_craf_materials" sequence="21"/>
+    <menuitem id="menu_craf_sections" name="Kesimlar" parent="stock.menu_product_in_config_stock"
+              action="action_craf_profile_section" sequence="20"/>
+    <menuitem id="menu_craf_colors" name="Ranglar" parent="stock.menu_product_in_config_stock"
+              action="action_craf_color" sequence="21"/>
 </odoo>
