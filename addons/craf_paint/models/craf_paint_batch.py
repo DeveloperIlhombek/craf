@@ -36,6 +36,13 @@ class CrafPaintBatch(models.Model):
     chem_line_ids = fields.One2many("craf.paint.chem.line", "batch_id", string="Kimyo", copy=True)
     scrap_product_id = fields.Many2one(
         "product.product", string="Brak (mahsulot)", default=lambda self: self._craf_product("PF-07"))
+    # qadoqlash materiallari
+    film_product_id = fields.Many2one(
+        "product.product", string="Plyonka (mahsulot)", default=lambda self: self._craf_product("QM-01"))
+    film_qty = fields.Float("Plyonka sarfi", digits=(16, 2), aggregator="sum")
+    tape_product_id = fields.Many2one(
+        "product.product", string="Lenta (mahsulot)", default=lambda self: self._craf_product("QM-02"))
+    tape_qty = fields.Float("Lenta sarfi", digits=(16, 1), aggregator="sum")
 
     pcs_in = fields.Integer("Kirdi, dona", compute="_compute_kpi", store=True, aggregator="sum")
     pcs_defect = fields.Integer("Brak, dona", compute="_compute_kpi", store=True, aggregator="sum")
@@ -106,12 +113,15 @@ class CrafPaintBatch(models.Model):
             needs[self.powder_product_id] = needs.get(self.powder_product_id, 0.0) + self.powder_qty
         for chem in self.chem_line_ids.filtered(lambda c: c.qty > EPS):
             needs[chem.product_id] = needs.get(chem.product_id, 0.0) + chem.qty
+        for product, qty in self._craf_pack_materials():
+            needs[product] = needs.get(product, 0.0) + qty
         self._craf_check_available(self.location_src_id, needs)
 
         area_total = sum(lines.mapped("area_m2"))
         pcs_total = sum(lines.mapped("pcs_in"))
         consumables = [(self.powder_product_id, self.powder_qty)] if self.powder_qty > EPS else []
         consumables += [(c.product_id, c.qty) for c in self.chem_line_ids if c.qty > EPS]
+        consumables += self._craf_pack_materials()
         left = {p: q for p, q in consumables}
         names = []
         for i, line in enumerate(lines):
@@ -137,6 +147,18 @@ class CrafPaintBatch(models.Model):
             "Maydon %s m²; kukun %s kg (normada %s kg)" % (
                 fmt(self.area_total, 1), fmt(self.powder_qty, 2), fmt(self.powder_norm_qty, 2)),
         ])
+
+    def _craf_pack_materials(self):
+        """[(mahsulot, miqdor)] — qadoqlash materiallari sarfi (plyonka, lenta)."""
+        self.ensure_one()
+        res = []
+        for product, qty, label in ((self.film_product_id, self.film_qty, "Plyonka"),
+                                    (self.tape_product_id, self.tape_qty, "Lenta")):
+            if qty > EPS:
+                if not product:
+                    raise UserError("%s mahsuloti tanlanmagan." % label)
+                res.append((product, qty))
+        return res
 
     def _craf_pack_items(self):
         return [(l.product_id, l.pcs_ok, self.location_dest_id) for l in self.line_ids if l.pcs_ok > 0]

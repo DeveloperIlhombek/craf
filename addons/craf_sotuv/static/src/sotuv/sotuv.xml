@@ -640,6 +640,7 @@
                                         <span class="cs-sale-prod"><t t-esc="l.product"/> <span class="cs-product-code" t-esc="l.code"/></span>
                                         <span class="cs-sale-qty"><t t-esc="l.text"/> <span class="text-muted">· <t t-esc="fmt(l.kg)"/> kg</span>
                                             <div class="cs-sale-meta" t-if="o.load_state !== 'draft' and l.delivered and l.delivered !== l.pcs">berildi: <t t-esc="fmt(l.delivered)"/> dona</div>
+                                            <div class="cs-sale-meta cs-returned" t-if="l.returned"><i class="fa fa-undo"/> qaytarildi: <t t-esc="l.returned_text"/></div>
                                         </span>
                                     </div>
                                 </t>
@@ -648,7 +649,9 @@
                                 <div class="cs-sale-actions">
                                     <button class="btn btn-light btn-sm" t-if="state.init.is_seller" t-on-click="() => this.openOrder(o.id)"><i class="fa fa-external-link"/> Ochish</button>
                                     <button class="btn btn-primary btn-sm" t-if="['queue', 'loading'].includes(o.load_state)" t-on-click="() => this.openLoad(o)"><i class="fa fa-truck"/> <t t-if="o.load_state === 'queue'">Ko'rish / qabul qilish</t><t t-else="">Yuklashni ko'rish</t></button>
+                                    <button class="btn btn-outline-danger btn-sm" t-if="state.init.is_seller and o.can_return and !(state.ret and state.ret.id === o.id)" t-on-click="() => this.openReturn(o)"><i class="fa fa-undo"/> Qaytarish<t t-if="o.return_count"> (<t t-esc="o.return_count"/>)</t></button>
                                 </div>
+                                <t t-if="state.ret and state.ret.id === o.id" t-call="craf_sotuv.ReturnForm"/>
                             </div>
                         </div>
                     </t>
@@ -666,6 +669,42 @@
                 </div>
             </div>
         </t>
+    </t>
+
+    <!-- ============================================================ Qaytarish -->
+    <t t-name="craf_sotuv.ReturnForm">
+        <t t-set="r" t-value="state.ret"/>
+        <div class="cs-return">
+            <div class="cs-label"><i class="fa fa-undo"/> Qaytarish — <t t-esc="r.name"/> · <t t-esc="r.partner"/></div>
+            <label class="cs-return-field">
+                <span>Qayerga tushirildi</span>
+                <select class="form-select" t-model.number="r.location_id">
+                    <option value="0">— joyni tanlang —</option>
+                    <t t-foreach="r.locations" t-as="loc" t-key="loc.id">
+                        <option t-att-value="loc.id" t-att-selected="loc.id === r.location_id" t-esc="loc.name"/>
+                    </t>
+                </select>
+            </label>
+            <div class="cs-return-line" t-foreach="r.lines" t-as="l" t-key="l.line_id">
+                <div class="cs-return-prod">
+                    <b t-esc="l.product"/> <span class="cs-product-code" t-esc="l.code"/>
+                    <div class="cs-sale-meta">berilgan: <t t-esc="l.delivered_text"/><t t-if="l.returned"> · qaytgan: <t t-esc="l.returned_text"/></t></div>
+                </div>
+                <div class="cs-return-qty">
+                    <label t-if="l.per_pack"><input type="number" min="0" inputmode="numeric" class="form-control" t-model="l.packs" placeholder="0"/><span>pachka</span></label>
+                    <label><input type="number" min="0" inputmode="numeric" class="form-control" t-model="l.pcs" placeholder="0"/><span>dona</span></label>
+                </div>
+            </div>
+            <div class="cs-empty" t-if="!r.lines.length">Qaytariladigan berilgan mahsulot yo'q</div>
+            <input type="text" class="form-control" t-model="r.note" placeholder="Sababi (ixtiyoriy): nuqson, ortiqcha…"/>
+            <div class="cs-sale-meta" t-if="r.history.length">
+                Avvalgi qaytarishlar: <t t-foreach="r.history" t-as="h" t-key="h.name"><t t-esc="h.name"/> (<t t-esc="h.date"/>, <t t-esc="h.location"/>) </t>
+            </div>
+            <div class="cs-sale-actions">
+                <button class="btn btn-light btn-sm" t-on-click="() => { state.ret = null; }">Bekor</button>
+                <button class="btn btn-danger btn-sm" t-att-disabled="r.busy or !r.location_id" t-on-click="saveReturn"><i class="fa fa-check"/> Qaytarishni yozish</button>
+            </div>
+        </div>
     </t>
 
     <!-- ============================================================ Qoldiq -->

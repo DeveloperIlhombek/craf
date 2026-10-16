@@ -68,6 +68,7 @@ export class CrafSotuv extends Component {
             stockAll: false,
             settings: false,
             expanded: {},
+            ret: null,
         });
         this.searchProducts = debounce(this._searchProducts.bind(this), 250);
         this.searchPartners = debounce(this._searchPartners.bind(this), 250);
@@ -818,6 +819,53 @@ export class CrafSotuv extends Component {
                 const n = await this.orm.call(MODEL, "mark_c1", [s.date]);
                 this.notification.add(`${n} ta sotuv belgilandi`, { type: "success" });
                 await this.loadSales();
+            },
+            cancel: () => {},
+        });
+    }
+    async openReturn(card) {
+        try {
+            const info = await this.orm.call(MODEL, "return_info", [card.id]);
+            info.lines.forEach((l) => Object.assign(l, { packs: "", pcs: "" }));
+            this.state.ret = Object.assign(info, { note: "", busy: false });
+        } catch (e) {
+            this.notification.add(this.errorText(e), { type: "danger" });
+        }
+    }
+    saveReturn() {
+        const r = this.state.ret;
+        const rows = r.lines
+            .map((l) => ({ line_id: l.line_id, packs: l.packs || 0, pcs: l.pcs || 0 }))
+            .filter((l) => Number(l.packs) || Number(l.pcs));
+        if (!rows.length) {
+            this.notification.add("Qaytariladigan miqdorni yozing", { type: "warning" });
+            return;
+        }
+        if (!r.location_id) {
+            this.notification.add("Mahsulot qayerga tushirilganini tanlang", { type: "warning" });
+            return;
+        }
+        const loc = r.locations.find((x) => x.id === r.location_id);
+        const summary = r.lines
+            .filter((l) => Number(l.packs) || Number(l.pcs))
+            .map((l) => `${l.product}: ${l.packs ? l.packs + " p " : ""}${l.pcs ? l.pcs + " d" : ""}`)
+            .join("; ");
+        this.dialog.add(ConfirmationDialog, {
+            title: "Qaytarish",
+            body: `${r.name} · ${r.partner}: ${summary} → ${loc ? loc.name : ""}. Mahsulot shu joyga qaytib kiradi.`,
+            confirmLabel: "Qaytarish",
+            confirm: async () => {
+                r.busy = true;
+                try {
+                    const res = await this.orm.call(MODEL, "return_save", [r.id, r.location_id, rows, r.note || ""]);
+                    this.notification.add(`${r.name}: qaytarildi (${res.picking})`, { type: "success" });
+                    this.state.ret = null;
+                    this.state.stock = null;
+                    await this.loadSales();
+                } catch (e) {
+                    r.busy = false;
+                    this.notification.add(this.errorText(e), { type: "danger" });
+                }
             },
             cancel: () => {},
         });

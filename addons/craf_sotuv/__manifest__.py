@@ -1,6 +1,6 @@
 {
     "name": "Craf Sotuv (Berildi)",
-    "version": "19.0.1.5.1",
+    "version": "19.0.1.6.0",
     "summary": "Sotuv bo'limi: sotuvchi buyurtma kiritadi, yuklovchi yuklaydi, «Berildi» da mahsulot ombordan ayriladi (telefon uchun)",
     "description": """
 Sotuv bo'limi (telefon birinchi):
@@ -32,6 +32,7 @@ Sotuv bo'limi (telefon birinchi):
         "views/res_partner_views.xml",
         "views/stock_location_views.xml",
         "views/craf_sotuv_menus.xml",
+        "views/craf_sanash_views.xml",
     ],
     "assets": {
         "web.assets_backend": [

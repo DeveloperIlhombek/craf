@@ -2,6 +2,7 @@ from . import (
     craf_load_alloc,
     craf_pack,
     craf_sotuv,
+    craf_return,
     craf_sotuv_alias,
     craf_kunlik_hisobot,
     res_company,

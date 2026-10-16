@@ -187,6 +187,12 @@
                             <field name="powder_diff_pct" decoration-danger="powder_diff_pct &gt; 10"
                                    decoration-success="powder_diff_pct &lt;= 0 and powder_qty"/>
                         </group>
+                        <group string="Qadoqlash materiallari">
+                            <field name="film_product_id" readonly="state != 'draft'"/>
+                            <field name="film_qty" readonly="state != 'draft'"/>
+                            <field name="tape_product_id" readonly="state != 'draft'"/>
+                            <field name="tape_qty" readonly="state != 'draft'"/>
+                        </group>
                         <group string="Ko'rsatkichlar">
                             <field name="pcs_in"/>
                             <field name="pcs_ok"/>

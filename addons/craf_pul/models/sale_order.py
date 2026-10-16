@@ -79,6 +79,36 @@ class SaleOrder(models.Model):
         self.env["craf.pul"]._reconcile_partner(self.partner_id, "asset_receivable")
         return moves
 
+    def _craf_after_return(self, picking):
+        """Sotuvdan qaytarish: hisob-faktura qilingan miqdor qaytgan bo'lsa — qaytarish hisob-fakturasi."""
+        res = super()._craf_after_return(picking)
+        try:
+            with self.env.cr.savepoint():
+                self.sudo()._craf_make_refund(picking)
+        except Exception as err:  # noqa: BLE001 — qaytarishni buzmasin
+            _logger.warning("Craf: %s qaytarish hisob-fakturasi yaratilmadi: %s", self.name, err)
+            self.sudo().message_post(body="Qaytarish hisob-fakturasi avtomatik yaratilmadi: %s" % err)
+        return res
+
+    def _craf_make_refund(self, picking):
+        self.ensure_one()
+        lines = self.order_line.filtered(lambda l: not l.display_type and l.product_id and l.qty_to_invoice < 0)
+        if not lines:
+            return self.env["account.move"]
+        locked = self._craf_unlocked()
+        try:
+            moves = self._create_invoices(final=True)
+            day = fields.Date.context_today(self, picking.date_done) if picking.date_done else \
+                fields.Date.context_today(self)
+            moves.write({"invoice_date": day, "ref": "Qaytarish %s" % picking.name})
+            moves.invoice_line_ids.filtered("tax_ids").write({"tax_ids": [(5,)]})
+            moves.action_post()
+        finally:
+            if locked:
+                locked.action_lock()
+        self.env["craf.pul"]._reconcile_partner(self.partner_id, "asset_receivable")
+        return moves
+
     def _craf_set_prices(self, prices):
         """prices: {sale.order.line id: narx}. Tasdiqlangan hisob-fakturalar ham yangi narxga o'tadi."""
         self.ensure_one()

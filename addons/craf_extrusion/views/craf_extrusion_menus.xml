@@ -4,4 +4,6 @@
               action="action_craf_extrusion_shift" sequence="20"/>
     <menuitem id="menu_craf_semi_profiles" name="Bo'yalmagan profillar" parent="stock.menu_stock_inventory_control"
               action="action_craf_semi_profiles" sequence="22"/>
+    <menuitem id="menu_craf_briket" name="Briketlash" parent="craf_production.menu_craf_production"
+              action="action_craf_briket" sequence="21"/>
 </odoo>

@@ -41,6 +41,8 @@
                         <group string="Литейка va qadoqlash">
                             <field name="foundry_kg_h"/>
                             <field name="pack_min"/>
+                            <field name="film_kg_per_pack"/>
+                            <field name="tape_m_per_pack"/>
                             <div class="text-muted small" colspan="2">
                                 Shixta tarkibi: Sozlamalar → Shixta retseptlari (quyma BoM i).
                             </div>

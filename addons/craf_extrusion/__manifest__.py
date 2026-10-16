@@ -1,6 +1,6 @@
 {
     "name": "Craf Press",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.1.0",
     "summary": "Press smena hisoboti: matritsa, quyma sarfi, profil chiqishi, qoldiq va brak",
     "description": """
 Press smenasi:
@@ -18,6 +18,7 @@ Press smenasi:
         "security/ir.model.access.csv",
         "data/craf_extrusion_data.xml",
         "views/craf_extrusion_shift_views.xml",
+        "views/craf_briket_views.xml",
         "views/craf_extrusion_menus.xml",
     ],
     "post_init_hook": "post_init_hook",

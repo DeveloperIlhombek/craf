@@ -30,7 +30,8 @@ class CrafExtrusionShift(models.Model):
     line_ids = fields.One2many("craf.extrusion.shift.line", "shift_id", string="Chiqish", copy=True)
 
     rest_product_id = fields.Many2one(
-        "product.product", string="Press qoldig'i (mahsulot)", default=lambda self: self._craf_product("PF-06"))
+        "product.product", string="Press qoldig'i (mahsulot)", compute="_compute_rest_product_id", store=True,
+        readonly=False, help="Quyma kartochkasidagi «Питак (shu quymadan)»: o'z stalbamiz → вторичка, RusAl → русал")
     rest_qty = fields.Float("Press qoldig'i (питак), kg", digits=(16, 1), aggregator="sum")
     scrap_product_id = fields.Many2one(
         "product.product", string="Brak (mahsulot)", default=lambda self: self._craf_product("PF-07"))
@@ -44,6 +45,12 @@ class CrafExtrusionShift(models.Model):
                             aggregator="sum")
     productivity = fields.Float("Unumdorlik, kg/soat", compute="_compute_kpi", store=True, digits=(16, 1),
                                 aggregator="avg")
+
+    @api.depends("billet_product_id")
+    def _compute_rest_product_id(self):
+        default = self._craf_product("PF-06")
+        for shift in self:
+            shift.rest_product_id = shift.billet_product_id.product_tmpl_id.craf_butt_product_id or default
 
     @api.depends("billet_product_id", "location_src_id")
     def _compute_billet_available(self):

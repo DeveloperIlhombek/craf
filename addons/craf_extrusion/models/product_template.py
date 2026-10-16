@@ -1,8 +1,16 @@
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
+
+    craf_press_waste = fields.Boolean(
+        "Press chiqindisi", help="Питак, brak profil, briket — press bo'limida chiqadi, sotib olinmaydi "
+                                 "(Литейка kirimida ko'rinmaydi).")
+    craf_butt_product_id = fields.Many2one(
+        "product.product", string="Питак (shu quymadan)",
+        help="Quyma (stalba) uchun: press kesgan qoldiq qaysi mahsulotga yoziladi. "
+             "Masalan, o'z stalbamiz → Питак (вторичка), RusAl → Питак (русал).")
 
     @api.model
     def _craf_raw_color(self):

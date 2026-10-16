@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tayyor mahsulot sanash: Odoo «Physical Inventory» — sotuv joylari (Zavod, Parnik, Rohat) bo'yicha.
+         Sotuvchi va omborchi sanoqni yozadi, omborchi/direktor «Qo'llash» bilan tasdiqlaydi. -->
+    <record id="action_craf_tayyor_sanash" model="ir.actions.server">
+        <field name="name">Tayyor mahsulot sanash</field>
+        <field name="model_id" ref="stock.model_stock_quant"/>
+        <field name="state">code</field>
+        <field name="code">
+locs = env["stock.location"].search([("craf_sale_point", "=", True), ("usage", "=", "internal")])
+action = model.action_view_inventory()
+ctx = dict(action.get("context") or {})
+ctx.pop("search_default_my_count", None)
+if locs:
+    ctx["default_location_id"] = locs[:1].id
+action.update({
+    "name": "Tayyor mahsulot sanash",
+    "domain": [("location_id", "child_of", locs.ids or [0]), ("product_id.sale_ok", "=", True)],
+    "context": ctx,
+})
+        </field>
+    </record>
+
+    <menuitem id="menu_craf_tayyor_sanash" name="Tayyor mahsulot sanash" parent="stock.menu_stock_adjustments"
+              action="action_craf_tayyor_sanash" sequence="11"
+              groups="craf_sotuv.group_craf_seller,stock.group_stock_manager"/>
+</odoo>
