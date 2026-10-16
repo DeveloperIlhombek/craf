@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Sotuv: buyurtma kartochkasida mijozning qarzi (Pul moduli) -->
+    <t t-inherit="craf_sotuv.OrderCard" t-inherit-mode="extension">
+        <xpath expr="//span[hasclass('cs-chip-ok')]" position="after">
+            <span t-if="order.partner and order.partner.debt_text" class="cs-chip pl-chip-debt"
+                  t-att-title="'Pul sahifasidagi qarz'"><i class="fa fa-exclamation-circle"/> <t t-esc="order.partner.debt_text"/></span>
+        </xpath>
+    </t>
+</templates>

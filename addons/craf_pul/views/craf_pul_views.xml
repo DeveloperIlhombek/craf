@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_pul" model="ir.actions.client">
+        <field name="name">Pul</field>
+        <field name="tag">craf_pul</field>
+        <field name="path">craf-pul</field>
+    </record>
+    <menuitem id="menu_craf_pul" name="Pul" parent="craf_profile.menu_craf_root" action="action_craf_pul"
+              sequence="5" groups="craf_sex.group_craf_accountant,base.group_system"/>
+
+    <record id="view_account_journal_form_craf_pul" model="ir.ui.view">
+        <field name="name">account.journal.form.craf.pul</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <field name="type" position="after">
+                <field name="craf_pay_method" invisible="type not in ('cash', 'bank')"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_order_form_craf_pul" model="ir.ui.view">
+        <field name="name">sale.order.form.craf.pul</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <field name="craf_price_missing" invisible="1"/>
+                <div class="alert alert-warning mb-0" role="alert" invisible="not craf_price_missing">
+                    Mahsulot berildi, lekin narx yozilmagan — hisob-faktura yaratilmadi. Narxni Craf → Pul → «Narx kerak» da yozing.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_tree_craf_pul" model="ir.ui.view">
+        <field name="name">account.payment.list.craf.pul</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_tree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="show" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new'"/>
+            </field>
+        </field>
+    </record>
+</odoo>

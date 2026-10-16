@@ -25,8 +25,12 @@ Odoo 19 Community + o'z modullarimiz (`addons/`).
 | `craf_hisobot` | Kunlik hisobot (1C uchun): bo'limlar sarfi va chiqishi, xom-ashyo harakati, Excel, "1C ga kiritildi" |
 | `craf_kalkulyator` | Hisobot ichidagi kalkulyator: pachka/qop → jami dona va kg; bo'yash/pech hujjatiga yozish |
 | `craf_litey` | Литейка: plavka ishchi daftari ko'rinishida (993+600+351 tortishlar, sarf buyumlari, stalba kg/uzunlik, Сталба/Литейка отход, шлак, balans va угар nazorati); Литейка hisoboti — qoldiq → sarf → stalba → otxod, kunlik qoldiq (Excel ko'rinishi), kirim (mashina raqami), Excel eksport va Excel qoldig'ini yuklash |
+| `craf_sotuv` | Sotuv (telefon): sotuvchi buyurtma yozadi, yuklovchi qabul qiladi va yuklaydi, «Berildi» — ombordan ayriladi; Zavod / Parnik / Rohat |
+| `craf_sex` | Sexlar sahifasi (telefon): Press smenasi va korzinkalar, kimyoviy ishlov, bo'yash va qadoqlash; rollar (Sex ishchisi, Hisobchi, Direktor); hisobchi kunlik yakuni (kirim, inventarizatsiya, 1C belgisi) |
+| `craf_pul` | Pul: narxlar (1 kg / 1 dona), «Berildi» da hisob-faktura, Литейка kirimida yetkazib beruvchi hisob-fakturasi, to'lovlar (naqd, plastik, bank), qarzlar va akt sverka |
+| `craf_davomat` | Davomat: Hikvision terminali yozuvlari (push), kunlik davomat, oylik tabel (Excel), KPI (sinov rejimi) |
 
-`craf_litey` o'rnatilsa, qolgan barcha Craf modullari bog'liqlik orqali o'rnatiladi.
+`craf_pul` va `craf_davomat` o'rnatilsa, qolgan barcha Craf modullari bog'liqlik orqali o'rnatiladi. Serverdagi `update.sh` `addons/` dagi yangi `craf_*` modullarini o'zi o'rnatadi.
 
 ## Kompyuterda (Windows, Docker Desktop)
 

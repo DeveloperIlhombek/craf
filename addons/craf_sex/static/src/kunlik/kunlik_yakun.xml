@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Hisobchi kunlik yakuni: bo'lim o'z sarlavhalarini beradi (kirim — "Qabul qilindi", sanash — "Kamomad"/"Ortiqcha") -->
+    <t t-inherit="craf_hisobot.Kunlik" t-inherit-mode="extension">
+        <xpath expr="//t[@t-set='label'][contains(@t-value, 'Topshirildi')]" position="attributes">
+            <attribute name="t-value">dep.made_label or (dep.key === 'ombor' ? 'Topshirildi' : (dep.key === 'sotuv' ? 'Sotildi' : 'Chiqish'))</attribute>
+        </xpath>
+        <xpath expr="//t[@t-set='label'][contains(@t-value, 'Sarf')]" position="attributes">
+            <attribute name="t-value">dep.used_label or 'Sarf'</attribute>
+        </xpath>
+    </t>
+</templates>

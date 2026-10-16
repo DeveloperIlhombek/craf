@@ -50,6 +50,10 @@ class CrafBasket(models.Model):
             basket.content = load.content if load else False
 
     def _search_state(self, operator, value):
+        if operator in ("!=", "not in"):
+            # Odoo 19 "!=" ni "not in" ga aylantiradi: teskari to'plam
+            positive = self._search_state("in", [value] if operator == "!=" else list(value))
+            return [("id", "not in", positive[0][2])]
         if operator not in ("=", "in"):
             raise NotImplementedError
         values = [value] if operator == "=" else list(value)

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="craf_hisobot.Kunlik" t-inherit-mode="extension">
+        <!-- Sotuv bo'limi: "Sotuv" sahifasiga o'tish -->
+        <xpath expr="//button[@t-on-click='() => this.newDoc(dep)']" position="before">
+            <button t-if="dep.key === 'sotuv'" class="btn btn-sm btn-outline-primary text-nowrap"
+                    t-on-click="() => this.actionService.doAction('craf_sotuv.action_craf_sotuv')">
+                <i class="fa fa-truck"/> Berildi
+            </button>
+        </xpath>
+        <xpath expr="//t[@t-set='label'][contains(@t-value, 'Topshirildi')]" position="attributes">
+            <attribute name="t-value">dep.key === 'ombor' ? 'Topshirildi' : (dep.key === 'sotuv' ? 'Sotildi' : 'Chiqish')</attribute>
+        </xpath>
+        <!-- Tayyor mahsulot harakati: "Sotildi" ustuni -->
+        <xpath expr="//th[text()='Chiqdi']" position="replace">
+            <th class="text-end">Sotildi</th>
+            <th class="text-end">Boshqa chiqim</th>
+        </xpath>
+        <xpath expr="//td[@t-esc='fmt(r.out_prod + r.out_other, 0)']" position="before">
+            <td class="text-end fw-semibold" t-esc="fmt(r.out_sale, 0)"/>
+        </xpath>
+        <xpath expr="//tr[@t-if='!d.finished.length']/td" position="attributes">
+            <attribute name="colspan">7</attribute>
+        </xpath>
+    </t>
+</templates>

@@ -1,0 +1,15 @@
+from . import (
+    craf_load_alloc,
+    craf_pack,
+    craf_sotuv,
+    craf_sotuv_alias,
+    craf_kunlik_hisobot,
+    res_company,
+    res_partner,
+    res_users,
+    sale_order,
+    sale_order_line,
+    stock_location,
+    stock_picking,
+    stock_rule,
+)

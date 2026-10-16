@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 from collections import defaultdict
 
 from markupsafe import Markup, escape
@@ -148,7 +149,7 @@ class CrafFoundryMelt(models.Model):
     # ---------------------------------------------------------------- shablon va raqam
     @api.model
     def _craf_template_products(self):
-        products = self.env["product.product"].search([("craf_melt_seq", ">", 0)])
+        products = self.env["product.product"].search([("craf_melt_seq", ">", 0), ("craf_litey_hidden", "=", False)])
         return products.sorted(lambda p: (p.craf_melt_seq, p.default_code or ""))
 
     @api.model
@@ -353,6 +354,18 @@ class CrafFoundryMelt(models.Model):
             self.picking_ids = [Command.link(p.id) for p in pickings]
         return pickings
 
+    def _craf_litey_backdate(self, mos, pickings, moment):
+        """Bajarilgan MO va avto ko'chirishlarni plavka sanasiga o'tkazadi."""
+        mos.with_context(force_date=True).write({"date_start": moment, "date_finished": moment})
+        moves = (mos.move_raw_ids | mos.move_finished_ids).filtered(lambda m: m.state == "done")
+        moves.write({"date": moment})
+        moves.move_line_ids.write({"date": moment})
+        if pickings:
+            earlier = moment - timedelta(minutes=1)
+            pickings.write({"date_done": earlier, "scheduled_date": earlier})
+            pickings.move_ids.write({"date": earlier})
+            pickings.move_ids.move_line_ids.write({"date": earlier})
+
     def _craf_check_total(self, needs):
         """Butun zavodda ham yetmasa — aniq xabar."""
         missing = []
@@ -397,14 +410,23 @@ class CrafFoundryMelt(models.Model):
         needs = defaultdict(float)
         for line in lines:
             needs[line.product_id] += line.qty
+        # O'tgan kungi plavka: ombor harakatlari plavka sanasiga yoziladi (hisobot va Inventarizatsiya
+        # daftar bilan bir kunda ko'rsatsin). O'sha kundan keyin qoldiq sanalgan bo'lsa — to'xtatiladi.
+        H = self.env["craf.litey.hisobot"]
+        moment = H._moment(self.date)
+        touched = self.env["product.product"].concat(*needs.keys(), self.billet_product_id,
+                                                     *[p for p, q, _l, _n in outputs if q > EPS])
+        H._check_lock(touched, moment, "Plavka %s" % self.name)
         self._craf_check_total(needs)
-        self._craf_litey_pull(needs)
+        pulled = self._craf_litey_pull(needs)
         self._craf_check_available(self.location_src_id, needs)
         zero.unlink()
         byproducts = [(p, q, loc) for p, q, loc, _label in outputs if q > EPS]
         mo = self.with_context(craf_melt_cut_waste=False)._craf_produce(
             self.billet_product_id, self.billet_qty, self.location_src_id, self.location_dest_id,
             list(needs.items()), byproducts)
+        if moment:
+            self._craf_litey_backdate(mo, pulled, moment)
         summary = [
             Markup("<b>Plavka tasdiqlandi</b> — %s") % mo.name,
             "Shixta: metall %s kg (jami %s kg)" % (fmt(self.charge_metal, 1), fmt(self.charge_total, 1)),

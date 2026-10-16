@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- sahifa -->
+    <t t-name="craf_pul.Pul">
+        <div class="o_action o_craf_litey o_craf_pul" t-att-class="{ 'cl-busy': state.busy or state.loading, 'pl-has-savebar': state.tab === 'narx' and editCount }">
+            <header class="cl-top">
+                <div class="cl-top-row">
+                    <h1 class="cl-title">Pul</h1>
+                    <div class="cl-top-actions" t-if="state.data">
+                        <div class="cl-period-group" t-if="state.tab !== 'narx'">
+                            <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(-1)" aria-label="Oldingi davr"><i class="fa fa-chevron-left"/></button>
+                            <button class="cl-period" t-on-click="openPeriod" aria-label="Davrni tanlash"><i class="fa fa-calendar-o"/> <span t-esc="periodLabel"/></button>
+                            <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(1)" aria-label="Keyingi davr"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <button class="btn btn-primary cl-new-desk d-none d-lg-inline-flex" t-if="canEdit and state.tab !== 'narx'" t-on-click="() => this.newPayment()"><i class="fa fa-plus"/> To'lov</button>
+                        <button class="cl-icon-btn" t-on-click="openMenu" aria-label="Boshqa amallar"><i class="fa fa-ellipsis-v"/></button>
+                    </div>
+                </div>
+                <nav class="cl-tabs" role="tablist">
+                    <button role="tab" t-att-class="{ active: state.tab === 'qarz' }" t-on-click="() => this.setTab('qarz')">Qarzlar</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'tolov' }" t-on-click="() => this.setTab('tolov')">To'lovlar</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'narx' }" t-on-click="() => this.setTab('narx')">Narxlar</button>
+                </nav>
+            </header>
+
+            <main class="cl-body">
+                <div class="cl-empty" t-if="!state.data"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+                <t t-else="">
+                    <t t-set="d" t-value="state.data"/>
+                    <t t-call="craf_pul.Banners"/>
+                    <t t-if="state.tab === 'qarz'" t-call="craf_pul.TabQarz"/>
+                    <t t-if="state.tab === 'tolov'" t-call="craf_pul.TabTolov"/>
+                    <t t-if="state.tab === 'narx'" t-call="craf_pul.TabNarx"/>
+                </t>
+            </main>
+
+            <div class="pl-savebar" t-if="state.tab === 'narx' and editCount">
+                <div class="pl-savebar-text"><b><t t-esc="editCount"/> ta narx o'zgardi</b><span>saqlanmagan</span></div>
+                <button class="btn btn-outline-secondary" t-on-click="cancelEdits" t-att-disabled="state.busy">Bekor</button>
+                <button class="btn btn-primary" t-on-click="savePrices" t-att-disabled="state.busy">Saqlash</button>
+            </div>
+            <button class="cl-fab d-lg-none" t-if="state.data and canEdit and state.tab !== 'narx'" t-on-click="() => this.newPayment()" aria-label="To'lov qo'shish"><i class="fa fa-plus"/></button>
+            <t t-if="state.sheet" t-call="craf_pul.Sheet"/>
+        </div>
+    </t>
+
+    <!-- ogohlantirishlar -->
+    <t t-name="craf_pul.Banners">
+        <div class="cl-banner cl-banner-bad" t-if="!d.setup.uzs" role="alert">
+            <i class="fa fa-exclamation-triangle"/>
+            <div class="cl-banner-text">Kompaniya valyutasi <b t-esc="d.setup.currency"/> — narx va qarzlar so'mda bo'lishi uchun valyutani UZS ga o'tkazing.</div>
+            <button class="btn btn-sm cl-banner-btn" t-if="d.roles.manager and !d.setup.posted" t-on-click="switchCurrency">O'tkazish</button>
+        </div>
+        <div class="pl-todo" t-if="state.tab === 'qarz' and (d.noprice.length or d.unbilled.length or d.prices_missing)" role="region" aria-label="Qilinadigan ishlar">
+            <button t-if="d.noprice.length" t-on-click="openNoprice">
+                <i class="fa fa-tag"/><span><b>Narx kerak:</b> <t t-esc="d.noprice.length"/> ta buyurtma narxsiz berildi</span><i class="fa fa-chevron-right"/>
+            </button>
+            <button t-if="d.unbilled.length" t-on-click="openUnbilled">
+                <i class="fa fa-truck"/><span><b>Hisob-fakturasiz kirim:</b> <t t-esc="d.unbilled.length"/> ta</span><i class="fa fa-chevron-right"/>
+            </button>
+            <button t-if="d.prices_missing" t-on-click="() => this.setTab('narx')">
+                <i class="fa fa-list"/><span><b>Narxsiz mahsulot:</b> <t t-esc="d.prices_missing"/> ta</span><i class="fa fa-chevron-right"/>
+            </button>
+        </div>
+    </t>
+
+    <!-- QARZLAR -->
+    <t t-name="craf_pul.TabQarz">
+        <div class="cl-kpis pl-kpis" aria-label="Davr ko'rsatkichlari">
+            <div class="cl-kpi" t-foreach="d.kpi" t-as="k" t-key="k_index">
+                <span class="cl-kpi-label" t-esc="k.label"/>
+                <span class="cl-kpi-value" t-att-class="toneClass(k.tone)" t-att-title="money(k.value) + ' ' + cur"><t t-esc="short(k.value)"/><small> <t t-esc="shortUnit(k.value)"/></small></span>
+                <span class="cl-kpi-sub" t-if="k.sub" t-esc="k.sub"/>
+            </div>
+        </div>
+        <div class="pl-sides" role="tablist" aria-label="Kim">
+            <button role="tab" t-att-class="{ active: state.side === 'customer' }" t-on-click="() => state.side = 'customer'">
+                Mijozlar <small t-esc="money(sideTotal('customer'))"/>
+            </button>
+            <button role="tab" t-att-class="{ active: state.side === 'supplier' }" t-on-click="() => state.side = 'supplier'">
+                Yetkazib beruvchilar <small t-esc="money(sideTotal('supplier'))"/>
+            </button>
+        </div>
+        <div class="cl-toolbar">
+            <div class="cl-search">
+                <i class="fa fa-search"/>
+                <input type="search" class="form-control" placeholder="Nomi yoki telefon" t-model="state.q" aria-label="Qidirish"/>
+            </div>
+        </div>
+        <div class="cl-empty" t-if="!partnerList.length">
+            <i class="fa fa-check-circle-o"/>
+            <div t-if="state.side === 'customer'">Qarzdor mijoz yo'q.</div>
+            <div t-else="">Yetkazib beruvchilarga qarz yo'q.</div>
+        </div>
+        <div class="cl-list" t-else="">
+            <button class="cl-mat pl-partner" t-foreach="partnerList" t-as="p" t-key="p.id" t-on-click="() => this.openPartner(p)">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name" t-esc="p.name"/>
+                    <span class="cl-mat-meta"><t t-if="p.last">oxirgi harakat <t t-esc="dmy(p.last)"/></t><t t-if="p.phone"> · <t t-esc="p.phone"/></t></span>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="cl-qty" t-att-class="p.balance &gt; 0 ? (state.side === 'customer' ? 'cl-bad' : 'cl-warn') : 'cl-ok'">
+                        <t t-esc="money(p.balance &gt; 0 ? p.balance : -p.balance)"/><small> <t t-esc="cur"/></small>
+                    </span>
+                    <span class="cl-flow cl-muted" t-if="p.balance &lt; 0">avans</span>
+                    <span class="cl-flow cl-muted" t-elif="state.side === 'supplier'">bizning qarz</span>
+                    <span class="cl-flow cl-muted" t-else="">qarz</span>
+                </span>
+            </button>
+        </div>
+    </t>
+
+    <!-- TO'LOVLAR -->
+    <t t-name="craf_pul.TabTolov">
+        <div class="pl-journals">
+            <div class="pl-journal" t-foreach="d.journals" t-as="j" t-key="j.id">
+                <span class="pl-journal-name"><i t-att-class="'fa ' + methodIcon(j.method)"/> <t t-esc="j.name"/></span>
+                <b t-att-class="{ 'cl-bad': j.balance &lt; 0 }"><t t-esc="money(j.balance)"/> <small t-esc="cur"/></b>
+            </div>
+        </div>
+        <p class="cl-note">Kassa va hisoblardagi hozirgi qoldiq. Pastda — davrdagi tushum va to'lovlar.</p>
+        <div class="cl-empty" t-if="!d.payments.length"><i class="fa fa-money"/><div>Bu davrda to'lov yo'q.</div></div>
+        <section t-foreach="payGroups" t-as="g" t-key="g.date" class="cl-dgroup">
+            <h2 class="cl-dgroup-head">
+                <t t-esc="g.label"/> <span class="cl-muted" t-esc="g.weekday"/>
+                <span class="pl-day-sum"><span class="cl-ok" t-if="g.inc">+<t t-esc="money(g.inc)"/></span><span class="cl-warn" t-if="g.out"> −<t t-esc="money(g.out)"/></span></span>
+            </h2>
+            <div class="cl-list">
+                <button class="cl-doc" t-foreach="g.rows" t-as="p" t-key="p.id" t-on-click="() => this.openPaymentDetail(p.id)">
+                    <span class="cl-doc-icon" t-att-class="p.kind === 'in' ? 'cl-k-kirim' : 'cl-k-chiqim'"><i t-att-class="'fa ' + methodIcon(p.method)"/></span>
+                    <span class="cl-doc-main">
+                        <span class="cl-doc-name" t-esc="p.partner"/>
+                        <span class="cl-doc-sub"><t t-esc="p.method_label"/> · <t t-esc="p.name"/><t t-if="p.memo"> · <t t-esc="p.memo"/></t></span>
+                    </span>
+                    <span class="cl-doc-right">
+                        <span class="cl-doc-total" t-att-class="p.kind === 'in' ? 'cl-ok' : 'cl-warn'"><t t-esc="p.kind === 'in' ? '+' : '−'"/><t t-esc="money(p.amount)"/></span>
+                        <span class="pl-c1" t-att-class="{ done: p.c1 === 'done' }" t-esc="p.c1 === 'done' ? '1C ✓' : '1C'"/>
+                    </span>
+                </button>
+            </div>
+        </section>
+    </t>
+
+    <!-- NARXLAR -->
+    <t t-name="craf_pul.TabNarx">
+        <div class="cl-empty" t-if="!state.prices"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+        <t t-else="">
+            <div class="cl-toolbar">
+                <div class="cl-search">
+                    <i class="fa fa-search"/>
+                    <input type="search" class="form-control" placeholder="Mahsulot, kod yoki kesim" t-model="state.priceQ" aria-label="Mahsulotni qidirish"/>
+                </div>
+                <div class="cl-chips" role="group" aria-label="Filtr">
+                    <button t-att-class="{ active: state.priceFilter === 'all' }" t-on-click="() => state.priceFilter = 'all'">Hammasi <span t-esc="state.prices.length"/></button>
+                    <button class="cl-chip-warn" t-if="priceMissingCount" t-att-class="{ active: state.priceFilter === 'missing' }" t-on-click="() => state.priceFilter = 'missing'">Narxsiz <span t-esc="priceMissingCount"/></button>
+                    <button t-foreach="priceChips" t-as="c" t-key="c" t-att-class="{ active: state.priceFilter === c }" t-on-click="() => state.priceFilter = c" t-esc="c"/>
+                </div>
+            </div>
+            <div class="pl-bulk" t-if="canEdit and priceRows.length">
+                <label class="cl-field">
+                    <span>Ko'rinayotgan <t t-esc="priceRows.length"/> ta mahsulotga 1 kg narxi, <t t-esc="cur"/></span>
+                    <input type="text" inputmode="numeric" class="form-control" t-model="state.bulkKg" placeholder="52 000"/>
+                </label>
+                <button class="btn btn-outline-primary" t-on-click="applyBulk">Qo'llash</button>
+            </div>
+            <p class="cl-note">Narx 1 kg yoki 1 dona uchun yoziladi — ikkinchisi og'irlikdan hisoblanadi. Sotuvda dona narxi ishlatiladi; berilganda hisob-faktura shu narx bilan yoziladi.</p>
+            <div class="cl-empty" t-if="!priceRows.length">Mos mahsulot yo'q.</div>
+            <section t-foreach="priceGroups" t-as="g" t-key="g.section" class="cl-dgroup">
+                <h2 class="cl-dgroup-head"><t t-esc="g.section"/> <span class="cl-muted" t-esc="g.rows.length"/></h2>
+                <div class="cl-list">
+                    <div class="pl-price" t-foreach="g.rows" t-as="r" t-key="r.id" t-att-class="{ 'pl-edited': isEdited(r), 'pl-missing': !rowPrice(r) }">
+                        <div class="pl-price-main">
+                            <span class="cl-mat-name" t-esc="r.name"/>
+                            <span class="cl-mat-meta"><t t-esc="r.code"/><t t-if="r.kg_pc"> · <t t-esc="num(r.kg_pc, 3)"/> kg/dona</t><t t-if="r.per_pack"> · pachka <t t-esc="r.per_pack"/></t></span>
+                        </div>
+                        <div class="pl-price-inputs">
+                            <label t-if="r.kg_pc"><span>1 kg</span>
+                                <input type="text" inputmode="numeric" class="form-control" t-att-value="fmtInput(kgValue(r))" t-on-change="(ev) => this.setKg(r, ev)" t-att-disabled="!canEdit" t-att-aria-label="r.name + ' 1 kg narxi'"/>
+                            </label>
+                            <label><span>1 dona</span>
+                                <input type="text" inputmode="numeric" class="form-control" t-att-value="fmtInput(pcValue(r))" t-on-change="(ev) => this.setPc(r, ev)" t-att-disabled="!canEdit" t-att-aria-label="r.name + ' 1 dona narxi'"/>
+                            </label>
+                            <span class="pl-pack" t-if="r.per_pack and rowPrice(r)">pachka <t t-esc="money(rowPrice(r) * r.per_pack)"/></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </t>
+    </t>
+
+    <!-- varaqlar -->
+    <t t-name="craf_pul.Sheet">
+        <t t-set="s" t-value="state.sheet"/>
+        <div class="cl-backdrop" t-on-click.self="closeSheet">
+            <div class="cl-sheet" t-att-class="'cl-sheet-' + s.type + (s.type === 'partner' or s.type === 'order' or s.type === 'receipt' ? ' pl-sheet-wide' : '')" role="dialog" aria-modal="true">
+                <t t-if="s.type === 'period'" t-call="craf_pul.SheetPeriod"/>
+                <t t-elif="s.type === 'menu'" t-call="craf_pul.SheetMenu"/>
+                <t t-elif="s.type === 'pay'" t-call="craf_pul.SheetPay"/>
+                <t t-elif="s.type === 'partner'" t-call="craf_pul.SheetPartner"/>
+                <t t-elif="s.type === 'paydoc'" t-call="craf_pul.SheetPayDoc"/>
+                <t t-elif="s.type === 'noprice'" t-call="craf_pul.SheetNoprice"/>
+                <t t-elif="s.type === 'order'" t-call="craf_pul.SheetOrder"/>
+                <t t-elif="s.type === 'unbilled'" t-call="craf_pul.SheetUnbilled"/>
+                <t t-elif="s.type === 'receipt'" t-call="craf_pul.SheetReceipt"/>
+                <div class="cl-sheet-error" t-if="s.error" role="alert">
+                    <i class="fa fa-exclamation-circle"/>
+                    <div class="cl-sheet-error-text" t-esc="s.error"/>
+                    <button class="cl-icon-btn" t-on-click="() => s.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_pul.Head">
+        <div class="cl-sheet-head">
+            <div class="cl-sheet-titles">
+                <div class="cl-sheet-title" t-esc="title"/>
+                <div class="cl-sheet-sub" t-if="sub" t-esc="sub"/>
+            </div>
+            <button class="cl-icon-btn" t-on-click="closeSheet" aria-label="Yopish"><i class="fa fa-times"/></button>
+        </div>
+    </t>
+
+    <t t-name="craf_pul.SheetPeriod">
+        <t t-call="craf_pul.Head"><t t-set="title" t-value="'Davr'"/><t t-set="sub" t-value="periodLabel"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-grid2">
+                <button class="cl-opt" t-on-click="() => this.preset('today')">Bugun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('yesterday')">Kecha</button>
+                <button class="cl-opt" t-on-click="() => this.preset('7')">Oxirgi 7 kun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('30')">Oxirgi 30 kun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('month')">Shu oy</button>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Boshlanish</span><input type="date" class="form-control" t-model="s.from"/></label>
+                <label class="cl-field"><span>Tugash</span><input type="date" class="form-control" t-model="s.to"/></label>
+            </div>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="applyPeriod">Ko'rsatish</button></div>
+    </t>
+
+    <t t-name="craf_pul.SheetMenu">
+        <t t-call="craf_pul.Head"><t t-set="title" t-value="'Boshqa amallar'"/><t t-set="sub" t-value="''"/></t>
+        <div class="cl-sheet-body cl-menu">
+            <button t-on-click="() => this.go('craf_hisobot.action_craf_kunlik')"><i class="fa fa-calendar-check-o"/> Kunlik hisobot (1C uchun)</button>
+            <button t-on-click="() => this.goList('account.move', 'Mijoz hisob-fakturalari', [['move_type', 'in', ['out_invoice', 'out_refund']]])"><i class="fa fa-file-text-o"/> Mijoz hisob-fakturalari</button>
+            <button t-on-click="() => this.goList('account.move', 'Yetkazib beruvchi hisob-fakturalari', [['move_type', 'in', ['in_invoice', 'in_refund']]])"><i class="fa fa-file-text"/> Yetkazib beruvchi hisob-fakturalari</button>
+            <button t-on-click="() => this.goList('account.payment', &quot;To'lovlar&quot;)"><i class="fa fa-money"/> To'lovlar (ro'yxat)</button>
+            <button t-if="state.data.noprice.length" t-on-click="openNoprice"><i class="fa fa-tag"/> Narx kerak: <t t-esc="state.data.noprice.length"/> ta buyurtma</button>
+            <button t-if="state.data.unbilled.length" t-on-click="openUnbilled"><i class="fa fa-truck"/> Hisob-fakturasiz kirim: <t t-esc="state.data.unbilled.length"/></button>
+            <button t-if="state.data.roles.manager and state.data.prices_missing" t-on-click="demoPrices"><i class="fa fa-magic"/> Namuna narxlar (sinov uchun)</button>
+            <button t-if="state.data.roles.manager" t-on-click="runSetup"><i class="fa fa-cog"/> Sozlashni tekshirish (kassalar, soliq)</button>
+            <button t-on-click="menuRefresh"><i class="fa fa-refresh"/> Yangilash</button>
+        </div>
+    </t>
+
+    <!-- to'lov qo'shish -->
+    <t t-name="craf_pul.SheetPay">
+        <t t-set="pv" t-value="payPreview"/>
+        <t t-call="craf_pul.Head">
+            <t t-set="title" t-value="s.partnerType === 'customer' ? &quot;Mijozdan to'lov&quot; : &quot;Yetkazib beruvchiga to'lov&quot;"/>
+            <t t-set="sub" t-value="s.partnerType === 'customer' ? 'Qarz eng eski hisob-fakturadan boshlab yopiladi' : 'Eng eski kirimdan boshlab yopiladi'"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-seg cl-seg-full pl-paytype" role="group" aria-label="To'lov turi">
+                <button t-att-class="{ active: s.partnerType === 'customer' }" t-on-click="() => this.setPayType('customer')">Mijozdan olindi</button>
+                <button t-att-class="{ active: s.partnerType === 'supplier' }" t-on-click="() => this.setPayType('supplier')">Yetkazib beruvchiga</button>
+            </div>
+            <div class="cl-field">
+                <span t-esc="s.partnerType === 'customer' ? 'Mijoz' : 'Yetkazib beruvchi'"/>
+                <div class="pl-picked" t-if="s.partner">
+                    <span class="pl-picked-name"><t t-esc="s.partner.name"/><small class="d-block cl-muted" t-if="s.partner.isNew">yangi — saqlanganda qo'shiladi</small></span>
+                    <span class="pl-picked-bal" t-if="!s.partner.isNew" t-att-class="s.partner.balance &gt; 0 ? 'cl-bad' : 'cl-ok'">
+                        <t t-esc="s.partner.balance &gt;= 0 ? 'qarz ' : 'avans '"/><t t-esc="money(s.partner.balance &gt;= 0 ? s.partner.balance : -s.partner.balance)"/>
+                    </span>
+                    <button class="cl-icon-btn" t-on-click="clearPartner" aria-label="Boshqasini tanlash"><i class="fa fa-times"/></button>
+                </div>
+                <t t-else="">
+                    <div class="cl-search cl-search-sheet">
+                        <i class="fa fa-search"/>
+                        <input type="search" class="form-control" t-model="s.q" placeholder="Nomini yozing" aria-label="Qidirish"/>
+                    </div>
+                    <div class="cl-list pl-picklist">
+                        <button class="cl-mat" t-foreach="payMatches" t-as="p" t-key="p.id" t-on-click="() => this.pickPartner(p)">
+                            <span class="cl-mat-main"><span class="cl-mat-name" t-esc="p.name"/></span>
+                            <span class="cl-mat-right"><span class="cl-qty" t-att-class="p.balance &gt; 0.5 ? 'cl-bad' : 'cl-muted'" t-if="p.balance"><t t-esc="money(p.balance)"/></span></span>
+                        </button>
+                        <button class="cl-mat pl-newpartner" t-if="payNewName" t-on-click="pickNewPartner">
+                            <span class="cl-mat-main"><span class="cl-mat-name"><i class="fa fa-plus"/> Yangi: «<t t-esc="payNewName"/>»</span></span>
+                        </button>
+                        <div class="cl-empty" t-if="!payMatches.length and !payNewName">Qarzdor yo'q — nomini yozing.</div>
+                    </div>
+                </t>
+            </div>
+            <label class="cl-field">
+                <span>Summa, <t t-esc="cur"/></span>
+                <input type="text" inputmode="decimal" class="form-control pl-big-input pl-amount" t-model="s.f.amount" placeholder="1 500 000" aria-label="Summa"/>
+            </label>
+            <div class="cl-field">
+                <span>Usul</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-foreach="s.o.journals" t-as="j" t-key="j.id" t-att-class="{ active: eq(s.f.journal_id, j.id) }" t-on-click="() => s.f.journal_id = j.id">
+                        <i t-att-class="'fa ' + methodIcon(j.method)"/> <t t-esc="j.label"/>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="s.f.date" t-att-max="s.o.today"/></label>
+                <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="s.f.memo" placeholder="Ixtiyoriy"/></label>
+            </div>
+            <div class="pl-preview" t-if="pv.ok">
+                <div class="cl-kv"><span>Summa</span><b><t t-esc="money(pv.amount)"/> <t t-esc="cur"/></b></div>
+                <t t-if="s.partner and !s.partner.isNew">
+                    <div class="cl-kv"><span t-esc="s.partnerType === 'customer' ? 'Qarzi hozir' : 'Bizning qarz hozir'"/><b><t t-esc="money(pv.before)"/></b></div>
+                    <div class="cl-kv cl-kv-total">
+                        <span>To'lovdan keyin</span>
+                        <b t-att-class="pv.after &gt; 0.5 ? 'cl-bad' : 'cl-ok'"><t t-if="pv.after &lt; -0.5">avans </t><t t-esc="money(pv.after &gt;= 0 ? pv.after : -pv.after)"/> <t t-esc="cur"/></b>
+                    </div>
+                </t>
+            </div>
+            <p class="cl-hint cl-bad" t-if="pv.bad">Summani raqam bilan yozing: 1 500 000 yoki 1000000+500000.</p>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="savePayment" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
+    <!-- hamkor: akt sverka -->
+    <t t-name="craf_pul.SheetPartner">
+        <t t-set="pd" t-value="s.d"/>
+        <t t-call="craf_pul.Head">
+            <t t-set="title" t-value="pd.partner.name"/>
+            <t t-set="sub" t-value="(pd.kind === 'customer' ? 'Mijoz' : 'Yetkazib beruvchi') + (pd.partner.phone ? ' · ' + pd.partner.phone : '')"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="pl-balance" t-att-class="pd.current &gt; 0.5 ? (pd.kind === 'customer' ? 'pl-bal-bad' : 'pl-bal-warn') : 'pl-bal-ok'">
+                <span t-if="pd.current &gt; 0.5" t-esc="pd.kind === 'customer' ? 'Qarzi' : 'Bizning qarz'"/>
+                <span t-elif="pd.current &lt; -0.5">Avans</span>
+                <span t-else="">Qarz yo'q</span>
+                <b><t t-esc="money(pd.current &gt;= 0 ? pd.current : -pd.current)"/> <small t-esc="cur"/></b>
+            </div>
+            <div class="pl-actions">
+                <button class="btn btn-primary" t-if="pd.roles.accountant" t-on-click="partnerPay"><i class="fa fa-plus"/> To'lov</button>
+                <button class="btn btn-outline-secondary" t-on-click="downloadAkt"><i class="fa fa-file-excel-o"/> Akt sverka</button>
+            </div>
+            <div class="cl-field-row pl-range">
+                <label class="cl-field"><span>Dan</span><input type="date" class="form-control" t-model="s.from"/></label>
+                <label class="cl-field"><span>Gacha</span><input type="date" class="form-control" t-model="s.to"/></label>
+                <button class="btn btn-outline-secondary" t-on-click="reloadPartner" aria-label="Ko'rsatish"><i class="fa fa-refresh"/></button>
+            </div>
+            <div class="cl-section">
+                <div class="cl-kv"><span>Boshlang'ich qoldiq (<t t-esc="dmy(pd.date_from)"/>)</span><b t-esc="money(pd.opening)"/></div>
+                <div class="cl-kv"><span t-esc="pd.kind === 'customer' ? 'Berildi (+)' : 'Olindi (+)'"/><b t-esc="money(pd.plus)"/></div>
+                <div class="cl-kv"><span>To'landi (−)</span><b t-esc="money(pd.minus)"/></div>
+                <div class="cl-kv cl-kv-total"><span>Oxirgi qoldiq (<t t-esc="dmy(pd.date_to)"/>)</span><b t-esc="money(pd.closing)"/></div>
+            </div>
+            <div class="cl-empty" t-if="!pd.rows.length">Bu davrda harakat yo'q.</div>
+            <div class="cl-list" t-else="">
+                <button class="cl-doc pl-row" t-foreach="pd.rows" t-as="r" t-key="r.id" t-on-click="() => this.openRow(r)">
+                    <span class="cl-doc-icon" t-att-class="r.payment_id ? 'cl-k-kirim' : 'cl-k-plavka'"><i t-att-class="r.payment_id ? 'fa fa-money' : 'fa fa-file-text-o'"/></span>
+                    <span class="cl-doc-main">
+                        <span class="cl-doc-name" t-esc="r.label"/>
+                        <span class="cl-doc-sub"><t t-esc="dmy(r.date)"/> · <t t-esc="r.name"/><t t-if="!r.payment_id and r.residual &gt; 0.5"> · ochiq <t t-esc="money(r.residual)"/></t></span>
+                    </span>
+                    <span class="cl-doc-right">
+                        <span class="cl-doc-total" t-att-class="r.amount &gt;= 0 ? '' : 'cl-ok'"><t t-esc="r.amount &gt;= 0 ? '+' : '−'"/><t t-esc="money(r.amount &gt;= 0 ? r.amount : -r.amount)"/></span>
+                        <span class="cl-muted small">qoldiq <t t-esc="money(r.balance)"/></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <!-- to'lov tafsiloti -->
+    <t t-name="craf_pul.SheetPayDoc">
+        <t t-set="p" t-value="s.p"/>
+        <t t-call="craf_pul.Head">
+            <t t-set="title" t-value="(p.kind === 'in' ? 'Tushum ' : &quot;To'lov &quot;) + money(p.amount) + ' ' + cur"/>
+            <t t-set="sub" t-value="p.name"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-doc-state">
+                <span class="cl-state" t-att-class="p.state === 'canceled' ? 'cl-st-cancel' : 'cl-st-done'" t-esc="p.state === 'canceled' ? 'Bekor qilingan' : 'Bajarildi'"/>
+                <span class="pl-c1 ms-1" t-att-class="{ done: p.c1 === 'done' }" t-esc="p.c1 === 'done' ? '1C ga kiritilgan' : '1C ga kiritilmagan'"/>
+            </div>
+            <div class="cl-section">
+                <div class="cl-kv"><span t-esc="p.partner_type === 'customer' ? 'Mijoz' : 'Yetkazib beruvchi'"/><b t-esc="p.partner"/></div>
+                <div class="cl-kv"><span>Sana</span><b t-esc="dmy(p.date)"/></div>
+                <div class="cl-kv"><span>Usul</span><b t-esc="p.method_label"/></div>
+                <div class="cl-kv" t-if="p.memo"><span>Izoh</span><b t-esc="p.memo"/></div>
+                <div class="cl-kv"><span>Kiritgan</span><b t-esc="p.user"/></div>
+            </div>
+            <div class="cl-section" t-if="p.invoices.length">
+                <h3>Yopilgan hisob-fakturalar</h3>
+                <div class="cl-kv cl-kv-line" t-foreach="p.invoices" t-as="m" t-key="m_index">
+                    <span><t t-esc="m.name"/><span class="cl-muted small d-block" t-esc="m.origin"/></span>
+                    <b><t t-esc="money(m.amount)"/><span class="cl-muted small d-block" t-if="m.residual &gt; 0.5">qoldi <t t-esc="money(m.residual)"/></span></b>
+                </div>
+            </div>
+            <p class="cl-hint" t-else="">Hali hisob-faktura bilan yopilmagan — avans sifatida turibdi.</p>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap" t-if="p.actions.length">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="p.actions.includes('cancel')" t-on-click="() => this.paymentAction(p, 'cancel')">Bekor qilish</button>
+            <button class="btn btn-outline-secondary" t-if="p.actions.includes('c1_undo')" t-on-click="() => this.paymentAction(p, 'c1_undo')">1C belgisini olish</button>
+            <button class="btn btn-outline-primary" t-if="p.actions.includes('c1')" t-on-click="() => this.paymentAction(p, 'c1')">1C ga kiritildi</button>
+        </div>
+    </t>
+
+    <!-- narx kerak: buyurtmalar ro'yxati -->
+    <t t-name="craf_pul.SheetNoprice">
+        <t t-call="craf_pul.Head"><t t-set="title" t-value="'Narx kerak'"/><t t-set="sub" t-value="'Berilgan, lekin narxi yozilmagan buyurtmalar'"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-empty" t-if="!state.data.noprice.length"><i class="fa fa-check"/><div>Hammasi narxlangan.</div></div>
+            <div class="cl-list" t-else="">
+                <button class="cl-doc" t-foreach="state.data.noprice" t-as="o" t-key="o.id" t-on-click="() => this.openOrder(o.id)">
+                    <span class="cl-doc-icon cl-k-chiqim"><i class="fa fa-truck"/></span>
+                    <span class="cl-doc-main">
+                        <span class="cl-doc-name"><t t-esc="o.partner"/> <span class="cl-muted" t-esc="o.name"/></span>
+                        <span class="cl-doc-sub"><t t-esc="dmy(o.date)"/><t t-if="o.truck"> · <t t-esc="o.truck"/></t> · <t t-esc="o.lines"/> qator</span>
+                    </span>
+                    <span class="cl-doc-right"><i class="fa fa-chevron-right cl-muted"/></span>
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_pul.SheetOrder">
+        <t t-call="craf_pul.Head">
+            <t t-set="title" t-value="s.o.partner + ' · ' + s.o.name"/>
+            <t t-set="sub" t-value="(s.o.date ? dmy(s.o.date) : '') + (s.o.truck ? ' · ' + s.o.truck : '')"/>
+        </t>
+        <div class="cl-sheet-body">
+            <p class="cl-hint">1 dona narxini yozing. Narxlar ro'yxatidagi narx avtomatik qo'yilgan bo'lsa — tekshiring.</p>
+            <div class="pl-oline" t-foreach="s.o.lines" t-as="l" t-key="l.id">
+                <div class="pl-oline-name">
+                    <b t-esc="l.name"/>
+                    <span class="cl-muted small d-block"><t t-esc="num(l.delivered or l.qty)"/> <t t-esc="l.uom"/> berildi<t t-if="l.kg_pc"> · <t t-esc="num((l.delivered or l.qty) * l.kg_pc, 1)"/> kg</t></span>
+                </div>
+                <input type="text" inputmode="numeric" class="form-control" t-model="s.prices[l.id]" placeholder="narx" t-att-aria-label="l.name + ' narxi'"/>
+            </div>
+            <div class="pl-preview">
+                <div class="cl-kv cl-kv-total"><span>Jami hisob-faktura</span><b><t t-esc="money(orderTotal(s))"/> <t t-esc="cur"/></b></div>
+            </div>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveOrder" t-att-disabled="state.busy">Hisob-faktura yozish</button>
+        </div>
+    </t>
+
+    <!-- hisob-fakturasiz kirim -->
+    <t t-name="craf_pul.SheetUnbilled">
+        <t t-call="craf_pul.Head"><t t-set="title" t-value="'Hisob-fakturasiz kirim'"/><t t-set="sub" t-value="'Narx yoki yetkazib beruvchi yozilmagan kirimlar (180 kun)'"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-empty" t-if="!state.data.unbilled.length"><i class="fa fa-check"/><div>Hammasiga hisob-faktura yozilgan.</div></div>
+            <div class="cl-list" t-else="">
+                <button class="cl-doc" t-foreach="state.data.unbilled" t-as="r" t-key="r.id" t-on-click="() => this.openReceipt(r.id)">
+                    <span class="cl-doc-icon cl-k-kirim"><i class="fa fa-truck"/></span>
+                    <span class="cl-doc-main">
+                        <span class="cl-doc-name"><t t-esc="r.partner or &quot;Yetkazib beruvchi yo'q&quot;"/> <span class="cl-muted" t-esc="r.name"/></span>
+                        <span class="cl-doc-sub"><t t-esc="dmy(r.date)"/><t t-if="r.vehicle"> · <t t-esc="r.vehicle"/></t><t t-if="r.kg"> · <t t-esc="num(r.kg)"/> kg</t></span>
+                        <span class="cl-doc-sub cl-warn">yo'q: <t t-esc="r.missing.join(', ')"/></span>
+                    </span>
+                    <span class="cl-doc-right"><i class="fa fa-chevron-right cl-muted"/></span>
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_pul.SheetReceipt">
+        <t t-call="craf_pul.Head">
+            <t t-set="title" t-value="'Kirim ' + s.r.name"/>
+            <t t-set="sub" t-value="dmy(s.r.date) + (s.r.vehicle ? ' · ' + s.r.vehicle : '')"/>
+        </t>
+        <div class="cl-sheet-body">
+            <label class="cl-field">
+                <span>Yetkazib beruvchi</span>
+                <input type="text" class="form-control" t-model="s.partner" list="pl_suppliers" placeholder="Masalan: Бухоро Чушка" aria-label="Yetkazib beruvchi"/>
+                <datalist id="pl_suppliers"><t t-foreach="s.r.partners" t-as="pn" t-key="pn"><option t-att-value="pn"/></t></datalist>
+            </label>
+            <div class="pl-oline" t-foreach="s.r.lines" t-as="l" t-key="l.id">
+                <div class="pl-oline-name">
+                    <b t-esc="l.name"/>
+                    <span class="cl-muted small d-block"><t t-esc="num(l.qty, 2)"/> <t t-esc="l.uom"/> · narx 1 <t t-esc="l.uom"/> uchun</span>
+                </div>
+                <input type="text" inputmode="decimal" class="form-control" t-model="s.prices[l.id]" placeholder="narx" t-att-aria-label="l.name + ' narxi'"/>
+            </div>
+            <div class="pl-preview">
+                <div class="cl-kv cl-kv-total"><span>Jami hisob-faktura</span><b><t t-esc="money(receiptTotal(s))"/> <t t-esc="cur"/></b></div>
+            </div>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveReceipt" t-att-disabled="state.busy">Hisob-faktura yozish</button>
+        </div>
+    </t>
+</templates>

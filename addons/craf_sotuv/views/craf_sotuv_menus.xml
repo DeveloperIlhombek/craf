@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_sotuv" model="ir.actions.client">
+        <field name="name">Sotuv</field>
+        <field name="tag">craf_sotuv</field>
+        <field name="path">craf-sotuv</field>
+        <field name="context">{'craf_tab': 'new'}</field>
+    </record>
+    <record id="action_craf_yuklash" model="ir.actions.client">
+        <field name="name">Yuklash</field>
+        <field name="tag">craf_sotuv</field>
+        <field name="path">craf-yuklash</field>
+        <field name="context">{'craf_tab': 'load'}</field>
+    </record>
+
+    <menuitem id="menu_craf_sotuv_root" name="Sotuv" parent="craf_profile.menu_craf_root" sequence="4"
+              groups="craf_sotuv.group_craf_loader"/>
+    <menuitem id="menu_craf_sotuv" name="Buyurtma" parent="menu_craf_sotuv_root"
+              action="action_craf_sotuv" sequence="10" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_yuklash" name="Yuklash" parent="menu_craf_sotuv_root"
+              action="action_craf_yuklash" sequence="15" groups="craf_sotuv.group_craf_loader"/>
+    <menuitem id="menu_craf_sale_orders" name="Sotuv hujjatlari" parent="menu_craf_sotuv_root"
+              action="action_craf_sale_orders" sequence="20" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_sale_lines" name="Berilgan mahsulotlar" parent="menu_craf_sotuv_root"
+              action="action_craf_sale_lines" sequence="30" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_sotuv_alias" name="Sotuv qisqartmalari" parent="craf_profile.menu_craf_config"
+              action="action_craf_sotuv_alias" sequence="60" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_sale_points" name="Sotuv joylari" parent="craf_profile.menu_craf_config"
+              action="action_craf_sale_points" sequence="61" groups="craf_sotuv.group_craf_seller"/>
+</odoo>

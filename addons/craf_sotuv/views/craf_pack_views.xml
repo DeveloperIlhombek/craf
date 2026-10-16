@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_pack_view_list_sotuv" model="ir.ui.view">
+        <field name="name">craf.pack.list.sotuv</field>
+        <field name="model">craf.pack</field>
+        <field name="inherit_id" ref="craf_label.craf_pack_view_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_id']" position="after">
+                <field name="craf_state" widget="badge" optional="show"
+                       decoration-success="craf_state == 'stock'" decoration-info="craf_state == 'sold'"/>
+                <field name="sold_partner_id" optional="show"/>
+                <field name="sale_order_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_pack_view_form_sotuv" model="ir.ui.view">
+        <field name="name">craf.pack.form.sotuv</field>
+        <field name="model">craf.pack</field>
+        <field name="inherit_id" ref="craf_label.craf_pack_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//widget[@name='web_ribbon']" position="after">
+                <widget name="web_ribbon" title="Sotildi" bg_color="text-bg-info" invisible="craf_state != 'sold'"/>
+            </xpath>
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="craf_state"/>
+                <field name="sale_order_id" invisible="not sale_order_id"/>
+                <field name="sold_partner_id" invisible="not sold_partner_id"/>
+                <field name="sold_date" invisible="not sold_date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_pack_view_search_sotuv" model="ir.ui.view">
+        <field name="name">craf.pack.search.sotuv</field>
+        <field name="model">craf.pack</field>
+        <field name="inherit_id" ref="craf_label.craf_pack_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='no_weight']" position="after">
+                <filter name="in_stock" string="Omborda" domain="[('craf_state', '=', 'stock')]"/>
+                <filter name="sold" string="Sotilgan" domain="[('craf_state', '=', 'sold')]"/>
+                <field name="sold_partner_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

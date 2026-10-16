@@ -1,6 +1,6 @@
 {
     "name": "Craf Литейка: daftar va hisobot",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Plavka daftar ko'rinishida, Литейка qoldig'i → sarf → stalba → otxod sikli, Excel eksport va import",
     "description": """
 Литейка (pech) ishini ishchilar daftari va Excel jadvaliga moslash:
@@ -15,6 +15,11 @@
   ishlab chiqarilgan stalba va otxod; kunlik qoldiq jadvali (Excel Лист1 ko'rinishida);
   plavkalar jadvali; kirimlar (mashina raqami bilan)
 - Excel eksport (4 varaq) va Excel jadvalidagi qoldiqni yuklash (taqqoslash va tuzatish)
+- Telefon birinchi (mobile first) sahifa: Qoldiq / Kunlik / Hujjatlar varaqlari
+- Materiallar: yaratish, tahrirlash, o'chirish yoki ro'yxatdan chiqarish, qaytarish
+- Hujjatlar: kirim, ko'chirish, sanash (SN-…, inventarizatsiya), qaytarish; barcha hujjatlar jurnali
+- O'tgan kungi plavka va kirim ombor harakatlari hujjat sanasiga yoziladi; sanashdan oldingi sanaga
+  yozish to'xtatiladi (ikki marta hisoblanmasin)
 """,
     "author": "Craf",
     "category": "Manufacturing",
@@ -23,11 +28,13 @@
     "data": [
         "security/ir.model.access.csv",
         "data/craf_litey_data.xml",
+        "data/craf_litey_count_data.xml",
         "views/craf_foundry_melt_views.xml",
         "views/product_views.xml",
         "views/stock_picking_views.xml",
         "views/craf_litey_kirim_views.xml",
         "views/craf_litey_import_views.xml",
+        "views/craf_litey_count_views.xml",
         "views/craf_litey_menus.xml",
     ],
     "assets": {

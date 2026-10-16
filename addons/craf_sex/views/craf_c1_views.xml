@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ombor hujjatlari: 1C belgisi -->
+    <record id="vpicktree_craf_c1" model="ir.ui.view">
+        <field name="name">stock.picking.list.craf.c1</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="hide" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new' and state == 'done'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_picking_internal_search_craf_c1" model="ir.ui.view">
+        <field name="name">stock.picking.search.craf.c1</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <filter name="available" position="after">
+                <separator/>
+                <filter name="c1_new" string="1C ga kiritilmagan" domain="[('state', '=', 'done'), ('c1_state', '=', 'new')]"/>
+            </filter>
+        </field>
+    </record>
+
+    <record id="view_picking_form_craf_c1" model="ir.ui.view">
+        <field name="name">stock.picking.form.craf.c1</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_c1_done" type="object" string="1C ga kiritildi"
+                        invisible="state != 'done' or c1_state == 'done'" groups="craf_sex.group_craf_accountant"/>
+                <button name="action_c1_reset" type="object" string="1C belgisini olish"
+                        invisible="c1_state != 'done'" groups="craf_sex.group_craf_accountant"/>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <field name="c1_state" invisible="1"/>
+                <span class="badge text-bg-success" invisible="c1_state != 'done'">1C ga kiritildi</span>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Литейка sanash: 1C belgisi -->
+    <record id="craf_litey_count_view_list_c1" model="ir.ui.view">
+        <field name="name">craf.litey.count.list.c1</field>
+        <field name="model">craf.litey.count</field>
+        <field name="inherit_id" ref="craf_litey.craf_litey_count_view_list"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="c1_state" widget="badge" optional="show" string="1C"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new' and state == 'done'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="craf_litey_count_view_search_c1" model="ir.ui.view">
+        <field name="name">craf.litey.count.search.c1</field>
+        <field name="model">craf.litey.count</field>
+        <field name="inherit_id" ref="craf_litey.craf_litey_count_view_search"/>
+        <field name="arch" type="xml">
+            <filter name="done" position="after">
+                <filter name="c1_new" string="1C ga kiritilmagan" domain="[('state', '=', 'done'), ('c1_state', '=', 'new')]"/>
+            </filter>
+        </field>
+    </record>
+
+    <record id="craf_litey_count_view_form_c1" model="ir.ui.view">
+        <field name="name">craf.litey.count.form.c1</field>
+        <field name="model">craf.litey.count</field>
+        <field name="inherit_id" ref="craf_litey.craf_litey_count_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="before">
+                <button name="action_c1_done" type="object" string="1C ga kiritildi"
+                        invisible="state != 'done' or c1_state == 'done'" groups="craf_sex.group_craf_accountant"/>
+                <button name="action_c1_reset" type="object" string="1C belgisini olish"
+                        invisible="c1_state != 'done'" groups="craf_sex.group_craf_accountant"/>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <field name="c1_state" invisible="1"/>
+                <span class="badge text-bg-success" invisible="c1_state != 'done'">1C ga kiritildi</span>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_davomat" model="ir.actions.client">
+        <field name="name">Davomat</field>
+        <field name="tag">craf_davomat</field>
+        <field name="path">craf-davomat</field>
+    </record>
+    <menuitem id="menu_craf_davomat" name="Davomat" parent="craf_profile.menu_craf_root" action="action_craf_davomat"
+              sequence="6" groups="craf_sex.group_craf_accountant,base.group_system"/>
+
+    <!-- terminallar -->
+    <record id="craf_davomat_device_view_list" model="ir.ui.view">
+        <field name="name">craf.davomat.device.list</field>
+        <field name="model">craf.davomat.device</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="place"/>
+                <field name="serial" optional="show"/>
+                <field name="last_seen"/>
+                <field name="last_ip" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="craf_davomat_device_view_form" model="ir.ui.view">
+        <field name="name">craf.davomat.device.form</field>
+        <field name="model">craf.davomat.device</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_new_token" type="object" string="Yangi kalit"
+                            confirm="Eski manzil ishlamay qoladi — qurilmada yangi manzilni yozish kerak. Davom etasizmi?"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="place"/>
+                            <field name="serial"/>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="push_url" widget="CopyClipboardChar"/>
+                            <field name="last_seen"/>
+                            <field name="last_ip"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_craf_davomat_device" model="ir.actions.act_window">
+        <field name="name">Davomat terminallari</field>
+        <field name="res_model">craf.davomat.device</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- yozuvlar jurnali -->
+    <record id="craf_davomat_log_view_list" model="ir.ui.view">
+        <field name="name">craf.davomat.log.list</field>
+        <field name="model">craf.davomat.log</field>
+        <field name="arch" type="xml">
+            <list create="0" decoration-danger="result in ('unknown', 'error')" decoration-muted="result in ('duplicate', 'ignored')">
+                <header>
+                    <button name="action_reprocess" type="object" string="Qayta ishlash"/>
+                </header>
+                <field name="event_time"/>
+                <field name="device_id"/>
+                <field name="employee_no"/>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="method" optional="show"/>
+                <field name="action"/>
+                <field name="result" widget="badge" decoration-success="result == 'done'" decoration-danger="result in ('unknown', 'error')"/>
+                <field name="note" optional="show"/>
+                <field name="serial_no" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="craf_davomat_log_view_search" model="ir.ui.view">
+        <field name="name">craf.davomat.log.search</field>
+        <field name="model">craf.davomat.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_no"/>
+                <field name="employee_id"/>
+                <field name="device_id"/>
+                <filter name="unknown" string="Xodim topilmadi" domain="[('result', '=', 'unknown')]"/>
+                <filter name="problems" string="Muammoli" domain="[('result', 'in', ('unknown', 'error', 'ignored'))]"/>
+                <separator/>
+                <filter name="today" string="Bugun" date="event_time"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_craf_davomat_log" model="ir.actions.act_window">
+        <field name="name">Terminal yozuvlari</field>
+        <field name="res_model">craf.davomat.log</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ish jadvallari -->
+    <record id="craf_davomat_schedule_view_list" model="ir.ui.view">
+        <field name="name">craf.davomat.schedule.list</field>
+        <field name="model">craf.davomat.schedule</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="start" widget="float_time"/>
+                <field name="end" widget="float_time"/>
+                <field name="break_hours" widget="float_time"/>
+                <field name="grace"/>
+                <field name="days"/>
+                <field name="night"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_craf_davomat_schedule" model="ir.actions.act_window">
+        <field name="name">Ish jadvallari</field>
+        <field name="res_model">craf.davomat.schedule</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_craf_davomat_devices" name="Davomat terminallari" parent="craf_profile.menu_craf_config"
+              action="action_craf_davomat_device" sequence="60" groups="craf_sex.group_craf_accountant,base.group_system"/>
+    <menuitem id="menu_craf_davomat_schedules" name="Ish jadvallari" parent="craf_profile.menu_craf_config"
+              action="action_craf_davomat_schedule" sequence="61" groups="craf_sex.group_craf_accountant,base.group_system"/>
+    <menuitem id="menu_craf_davomat_logs" name="Terminal yozuvlari" parent="craf_profile.menu_craf_config"
+              action="action_craf_davomat_log" sequence="62" groups="craf_sex.group_craf_accountant,base.group_system"/>
+
+    <!-- xodim kartasi -->
+    <record id="view_employee_form_craf_davomat" model="ir.ui.view">
+        <field name="name">hr.employee.form.craf.davomat</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='work_information']" position="inside">
+                <group string="Davomat (Craf)" name="craf_davomat">
+                    <field name="craf_terminal_id"/>
+                    <field name="craf_schedule_id"/>
+                    <field name="craf_place"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

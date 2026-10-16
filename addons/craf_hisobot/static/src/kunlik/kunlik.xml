@@ -82,8 +82,8 @@
                                         </t>
                                     </div>
                                     <div class="small text-muted mb-2" t-if="dep.extra.length" t-esc="dep.extra.join(' · ')"/>
-                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="'Sarf'"/><t t-set="rows" t-value="dep.used"/></t>
-                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="dep.key === 'ombor' ? 'Topshirildi' : 'Chiqish'"/><t t-set="rows" t-value="dep.made"/></t>
+                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="dep.used_label or 'Sarf'"/><t t-set="rows" t-value="dep.used"/></t>
+                                    <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="dep.made_label or (dep.key === 'ombor' ? 'Topshirildi' : 'Chiqish')"/><t t-set="rows" t-value="dep.made"/></t>
                                     <t t-call="craf_hisobot.ItemTable"><t t-set="label" t-value="'Chiqindi va brak'"/><t t-set="rows" t-value="dep.waste"/></t>
                                 </div>
                             </div>

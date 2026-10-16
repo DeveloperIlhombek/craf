@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_davomat_device_acc,craf.davomat.device hisobchi,model_craf_davomat_device,craf_sex.group_craf_accountant,1,1,1,1
+access_craf_davomat_device_admin,craf.davomat.device admin,model_craf_davomat_device,base.group_system,1,1,1,1
+access_craf_davomat_log_acc,craf.davomat.log hisobchi,model_craf_davomat_log,craf_sex.group_craf_accountant,1,1,1,0
+access_craf_davomat_log_admin,craf.davomat.log admin,model_craf_davomat_log,base.group_system,1,1,1,1
+access_craf_davomat_schedule_user,craf.davomat.schedule user,model_craf_davomat_schedule,base.group_user,1,0,0,0
+access_craf_davomat_schedule_acc,craf.davomat.schedule hisobchi,model_craf_davomat_schedule,craf_sex.group_craf_accountant,1,1,1,1
+access_craf_davomat_schedule_admin,craf.davomat.schedule admin,model_craf_davomat_schedule,base.group_system,1,1,1,1

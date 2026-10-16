@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_sotuv_alias_user,craf.sotuv.alias user,model_craf_sotuv_alias,base.group_user,1,0,0,0
+access_craf_sotuv_alias_seller,craf.sotuv.alias seller,model_craf_sotuv_alias,group_craf_seller,1,1,1,1
+access_craf_load_alloc_loader,craf.load.alloc loader,model_craf_load_alloc,group_craf_loader,1,1,1,1

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_craf_sotuv" model="ir.ui.view">
+        <field name="name">sale.order.form.craf.sotuv</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_craf_send" type="object" string="Yuklashga yuborish" class="btn-primary"
+                        icon="fa-send" invisible="state == 'cancel' or delivery_status == 'full' or craf_load_state not in ('draft', 'cancel')"
+                        groups="craf_sotuv.group_craf_seller"/>
+                <button name="action_craf_berildi" type="object" string="Berildi" class="btn-primary"
+                        icon="fa-truck" data-hotkey="b" groups="craf_sotuv.group_craf_seller"
+                        invisible="state == 'cancel' or delivery_status == 'full'"
+                        confirm="Buyurtma tasdiqlanadi va mahsulot tanlangan joydan mijozga chiqariladi. Davom etasizmi?"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="craf_location_id" options="{'no_create': True}"
+                       readonly="delivery_status == 'full'"/>
+                <field name="craf_given_date" readonly="delivery_status == 'full'"/>
+                <field name="craf_truck" placeholder="01 A 777 AA"/>
+                <field name="craf_load_note"/>
+                <field name="craf_load_state" widget="badge" readonly="1"
+                       decoration-info="craf_load_state == 'queue'" decoration-warning="craf_load_state == 'loading'"
+                       decoration-success="craf_load_state == 'done'"/>
+                <field name="craf_loader_id" readonly="1" invisible="not craf_loader_id"/>
+                <field name="craf_truck_photo_ids" widget="many2many_binary" readonly="1"
+                       invisible="not craf_truck_photo_ids"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="before">
+                <field name="craf_packs" string="Pachka" optional="show"/>
+                <field name="craf_extra" string="+ dona" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="after">
+                <field name="craf_kg" string="kg" optional="show" sum="kg"/>
+                <field name="craf_source_line" optional="hide"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Craf" name="craf_sotuv">
+                    <group>
+                        <group string="Jami">
+                            <field name="craf_total_packs"/>
+                            <field name="craf_total_pcs"/>
+                            <field name="craf_total_kg"/>
+                        </group>
+                        <group string="1C">
+                            <field name="c1_state" readonly="1"/>
+                            <field name="c1_date" invisible="c1_state != 'done'"/>
+                            <field name="c1_user_id" invisible="c1_state != 'done'"/>
+                            <button name="action_c1_done" type="object" string="1C ga kiritildi" class="btn-link"
+                                    invisible="c1_state == 'done' or state != 'sale'"/>
+                            <button name="action_c1_reset" type="object" string="1C belgisini olib tashlash"
+                                    class="btn-link" invisible="c1_state != 'done'"/>
+                        </group>
+                    </group>
+                    <field name="craf_source_text" placeholder="Sotuvchi yozgan matn" invisible="not craf_source_text"
+                           readonly="1"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_quotation_tree_craf_sotuv" model="ir.ui.view">
+        <field name="name">sale.order.list.craf.sotuv</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="craf_location_id" optional="show"/>
+                <field name="craf_given_date" optional="show"/>
+                <field name="craf_load_state" optional="show" widget="badge"
+                       decoration-info="craf_load_state == 'queue'" decoration-warning="craf_load_state == 'loading'"
+                       decoration-success="craf_load_state == 'done'"/>
+                <field name="craf_loader_id" optional="show"/>
+                <field name="craf_truck" optional="show"/>
+                <field name="craf_total_packs" optional="show" sum="pachka"/>
+                <field name="craf_total_pcs" optional="hide" sum="dona"/>
+                <field name="craf_total_kg" optional="show" sum="kg"/>
+                <field name="c1_state" optional="show" widget="badge"
+                       decoration-success="c1_state == 'done'" decoration-warning="c1_state == 'new'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sales_order_filter_craf_sotuv" model="ir.ui.view">
+        <field name="name">sale.order.search.craf.sotuv</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="craf_location_id"/>
+                <filter name="craf_c1_new" string="1C ga kiritilmagan"
+                        domain="[('c1_state', '=', 'new'), ('state', '=', 'sale')]"/>
+                <filter name="craf_given" string="Berildi" domain="[('delivery_status', '=', 'full')]"/>
+                <filter name="craf_queue" string="Yuklashda" domain="[('craf_load_state', 'in', ('queue', 'loading'))]"/>
+                <field name="craf_loader_id"/>
+                <field name="craf_truck"/>
+                <group>
+                    <filter name="group_craf_location" string="Qayerdan" context="{'group_by': 'craf_location_id'}"/>
+                    <filter name="group_craf_day" string="Berilgan kun" context="{'group_by': 'craf_given_date:day'}"/>
+                    <filter name="group_craf_loader" string="Yuklovchi" context="{'group_by': 'craf_loader_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_craf_sale_orders" model="ir.actions.act_window">
+        <field name="name">Sotuv hujjatlari</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('state', '!=', 'cancel')]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Berilgan mahsulotlar (qatorlar) -->
+    <record id="craf_sale_line_view_list" model="ir.ui.view">
+        <field name="name">sale.order.line.list.craf</field>
+        <field name="model">sale.order.line</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Berilgan mahsulotlar" create="0" edit="0" delete="0">
+                <field name="craf_date" string="Vaqt"/>
+                <field name="order_id"/>
+                <field name="order_partner_id" string="Mijoz"/>
+                <field name="craf_location_id" optional="show"/>
+                <field name="product_id"/>
+                <field name="craf_packs" string="Pachka" sum="pachka"/>
+                <field name="craf_extra" string="+ dona" optional="show"/>
+                <field name="product_uom_qty" string="Jami dona" sum="dona"/>
+                <field name="qty_delivered" string="Berildi" optional="show" sum="berildi"/>
+                <field name="craf_kg" sum="kg"/>
+                <field name="craf_source_line" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_sale_line_view_search" model="ir.ui.view">
+        <field name="name">sale.order.line.search.craf</field>
+        <field name="model">sale.order.line</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search string="Berilgan mahsulotlar">
+                <field name="order_partner_id" string="Mijoz"/>
+                <field name="product_id"/>
+                <field name="order_id"/>
+                <field name="craf_location_id"/>
+                <filter name="today" string="Bugun"
+                        domain="[('craf_date', '>=', (context_today()).strftime('%Y-%m-%d 00:00:00')), ('craf_date', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter name="craf_date" string="Sana" date="craf_date"/>
+                <group>
+                    <filter name="group_partner" string="Mijoz" context="{'group_by': 'order_partner_id'}"/>
+                    <filter name="group_product" string="Mahsulot" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_location" string="Qayerdan" context="{'group_by': 'craf_location_id'}"/>
+                    <filter name="group_date" string="Kun" context="{'group_by': 'craf_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_sale_lines" model="ir.actions.act_window">
+        <field name="name">Berilgan mahsulotlar</field>
+        <field name="res_model">sale.order.line</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('craf_sale_line_view_list')})]"/>
+        <field name="search_view_id" ref="craf_sale_line_view_search"/>
+        <field name="domain">[('order_id.state', '=', 'sale'), ('display_type', '=', False)]</field>
+        <field name="context">{'search_default_group_date': 1}</field>
+    </record>
+</odoo>

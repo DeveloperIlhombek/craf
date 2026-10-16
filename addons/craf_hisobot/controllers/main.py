@@ -31,13 +31,16 @@ class CrafKunlikController(http.Controller):
         for dep in data["departments"]:
             ws.write(row, 0, dep["title"], bold)
             row += 1
-            docs = ", ".join("%s (%s)" % (d["name"], d["state_label"]) for d in dep["docs"]) or "hujjat yo'q"
+            docs = ", ".join("%s (%s%s)" % (d["name"], d["state_label"], ", 1C ✓" if d.get("c1") == "done" else "")
+                             for d in dep["docs"]) or "hujjat yo'q"
             ws.write(row, 0, "Hujjatlar: " + docs)
             row += 1
             for extra in dep.get("extra") or []:
                 ws.write(row, 0, extra)
                 row += 1
-            for label, rows in (("Sarf", dep.get("used")), ("Chiqish", dep.get("made")), ("Chiqindi / brak", dep.get("waste"))):
+            for label, rows in ((dep.get("used_label") or "Sarf", dep.get("used")),
+                                (dep.get("made_label") or "Chiqish", dep.get("made")),
+                                ("Chiqindi / brak", dep.get("waste"))):
                 if not rows:
                     continue
                 ws.write_row(row, 0, [label + ": kod", "Nomi", "Miqdor", "Birlik", "kg"], head)

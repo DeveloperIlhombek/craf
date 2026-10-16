@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_location_form_craf_sotuv" model="ir.ui.view">
+        <field name="name">stock.location.form.craf.sotuv</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='additional_info']/.." position="after">
+                <group string="Sotuv" name="craf_sotuv" invisible="usage != 'internal'">
+                    <group>
+                        <field name="craf_sale_point"/>
+                        <field name="craf_sale_label" invisible="not craf_sale_point"/>
+                        <field name="craf_sale_sequence" invisible="not craf_sale_point"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="craf_sale_point_view_list" model="ir.ui.view">
+        <field name="name">stock.location.list.craf.sotuv</field>
+        <field name="model">stock.location</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Sotuv joylari" editable="bottom">
+                <field name="craf_sale_sequence" widget="handle"/>
+                <field name="craf_sale_label"/>
+                <field name="complete_name" string="Joylashuv" readonly="1"/>
+                <field name="name" optional="hide"/>
+                <field name="location_id" optional="hide" options="{'no_create': True}"/>
+                <field name="usage" column_invisible="1"/>
+                <field name="craf_sale_point" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_craf_sale_points" model="ir.actions.act_window">
+        <field name="name">Sotuv joylari</field>
+        <field name="res_model">stock.location</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('craf_sale_point_view_list')})]"/>
+        <field name="domain">[('usage', '=', 'internal')]</field>
+        <field name="context">{'default_usage': 'internal', 'default_craf_sale_point': True}</field>
+        <field name="help" type="html">
+            <p>Mahsulot beriladigan joylar: Zavod (Tayyor mahsulot ombori), Parnik, Rohat.
+               «Sotuv joyi» yoqilganlari Sotuv sahifasida tugma bo'lib chiqadi.</p>
+        </field>
+    </record>
+</odoo>

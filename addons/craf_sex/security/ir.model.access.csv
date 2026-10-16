@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_maintenance_equipment_craf_worker,maintenance.equipment craf worker,maintenance.model_maintenance_equipment,craf_sex.group_craf_worker,1,0,0,0
+access_maintenance_equipment_category_craf_worker,maintenance.equipment.category craf worker,maintenance.model_maintenance_equipment_category,craf_sex.group_craf_worker,1,0,0,0

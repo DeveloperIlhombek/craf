@@ -14,3 +14,7 @@ class ProductTemplate(models.Model):
     craf_litey_location_id = fields.Many2one(
         "stock.location", string="Asosiy joy", domain=[("usage", "=", "internal")],
         help="Excel qoldig'i yuklanganda shu joyga yoziladi (bo'sh bo'lsa — Литейка).")
+    craf_litey_hidden = fields.Boolean(
+        "Литейка ro'yxatidan chiqarilgan", copy=False,
+        help="Material Литейка hisobotida ko'rinmaydi, lekin mahsulot va uning tarixi Inventarizatsiya da qoladi. "
+             "Литейка hisoboti → material → «Qaytarish» bilan qaytariladi.")
