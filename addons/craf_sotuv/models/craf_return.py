@@ -59,7 +59,7 @@ class SaleOrder(models.Model):
                     packs_text(line.qty_delivered, line.product_id.craf_pcs_per_pack)))
         customer = self.env.ref("stock.stock_location_customers")
         warehouse = location.warehouse_id or self.warehouse_id
-        picking_type = warehouse.return_type_id or warehouse.in_type_id
+        picking_type = warehouse.in_type_id
         moves = []
         for line, qty in quantities.items():
             origin = line.move_ids.filtered(
