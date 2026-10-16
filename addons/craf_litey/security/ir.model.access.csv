@@ -3,3 +3,5 @@ access_craf_litey_kirim,craf.litey.kirim,model_craf_litey_kirim,stock.group_stoc
 access_craf_litey_kirim_line,craf.litey.kirim.line,model_craf_litey_kirim_line,stock.group_stock_user,1,1,1,1
 access_craf_litey_import,craf.litey.import,model_craf_litey_import,stock.group_stock_manager,1,1,1,1
 access_craf_litey_import_line,craf.litey.import.line,model_craf_litey_import_line,stock.group_stock_manager,1,1,1,1
+access_craf_litey_count,craf.litey.count,model_craf_litey_count,stock.group_stock_user,1,1,1,1
+access_craf_litey_count_line,craf.litey.count.line,model_craf_litey_count_line,stock.group_stock_user,1,1,1,1

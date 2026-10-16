@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- sahifa -->
+    <t t-name="craf_sex.Sex">
+        <div class="o_action o_craf_litey o_craf_sex" t-att-class="{ 'cl-busy': state.busy or state.loading }">
+            <header class="cl-top">
+                <div class="cl-top-row">
+                    <h1 class="cl-title">Sexlar</h1>
+                    <div class="cl-top-actions" t-if="state.data">
+                        <div class="cl-period-group">
+                            <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(-1)" aria-label="Oldingi davr"><i class="fa fa-chevron-left"/></button>
+                            <button class="cl-period" t-on-click="openPeriod" aria-label="Davrni tanlash"><i class="fa fa-calendar-o"/> <span t-esc="periodLabel"/></button>
+                            <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(1)" aria-label="Keyingi davr"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <button class="btn btn-primary cl-new-desk d-none d-lg-inline-flex" t-on-click="newDoc"><i class="fa fa-plus"/> <t t-esc="newLabel"/></button>
+                        <button class="cl-icon-btn" t-on-click="openMenu" aria-label="Boshqa amallar"><i class="fa fa-ellipsis-v"/></button>
+                    </div>
+                </div>
+                <div class="sx-stages" role="tablist" aria-label="Sex" t-if="state.data">
+                    <button t-foreach="state.data.stages" t-as="st" t-key="st.key" role="tab"
+                            t-att-aria-selected="state.stage === st.key ? 'true' : 'false'"
+                            t-att-class="{ active: state.stage === st.key }" t-on-click="() => this.setStage(st.key)">
+                        <t t-esc="st.label"/><span class="sx-stage-count" t-if="st.drafts" t-esc="st.drafts" t-att-title="st.drafts + ' ta qoralama'"/>
+                    </button>
+                </div>
+                <nav class="cl-tabs" role="tablist">
+                    <button role="tab" t-att-class="{ active: state.tab === 'ish' }" t-on-click="() => this.setTab('ish')">Ish</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'hujjat' }" t-on-click="() => this.setTab('hujjat')">Hujjatlar</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'qoldiq' }" t-on-click="() => this.setTab('qoldiq')">Qoldiq</button>
+                </nav>
+            </header>
+
+            <main class="cl-body">
+                <div class="cl-empty" t-if="!state.data"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+                <t t-else="">
+                    <t t-set="d" t-value="state.data"/>
+                    <t t-if="state.tab === 'ish'">
+                        <div class="cl-kpis" aria-label="Davr ko'rsatkichlari">
+                            <div class="cl-kpi" t-foreach="d.kpi" t-as="k" t-key="k_index">
+                                <span class="cl-kpi-label" t-esc="k.label"/>
+                                <span class="cl-kpi-value" t-att-class="toneClass(k.tone)"><t t-esc="k.value"/><small t-if="k.unit"> <t t-esc="k.unit"/></small></span>
+                                <span class="cl-kpi-sub" t-if="k.sub" t-esc="k.sub"/>
+                            </div>
+                        </div>
+                        <t t-if="state.stage === 'press'" t-call="craf_sex.IshPress"/>
+                        <t t-if="state.stage === 'kimyo'" t-call="craf_sex.IshKimyo"/>
+                        <t t-if="state.stage === 'boyash'" t-call="craf_sex.IshBoyash"/>
+                    </t>
+                    <t t-if="state.tab === 'hujjat'" t-call="craf_sex.TabDocs"/>
+                    <t t-if="state.tab === 'qoldiq'" t-call="craf_sex.TabStock"/>
+                </t>
+            </main>
+
+            <div class="sx-pickbar" t-if="state.data and state.tab === 'ish' and state.stage !== 'press' and picked.length">
+                <div class="sx-pickbar-text">
+                    <b><t t-esc="pickedSummary.count"/> ta korzinka</b>
+                    <span><t t-esc="num(pickedSummary.pcs, 0)"/> dona · <t t-esc="num(pickedSummary.kg, 0)"/> kg<t t-if="state.stage === 'kimyo'"> · <t t-esc="num(pickedSummary.area, 0)"/> m²</t></span>
+                </div>
+                <button class="btn btn-primary" t-on-click="newDoc"><t t-esc="state.stage === 'kimyo' ? 'Ishlov berildi' : &quot;Bo'yashga&quot;"/></button>
+            </div>
+            <button class="cl-fab d-lg-none" t-if="state.data and !(state.tab === 'ish' and state.stage !== 'press' and picked.length)" t-on-click="newDoc" t-att-aria-label="newLabel"><i class="fa fa-plus"/></button>
+            <t t-if="state.sheet" t-call="craf_sex.Sheet"/>
+        </div>
+    </t>
+
+    <!-- umumiy: korzinka qatori -->
+    <t t-name="craf_sex.LoadRow">
+        <span class="sx-load-main">
+            <span class="sx-basket" t-esc="l.basket"/>
+            <span class="sx-load-text">
+                <span class="cl-mat-name" t-esc="l.content"/>
+                <span class="cl-mat-meta"><t t-esc="l.shift"/><t t-if="l.date_label">, <t t-esc="l.date_label"/></t></span>
+            </span>
+        </span>
+        <span class="cl-mat-right">
+            <span class="cl-qty"><t t-esc="num(l.pcs, 0)"/><small> dona</small></span>
+            <span class="cl-flow"><span class="cl-muted"><t t-esc="num(l.kg, 0)"/> kg</span></span>
+        </span>
+    </t>
+
+    <!-- PRESS: ish -->
+    <t t-name="craf_sex.IshPress">
+        <h2 class="sx-h">Ochiq smenalar</h2>
+        <div class="cl-empty sx-empty-card" t-if="!d.drafts.length">
+            <i class="fa fa-cogs"/>
+            <div>Ochiq smena yo'q.</div>
+            <button class="btn btn-primary mt-2" t-on-click="() => this.openPress()"><i class="fa fa-plus"/> Smena ochish</button>
+        </div>
+        <section class="sx-card" t-foreach="d.drafts" t-as="c" t-key="c.id">
+            <div class="sx-card-head" role="button" tabindex="0" t-on-click="() => this.openDoc('press', c.id)">
+                <div class="sx-card-titles">
+                    <div class="sx-card-title" t-esc="c.title"/>
+                    <div class="cl-muted small"><t t-esc="c.name"/> · <t t-esc="c.date_label"/> · <t t-esc="c.shift"/><t t-if="c.who"> · <t t-esc="c.who"/></t></div>
+                </div>
+                <span class="cl-state cl-st-draft">Qoralama</span>
+            </div>
+            <div class="sx-loads">
+                <button class="sx-load" t-foreach="c.loads" t-as="l" t-key="l.id" t-on-click="() => this.openBasket(c, l)">
+                    <t t-call="craf_sex.LoadRow"/>
+                </button>
+                <div class="sx-load sx-load-empty" t-if="!c.loads.length">Hali korzinka yo'q</div>
+            </div>
+            <div class="sx-card-foot">
+                <button class="btn btn-outline-primary" t-on-click="() => this.openBasket(c)"><i class="fa fa-plus"/> Korzinka</button>
+                <button class="btn btn-primary" t-on-click="() => this.openPress(c.id)">Smenani yakunlash</button>
+            </div>
+        </section>
+        <p class="cl-note">Bo'sh korzinkalar: <b><t t-esc="d.baskets.empty"/></b> / <t t-esc="d.baskets.total"/>.</p>
+
+        <h2 class="sx-h">Kimyoga kutayotgan korzinkalar <span class="cl-muted" t-esc="d.baskets.waiting.length"/></h2>
+        <div class="cl-empty" t-if="!d.baskets.waiting.length">Kutayotgan korzinka yo'q.</div>
+        <div class="cl-list" t-else="">
+            <div class="sx-load" t-foreach="d.baskets.waiting" t-as="l" t-key="l.id"><t t-call="craf_sex.LoadRow"/></div>
+        </div>
+    </t>
+
+    <!-- KIMYO: ish -->
+    <t t-name="craf_sex.IshKimyo">
+        <t t-if="d.drafts.length">
+            <h2 class="sx-h">Ochiq hujjatlar</h2>
+            <div class="cl-list">
+                <button class="cl-doc" t-foreach="d.drafts" t-as="c" t-key="c.id" t-on-click="() => this.openDoc('kimyo', c.id)">
+                    <t t-call="craf_sex.DocRow"/>
+                </button>
+            </div>
+        </t>
+        <div class="sx-h-row">
+            <h2 class="sx-h">Kimyoga kutayotgan korzinkalar <span class="cl-muted" t-esc="d.baskets.waiting.length"/></h2>
+            <button class="btn btn-link cl-link" t-if="d.baskets.waiting.length" t-on-click="pickAll">Hammasi</button>
+        </div>
+        <div class="cl-empty" t-if="!d.baskets.waiting.length"><i class="fa fa-check"/><div>Kutayotgan korzinka yo'q.</div></div>
+        <div class="cl-list" t-else="">
+            <button class="sx-load sx-pick" t-foreach="d.baskets.waiting" t-as="l" t-key="l.id" t-att-class="{ picked: state.pick[l.id] }"
+                    t-att-aria-pressed="state.pick[l.id] ? 'true' : 'false'" t-on-click="() => this.togglePick(l)">
+                <span class="sx-check"><i t-att-class="state.pick[l.id] ? 'fa fa-check-square' : 'fa fa-square-o'"/></span>
+                <t t-call="craf_sex.LoadRow"/>
+            </button>
+        </div>
+        <h2 class="sx-h">Bo'yashga tayyor <span class="cl-muted" t-esc="d.baskets.ready.length"/></h2>
+        <div class="cl-empty" t-if="!d.baskets.ready.length">Yo'q.</div>
+        <div class="cl-list" t-else="">
+            <div class="sx-load" t-foreach="d.baskets.ready" t-as="l" t-key="l.id"><t t-call="craf_sex.LoadRow"/></div>
+        </div>
+    </t>
+
+    <!-- BO'YASH: ish -->
+    <t t-name="craf_sex.IshBoyash">
+        <t t-if="d.drafts.length">
+            <h2 class="sx-h">Ochiq smenalar</h2>
+            <div class="cl-list">
+                <button class="cl-doc" t-foreach="d.drafts" t-as="c" t-key="c.id" t-on-click="() => this.openPaint(c.id)">
+                    <t t-call="craf_sex.DocRow"/>
+                </button>
+            </div>
+        </t>
+        <t t-if="d.unstocked.length">
+            <h2 class="sx-h">Omborga topshirilmagan <span class="cl-muted" t-esc="d.unstocked.length"/></h2>
+            <div class="cl-list">
+                <div class="cl-doc sx-doc-act" t-foreach="d.unstocked" t-as="c" t-key="c.id">
+                    <button class="sx-doc-open" t-on-click="() => this.openDoc('boyash', c.id)">
+                        <span class="cl-doc-icon cl-k-kirim"><i class="fa fa-paint-brush"/></span>
+                        <span class="cl-doc-main">
+                            <span class="cl-doc-name"><t t-esc="c.title"/> <span class="cl-muted" t-esc="c.name"/></span>
+                            <span class="cl-doc-sub"><t t-esc="c.date_label"/> · <t t-esc="c.sub"/></span>
+                        </span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.quickToStock(c)">Omborga</button>
+                </div>
+            </div>
+        </t>
+        <div class="sx-h-row">
+            <h2 class="sx-h">Bo'yashga tayyor korzinkalar <span class="cl-muted" t-esc="d.baskets.ready.length"/></h2>
+            <button class="btn btn-link cl-link" t-if="d.baskets.ready.length" t-on-click="pickAll">Hammasi</button>
+        </div>
+        <div class="cl-empty" t-if="!d.baskets.ready.length"><i class="fa fa-paint-brush"/><div>Tayyor korzinka yo'q. Profilni sexdagi qoldiqdan ham qo'shish mumkin: «+».</div></div>
+        <div class="cl-list" t-else="">
+            <button class="sx-load sx-pick" t-foreach="d.baskets.ready" t-as="l" t-key="l.id" t-att-class="{ picked: state.pick[l.id] }"
+                    t-att-aria-pressed="state.pick[l.id] ? 'true' : 'false'" t-on-click="() => this.togglePick(l)">
+                <span class="sx-check"><i t-att-class="state.pick[l.id] ? 'fa fa-check-square' : 'fa fa-square-o'"/></span>
+                <t t-call="craf_sex.LoadRow"/>
+            </button>
+        </div>
+    </t>
+
+    <!-- hujjat qatori -->
+    <t t-name="craf_sex.DocRow">
+        <span class="cl-doc-icon" t-att-class="{ 'cl-k-plavka': state.stage === 'press', 'cl-k-kochirish': state.stage === 'kimyo', 'cl-k-kirim': state.stage === 'boyash' }">
+            <i t-att-class="'fa ' + (state.stage === 'press' ? 'fa-cogs' : state.stage === 'kimyo' ? 'fa-flask' : 'fa-paint-brush')"/>
+        </span>
+        <span class="cl-doc-main">
+            <span class="cl-doc-name"><t t-esc="c.title"/> <span class="cl-muted" t-esc="c.name"/></span>
+            <span class="cl-doc-sub"><t t-esc="c.sub"/></span>
+            <span class="cl-doc-sub" t-if="c.who or c.shift"><t t-esc="c.shift"/><t t-if="c.who"> · <t t-esc="c.who"/></t></span>
+        </span>
+        <span class="cl-doc-right">
+            <span class="cl-state" t-att-class="'cl-st-' + c.state" t-esc="c.state_label"/>
+            <span class="cl-doc-total" t-if="c.metric" t-esc="c.metric"/>
+            <span class="sx-c1" t-if="c.state === 'done'" t-att-class="{ done: c.c1 === 'done' }" t-esc="c.c1 === 'done' ? '1C ✓' : '1C'"/>
+        </span>
+    </t>
+
+    <!-- hujjatlar -->
+    <t t-name="craf_sex.TabDocs">
+        <div class="cl-toolbar">
+            <div class="form-check form-switch cl-switch">
+                <input class="form-check-input" type="checkbox" id="sx_drafts" t-model="state.onlyDrafts"/>
+                <label class="form-check-label" for="sx_drafts">Faqat qoralamalar</label>
+            </div>
+            <div class="form-check form-switch cl-switch" t-if="d.roles.accountant">
+                <input class="form-check-input" type="checkbox" id="sx_c1" t-model="state.onlyC1"/>
+                <label class="form-check-label" for="sx_c1">1C ga kiritilmagan <span class="cl-muted" t-esc="c1Count"/></label>
+            </div>
+        </div>
+        <div class="cl-empty" t-if="!docList.length"><i class="fa fa-file-text-o"/><div>Bu davrda hujjat yo'q.</div></div>
+        <section t-foreach="docGroups" t-as="g" t-key="g.date" class="cl-dgroup">
+            <h2 class="cl-dgroup-head"><t t-esc="g.label"/> <span class="cl-muted" t-esc="g.weekday"/></h2>
+            <div class="cl-list">
+                <button class="cl-doc" t-foreach="g.docs" t-as="c" t-key="c.id" t-on-click="() => this.openDoc(state.stage, c.id)"
+                        t-att-class="{ 'cl-is-cancel': c.state === 'cancel' }">
+                    <t t-call="craf_sex.DocRow"/>
+                </button>
+            </div>
+        </section>
+    </t>
+
+    <!-- qoldiq -->
+    <t t-name="craf_sex.TabStock">
+        <p class="cl-note"><t t-esc="d.stock.location"/> joyidagi hozirgi qoldiq.</p>
+        <div class="cl-empty" t-if="!d.stock.rows.length"><i class="fa fa-cube"/><div>Sexda qoldiq yo'q.</div></div>
+        <div class="cl-list" t-else="">
+            <div class="cl-mat" t-foreach="d.stock.rows" t-as="r" t-key="r.product_id">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name" t-esc="r.name"/>
+                    <span class="cl-mat-meta"><t t-esc="r.code"/><t t-if="r.kind === 'semi'">, bo'yalmagan</t><t t-if="r.kind === 'painted'">, bo'yalgan</t></span>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="cl-qty" t-att-class="{ 'cl-bad': r.qty &lt; 0 }"><t t-esc="num(r.qty, 2)"/><small> <t t-esc="r.uom"/></small></span>
+                    <span class="cl-flow cl-muted" t-if="r.packs or r.kg"><t t-esc="r.packs"/><t t-if="r.packs and r.kg"> · </t><t t-if="r.kg"><t t-esc="num(r.kg, 0)"/> kg</t></span>
+                </span>
+            </div>
+        </div>
+    </t>
+
+    <!-- varaqlar -->
+    <t t-name="craf_sex.Sheet">
+        <t t-set="s" t-value="state.sheet"/>
+        <div class="cl-backdrop" t-on-click.self="closeSheet">
+            <div class="cl-sheet" t-att-class="'cl-sheet-' + s.type + (s.type === 'paint' or s.type === 'press' or s.type === 'chem' or s.type === 'doc' ? ' sx-sheet-wide' : '')" role="dialog" aria-modal="true">
+                <t t-if="s.type === 'period'" t-call="craf_sex.SheetPeriod"/>
+                <t t-elif="s.type === 'menu'" t-call="craf_sex.SheetMenu"/>
+                <t t-elif="s.type === 'press'" t-call="craf_sex.SheetPress"/>
+                <t t-elif="s.type === 'basket'" t-call="craf_sex.SheetBasket"/>
+                <t t-elif="s.type === 'chem'" t-call="craf_sex.SheetChem"/>
+                <t t-elif="s.type === 'paint'" t-call="craf_sex.SheetPaint"/>
+                <t t-elif="s.type === 'doc'" t-call="craf_sex.SheetDoc"/>
+                <div class="cl-sheet-error" t-if="s.error" role="alert">
+                    <i class="fa fa-exclamation-circle"/>
+                    <div class="cl-sheet-error-text" t-esc="s.error"/>
+                    <button class="cl-icon-btn" t-on-click="() => s.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sex.Head">
+        <div class="cl-sheet-head">
+            <div class="cl-sheet-titles">
+                <div class="cl-sheet-title" t-esc="title"/>
+                <div class="cl-sheet-sub" t-if="sub" t-esc="sub"/>
+            </div>
+            <button class="cl-icon-btn" t-on-click="closeSheet" aria-label="Yopish"><i class="fa fa-times"/></button>
+        </div>
+    </t>
+
+    <t t-name="craf_sex.CommonFields">
+        <!-- f, opts: sana, smena, mas'ul, uskuna -->
+        <div class="cl-field-row">
+            <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
+            <div class="cl-field">
+                <span>Smena</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-foreach="opts.shifts" t-as="sh" t-key="sh.key" t-att-class="{ active: f.shift === sh.key }" t-on-click="() => f.shift = sh.key" t-esc="sh.key"/>
+                </div>
+            </div>
+        </div>
+        <div class="cl-field-row">
+            <label class="cl-field">
+                <span>Mas'ul</span>
+                <select class="form-select" t-model="f.employee_id">
+                    <option value="">—</option>
+                    <option t-foreach="opts.employees" t-as="e" t-key="e.id" t-att-value="e.id" t-att-selected="eq(f.employee_id, e.id)" t-esc="e.name"/>
+                </select>
+            </label>
+            <label class="cl-field" t-if="equipment and equipment.length">
+                <span t-esc="equipmentLabel"/>
+                <select class="form-select" t-model="f.equipment_id">
+                    <option t-foreach="equipment" t-as="e" t-key="e.id" t-att-value="e.id" t-att-selected="eq(f.equipment_id, e.id)" t-esc="e.name"/>
+                </select>
+            </label>
+        </div>
+    </t>
+
+    <!-- davr -->
+    <t t-name="craf_sex.SheetPeriod">
+        <t t-call="craf_sex.Head"><t t-set="title" t-value="'Davr'"/><t t-set="sub" t-value="periodLabel"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-grid2">
+                <button class="cl-opt" t-on-click="() => this.preset('today')">Bugun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('yesterday')">Kecha</button>
+                <button class="cl-opt" t-on-click="() => this.preset('7')">Oxirgi 7 kun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('30')">Oxirgi 30 kun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('month')">Shu oy</button>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Boshlanish</span><input type="date" class="form-control" t-model="s.from"/></label>
+                <label class="cl-field"><span>Tugash</span><input type="date" class="form-control" t-model="s.to"/></label>
+            </div>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="applyPeriod">Ko'rsatish</button></div>
+    </t>
+
+    <!-- menyu -->
+    <t t-name="craf_sex.SheetMenu">
+        <t t-call="craf_sex.Head"><t t-set="title" t-value="'Boshqa amallar'"/><t t-set="sub" t-value="''"/></t>
+        <div class="cl-sheet-body cl-menu">
+            <button t-on-click="() => this.go('craf_hisobot.action_craf_kunlik')"><i class="fa fa-calendar-check-o"/> Kunlik hisobot (1C uchun)</button>
+            <button t-on-click="() => this.go('craf_litey.action_craf_litey')"><i class="fa fa-fire"/> Литейка</button>
+            <button t-on-click="() => this.go('craf_extrusion.action_craf_extrusion_shift')"><i class="fa fa-list"/> Press smenalari (ro'yxat)</button>
+            <button t-on-click="() => this.go('craf_korzinka.action_craf_chem_treatment')"><i class="fa fa-list"/> Kimyoviy ishlov (ro'yxat)</button>
+            <button t-on-click="() => this.go('craf_paint.action_craf_paint_batch')"><i class="fa fa-list"/> Bo'yash smenalari (ro'yxat)</button>
+            <button t-on-click="() => this.go('craf_korzinka.action_craf_basket')"><i class="fa fa-archive"/> Korzinkalar</button>
+            <button t-if="state.data.roles.manager" t-on-click="() => this.go('craf_mrp.action_craf_mrp_norm')"><i class="fa fa-sliders"/> Ishlab chiqarish me'yorlari</button>
+            <button t-on-click="menuRefresh"><i class="fa fa-refresh"/> Yangilash</button>
+        </div>
+    </t>
+
+    <!-- PRESS smenasi -->
+    <t t-name="craf_sex.SheetPress">
+        <t t-set="f" t-value="s.f"/>
+        <t t-set="opts" t-value="s.o"/>
+        <t t-set="equipment" t-value="s.o.presses"/>
+        <t t-set="equipmentLabel" t-value="'Press'"/>
+        <t t-set="sec" t-value="sectionOf(f)"/>
+        <t t-set="pv" t-value="pressPreview(f)"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="f.id ? 'Press smenasi ' + f.name : 'Smena ochish'"/>
+            <t t-set="sub" t-value="f.id ? 'Smena oxirida quyma sarfi, питак va brakni yozib tasdiqlang' : &quot;Korzinkalar smena davomida qo'shiladi&quot;"/>
+        </t>
+        <div class="cl-sheet-body">
+            <t t-call="craf_sex.CommonFields"/>
+            <label class="cl-field">
+                <span>Matritsa (profil kesimi)</span>
+                <select class="form-select" t-model="f.section_id" t-att-disabled="f.loads and f.loads.length">
+                    <option value="">Tanlang</option>
+                    <option t-foreach="s.o.sections" t-as="sc" t-key="sc.id" t-att-value="sc.id" t-att-selected="eq(f.section_id, sc.id)">
+                        <t t-esc="sc.name"/> — <t t-esc="num(sc.kg_m, 3)"/> kg/m
+                    </option>
+                </select>
+            </label>
+            <div class="cl-field">
+                <span>Quyma</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-foreach="s.o.billets" t-as="b" t-key="b.id" t-att-class="{ active: eq(f.billet_product_id, b.id) }" t-on-click="() => f.billet_product_id = b.id">
+                        <t t-esc="b.name"/> <small class="d-block">pressda <t t-esc="num(b.avail, 0)"/> kg</small>
+                    </button>
+                </div>
+            </div>
+
+            <t t-if="f.loads and f.loads.length">
+                <h3 class="cl-lines-head">Korzinkalar <span class="cl-muted" t-esc="f.loads.length"/></h3>
+                <div class="cl-list sx-mb">
+                    <div class="sx-load" t-foreach="f.loads" t-as="l" t-key="l.id"><t t-call="craf_sex.LoadRow"/></div>
+                </div>
+            </t>
+            <t t-if="sec and sec.direct.length">
+                <h3 class="cl-lines-head">Korzinkasiz chiqish (qadoqlashga)</h3>
+                <div class="sx-direct" t-foreach="sec.direct" t-as="p" t-key="p.id">
+                    <span><t t-esc="p.name"/><small class="d-block cl-muted"><t t-esc="num(p.length, 1)"/> m<t t-if="p.per_pack">, pachkada <t t-esc="p.per_pack"/></t></small></span>
+                    <input type="text" inputmode="numeric" class="form-control" placeholder="dona" t-att-value="directQty(f, p.id)" t-on-change="(ev) => this.setDirect(f, p.id, ev)" t-att-aria-label="p.name + ' dona'"/>
+                </div>
+            </t>
+
+            <h3 class="cl-lines-head">Smena oxirida</h3>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Quyma sarfi, kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.billet_text" placeholder="930+925"/></label>
+                <label class="cl-field"><span>Ish vaqti, soat</span><input type="text" inputmode="decimal" class="form-control" t-model="f.duration"/></label>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Press qoldig'i (питак), kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.rest_text" placeholder="0"/></label>
+                <label class="cl-field"><span>Brak profil, kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.scrap_text" placeholder="0"/></label>
+            </div>
+            <div class="sx-preview" t-if="pv.billet or pv.kg">
+                <div class="cl-kv"><span>Profil chiqdi</span><b><t t-esc="num(pv.kg, 1)"/> kg · <t t-esc="num(pv.pcs, 0)"/> dona</b></div>
+                <div class="cl-kv" t-if="pv.billet"><span>Chiqish</span><b t-att-class="pv.yield &gt;= 80 ? 'cl-ok' : (pv.yield &gt;= 75 ? 'cl-warn' : 'cl-bad')"><t t-esc="num(pv.yield, 1)"/>%</b></div>
+                <div class="cl-kv cl-kv-total" t-if="pv.billet"><span>Hisobga olinmagan farq</span><b t-att-class="{ 'cl-bad': pv.loss &lt; -0.05 }"><t t-esc="num(pv.loss, 1)"/> kg</b></div>
+            </div>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-outline-primary" t-on-click="() => this.savePress(false)" t-att-disabled="state.busy"><t t-esc="f.id ? 'Saqlash' : 'Smenani ochish'"/></button>
+            <button class="btn btn-primary" t-if="f.id" t-on-click="() => this.savePress(true)" t-att-disabled="state.busy">Tasdiqlash</button>
+        </div>
+    </t>
+
+    <!-- korzinka -->
+    <t t-name="craf_sex.SheetBasket">
+        <t t-set="f" t-value="s.f"/>
+        <t t-set="bp" t-value="basketPreview(s)"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="f.load_id ? 'Korzinka' : &quot;Korzinka to'ldirish&quot;"/>
+            <t t-set="sub" t-value="s.title + (s.sec ? ' · ' + s.sec.name : '')"/>
+        </t>
+        <div class="cl-sheet-body">
+            <label class="cl-field">
+                <span>Korzinka</span>
+                <select class="form-select" t-model="f.basket_id">
+                    <option t-foreach="s.baskets" t-as="b" t-key="b.id" t-att-value="b.id" t-att-selected="eq(f.basket_id, b.id)">
+                        <t t-esc="b.name"/><t t-if="b.tare"> — o'zi <t t-esc="num(b.tare, 1)"/> kg</t>
+                    </option>
+                </select>
+            </label>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>6 m, dona</span><input type="text" inputmode="numeric" class="form-control sx-big-input" t-model="f.qty_6" placeholder="0"/></label>
+                <label class="cl-field" t-if="!s.sec or s.sec.has5"><span>5 m, dona</span><input type="text" inputmode="numeric" class="form-control sx-big-input" t-model="f.qty_5" placeholder="0"/></label>
+            </div>
+            <label class="cl-field"><span>Tortildi (korzinka bilan), kg</span><input type="text" inputmode="tel" class="form-control sx-big-input" t-model="f.gross_text" placeholder="ixtiyoriy"/></label>
+            <div class="sx-preview">
+                <div class="cl-kv"><span>Jami</span><b t-att-class="{ 'cl-bad': bp.over }"><t t-esc="bp.pcs"/> dona<t t-if="bp.capacity"> / <t t-esc="bp.capacity"/></t></b></div>
+                <div class="cl-kv"><span>Nazariy og'irlik</span><b><t t-esc="num(bp.theory, 1)"/> kg</b></div>
+                <div class="cl-kv" t-if="bp.net"><span>Profillar (netto)</span><b><t t-esc="num(bp.net, 1)"/> kg</b></div>
+                <div class="cl-kv cl-kv-total" t-if="bp.net"><span>Farq</span><b t-att-class="Math.abs(bp.diff) &gt; bp.theory * 0.05 ? 'cl-warn' : ''"><t t-esc="signed(bp.diff, 1)"/> kg</b></div>
+            </div>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="f.load_id" t-on-click="deleteBasket">Olib tashlash</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveBasket" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
+    <!-- KIMYO -->
+    <t t-name="craf_sex.SheetChem">
+        <t t-set="f" t-value="s.f"/>
+        <t t-set="opts" t-value="s.o"/>
+        <t t-set="equipment" t-value="s.o.equipment"/>
+        <t t-set="equipmentLabel" t-value="'Vanna'"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="f.id ? 'Kimyoviy ishlov ' + f.name : 'Kimyoviy ishlov'"/>
+            <t t-set="sub" t-value="&quot;Korzinkalar Bo'yash sexiga o'tadi, kimyo sarflanadi&quot;"/>
+        </t>
+        <div class="cl-sheet-body">
+            <t t-call="craf_sex.CommonFields"/>
+            <h3 class="cl-lines-head">Korzinkalar <span class="cl-muted"><t t-esc="sheetPicked(s).length"/> / <t t-esc="s.loads.length"/></span></h3>
+            <div class="cl-empty" t-if="!s.loads.length">Kutayotgan korzinka yo'q.</div>
+            <div class="cl-list sx-mb" t-else="">
+                <button class="sx-load sx-pick" t-foreach="s.loads" t-as="l" t-key="l.id" t-att-class="{ picked: f.pick[l.id] }" t-on-click="() => this.toggleSheetPick(s, l)">
+                    <span class="sx-check"><i t-att-class="f.pick[l.id] ? 'fa fa-check-square' : 'fa fa-square-o'"/></span>
+                    <t t-call="craf_sex.LoadRow"/>
+                </button>
+            </div>
+            <h3 class="cl-lines-head">Kimyo sarfi <span class="cl-muted">— maydon <t t-esc="num(chemArea(s), 1)"/> m²</span></h3>
+            <div class="sx-direct" t-foreach="s.o.chems" t-as="c" t-key="c.id">
+                <span><t t-esc="c.name"/><small class="d-block cl-muted">me'yor <t t-esc="num(chemNorm(s, c), 2)"/> kg · bor <t t-esc="num(c.avail, 1)"/> kg</small></span>
+                <input type="text" inputmode="decimal" class="form-control" t-att-placeholder="num(chemNorm(s, c), 2)" t-model="f.chem[c.id]" t-att-aria-label="c.name + ' kg'"/>
+            </div>
+            <p class="cl-hint">Bo'sh qoldirilsa — me'yor bo'yicha yoziladi.</p>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-outline-primary" t-on-click="() => this.saveChem(false)" t-att-disabled="state.busy">Qoralama</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="() => this.saveChem(true)" t-att-disabled="state.busy">Tasdiqlash</button>
+        </div>
+    </t>
+
+    <!-- BO'YASH -->
+    <t t-name="craf_sex.SheetPaint">
+        <t t-set="f" t-value="s.f"/>
+        <t t-set="opts" t-value="s.o"/>
+        <t t-set="equipment" t-value="s.o.equipment"/>
+        <t t-set="equipmentLabel" t-value="'Liniya'"/>
+        <t t-set="pt" t-value="paintTotals(s)"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="f.id ? &quot;Bo'yash smenasi &quot; + f.name : &quot;Bo'yash smenasi&quot;"/>
+            <t t-set="sub" t-value="'Kirdi, brak va qadoqlangan pachkalar'"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-field">
+                <span>Rang</span>
+                <div class="sx-colors" role="group">
+                    <button t-foreach="s.o.colors" t-as="c" t-key="c.id" t-att-class="{ active: eq(f.color_id, c.id) }" t-on-click="() => f.color_id = c.id">
+                        <t t-esc="c.name"/><small class="d-block">kukun <t t-esc="num(c.avail, 1)"/> kg</small>
+                    </button>
+                </div>
+            </div>
+            <t t-call="craf_sex.CommonFields"/>
+            <t t-if="s.loads.length">
+                <h3 class="cl-lines-head">Tayyor korzinkalar <span class="cl-muted"><t t-esc="sheetPicked(s).length"/> / <t t-esc="s.loads.length"/></span></h3>
+                <div class="cl-list sx-mb">
+                    <button class="sx-load sx-pick" t-foreach="s.loads" t-as="l" t-key="l.id" t-att-class="{ picked: f.pick[l.id] }" t-on-click="() => this.togglePaintPick(s, l)">
+                        <span class="sx-check"><i t-att-class="f.pick[l.id] ? 'fa fa-check-square' : 'fa fa-square-o'"/></span>
+                        <t t-call="craf_sex.LoadRow"/>
+                    </button>
+                </div>
+            </t>
+            <h3 class="cl-lines-head">Profillar</h3>
+            <div class="cl-empty" t-if="!f.lines.length">Korzinkani belgilang yoki pastdan profil qo'shing.</div>
+            <div class="cl-line sx-pline" t-foreach="f.lines" t-as="line" t-key="line.key">
+                <t t-set="li" t-value="lineInfo(s, line)"/>
+                <div class="sx-pline-head">
+                    <b t-esc="li.name"/>
+                    <button class="cl-icon-btn cl-line-del" t-if="line.manual" t-on-click="() => this.removePaintLine(line)" aria-label="Qatorni o'chirish"><i class="fa fa-trash-o"/></button>
+                </div>
+                <div class="cl-line-sum cl-bad" t-if="li.missing">Bu rangdagi tayyor mahsulot katalogda yo'q.</div>
+                <div class="sx-pgrid">
+                    <label class="cl-field"><span>Kirdi</span><input type="text" inputmode="numeric" class="form-control" t-model="line.pcs_in" placeholder="dona"/></label>
+                    <label class="cl-field"><span>Brak</span><input type="text" inputmode="numeric" class="form-control" t-model="line.defect" placeholder="0"/></label>
+                    <label class="cl-field" t-if="li.perPack"><span>Pachka (<t t-esc="li.perPack"/>)</span><input type="text" inputmode="numeric" class="form-control" t-model="line.packs" placeholder="0"/></label>
+                    <label class="cl-field" t-if="li.perPack"><span>+ dona</span><input type="text" inputmode="numeric" class="form-control" t-model="line.extra" placeholder="0"/></label>
+                </div>
+                <div class="cl-line-sum">
+                    Bo'yaldi <b><t t-esc="num(li.ok, 0)"/></b> dona<t t-if="li.packed">, qadoqlandi <b><t t-esc="num(li.packed, 0)"/></b></t><t t-if="line.manual">, sexda bor <t t-esc="num(li.avail, 0)"/></t>
+                    <span class="cl-bad d-block" t-if="li.mismatch">Qadoqlangan (<t t-esc="li.packed"/>) bo'yalgandan (<t t-esc="li.ok"/>) farq qiladi — kirdi yoki brakni tekshiring.</span>
+                </div>
+            </div>
+            <div class="sx-addline" t-if="semisInStock.length">
+                <select class="form-select" t-model="s.addSemi" aria-label="Sexdagi profil">
+                    <option value="">Sexdagi profildan qo'shish…</option>
+                    <option t-foreach="semisInStock" t-as="x" t-key="x.id" t-att-value="x.id"><t t-esc="x.name"/> — <t t-esc="num(x.avail, 0)"/> dona</option>
+                </select>
+                <button class="btn btn-outline-secondary" t-on-click="addPaintLine" t-att-disabled="!s.addSemi"><i class="fa fa-plus"/></button>
+            </div>
+            <h3 class="cl-lines-head">Kukun <span class="cl-muted">— me'yor <t t-esc="num(pt.powderNorm, 2)"/> kg (<t t-esc="num(pt.area, 1)"/> m²)</span></h3>
+            <div class="cl-field-row">
+                <label class="cl-field" t-if="pt.color and pt.color.pkg_kg"><span><t t-esc="pt.color.pkg_name"/> (<t t-esc="num(pt.color.pkg_kg, 1)"/> kg)</span><input type="text" inputmode="decimal" class="form-control" t-model="f.powder_bags" placeholder="0"/></label>
+                <label class="cl-field"><span>yoki kg</span><input type="text" inputmode="decimal" class="form-control" t-model="f.powder_text" t-att-placeholder="pt.powder ? num(pt.powder, 2) : num(pt.powderNorm, 2)"/></label>
+            </div>
+            <div class="sx-preview">
+                <div class="cl-kv"><span>Bo'yaldi</span><b><t t-esc="num(pt.ok, 0)"/> dona · <t t-esc="num(pt.kg, 0)"/> kg</b></div>
+                <div class="cl-kv"><span>Brak</span><b><t t-esc="num(pt.defect, 0)"/> dona</b></div>
+                <div class="cl-kv cl-kv-total"><span>Kukun</span><b><t t-esc="num(pt.powder, 2)"/> kg</b></div>
+            </div>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-outline-primary" t-on-click="() => this.savePaint(false)" t-att-disabled="state.busy">Qoralama</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="() => this.savePaint(true)" t-att-disabled="state.busy">Tasdiqlash</button>
+        </div>
+    </t>
+
+    <!-- hujjat tafsiloti -->
+    <t t-name="craf_sex.SheetDoc">
+        <t t-set="dd" t-value="s.d"/>
+        <t t-call="craf_sex.Head"><t t-set="title" t-value="dd.title"/><t t-set="sub" t-value="dd.name"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-doc-state">
+                <span class="cl-state" t-att-class="'cl-st-' + dd.state" t-esc="dd.state_label"/>
+                <span class="sx-c1 ms-1" t-if="dd.state === 'done'" t-att-class="{ done: dd.c1 === 'done' }" t-esc="dd.c1 === 'done' ? '1C ga kiritilgan' : '1C ga kiritilmagan'"/>
+            </div>
+            <div class="cl-section" t-if="dd.meta.length">
+                <div class="cl-kv" t-foreach="dd.meta" t-as="mt" t-key="mt_index"><span t-esc="mt[0]"/><b t-esc="mt[1]"/></div>
+            </div>
+            <div class="cl-section" t-if="dd.lines.length">
+                <h3>Tarkibi</h3>
+                <div class="cl-kv cl-kv-line" t-foreach="dd.lines" t-as="l" t-key="l_index">
+                    <span><t t-esc="l.name"/><span class="cl-muted small d-block" t-if="l.note" t-esc="l.note"/></span>
+                    <b t-esc="l.qty"/>
+                </div>
+            </div>
+            <div class="cl-section" t-if="dd.outputs.length">
+                <h3>Natija</h3>
+                <div class="cl-kv" t-foreach="dd.outputs" t-as="o" t-key="o_index"><span t-esc="o[0]"/><b t-esc="o[1]"/></div>
+            </div>
+            <p class="cl-hint" t-if="dd.packs">Pachkalar: <t t-esc="dd.packs"/> ta.</p>
+            <p class="cl-hint" t-if="dd.note" t-esc="dd.note"/>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="dd.actions.includes('delete')" t-on-click="() => this.docAction(dd, 'delete')">O'chirish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('cancel')" t-on-click="() => this.docAction(dd, 'cancel')">Bekor qilish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('draft')" t-on-click="() => this.docAction(dd, 'draft')">Qoralamaga</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('open')" t-on-click="() => this.docOpen(dd)">Odoo da ochish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('labels')" t-on-click="() => this.docAction(dd, 'labels')"><i class="fa fa-tag"/> Yorliqlar</button>
+            <button class="btn btn-outline-primary" t-if="dd.actions.includes('c1')" t-on-click="() => this.docAction(dd, 'c1')">1C ga kiritildi</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('c1_undo')" t-on-click="() => this.docAction(dd, 'c1_undo')">1C belgisini olish</button>
+            <button class="btn btn-outline-primary" t-if="dd.actions.includes('basket')" t-on-click="() => this.docBasket(dd)"><i class="fa fa-plus"/> Korzinka</button>
+            <button class="btn btn-primary" t-if="dd.actions.includes('to_stock')" t-on-click="() => this.docAction(dd, 'to_stock')">Omborga topshirish</button>
+            <button class="btn btn-outline-primary" t-if="dd.actions.includes('edit')" t-on-click="() => this.docEdit(dd)">Tahrirlash</button>
+            <button class="btn btn-primary" t-if="dd.actions.includes('done')" t-on-click="() => this.docAction(dd, 'done')">Tasdiqlash</button>
+        </div>
+    </t>
+</templates>

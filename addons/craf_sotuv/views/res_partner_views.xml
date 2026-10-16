@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_craf_sotuv" model="ir.ui.view">
+        <field name="name">res.partner.form.craf.sotuv</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button class="oe_stat_button" type="object" name="action_craf_sale_lines" icon="fa-cubes"
+                        invisible="craf_sale_line_count == 0">
+                    <field string="Berilgan" name="craf_sale_line_count" widget="statinfo"/>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

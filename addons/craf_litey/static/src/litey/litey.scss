@@ -1,166 +1,1258 @@
-.o_craf_litey {
-    background-color: $o-webclient-background-color;
+// Craf → Литейка — telefon birinchi (mobile first).
+// Asosiy uslub telefon uchun; planshet (≥768px) va kompyuter (≥992px) uchun kengaytiriladi.
+// Ranglar Odoo mavzusi o'zgaruvchilaridan olinadi (qorong'i rejimda ham ishlaydi); urg'u ranglari shaffof.
 
-    .o_cl_loading .o_cl_card {
-        opacity: 0.55;
+$cl-radius: 12px;
+$cl-tap: 44px;
+$cl-line: rgba(127, 127, 127, 0.22);
+$cl-muted: #63707a; // alyuminiy kulrangi
+$cl-in: #12753a;
+$cl-out: #a1401a;
+$cl-adj: #4757a8;
+$cl-warn: #9a6200;
+$cl-bad: #c4314b;
+$cl-ok: #12753a;
+$cl-molten: #c2540a;
+
+.o_craf_litey {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: $o-webclient-background-color;
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+
+    :where(button:not(.btn)) {
+        color: inherit;
     }
-    .o_cl_card {
-        background-color: $o-view-background-color;
-        border: 1px solid rgba(11, 11, 11, 0.1);
-        border-radius: 8px;
-        padding: 14px 16px;
+    .cl-link {
+        color: $primary;
+        font-weight: 500;
+        text-decoration: none;
     }
-    .o_cl_tabcard {
-        border-top-left-radius: 0;
-        border-top: 0;
-    }
-    .o_cl_tabs .nav-link {
+    .cl-zero {
+        color: $cl-muted;
         font-weight: 500;
     }
-    .o_cl_tabs .nav-link.active {
+    .cl-muted {
+        color: $cl-muted;
+    }
+    .cl-in {
+        color: $cl-in;
+    }
+    .cl-out {
+        color: $cl-out;
+    }
+    .cl-adj {
+        color: $cl-adj;
+    }
+    .cl-ok {
+        color: $cl-ok;
+    }
+    .cl-warn {
+        color: $cl-warn;
+    }
+    .cl-bad {
+        color: $cl-bad;
+    }
+
+    // ---------------------------------------------------------------- yuqori panel
+    .cl-top {
+        position: sticky;
+        top: 0;
+        z-index: 6;
         background-color: $o-view-background-color;
+        border-bottom: 1px solid $cl-line;
+        padding: 6px 12px 0;
     }
-    .o_cl_date {
-        max-width: 140px;
+    .cl-top-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: $cl-tap;
     }
-    .o_cl_kpi {
-        height: 100%;
-        padding: 10px 14px;
+    .cl-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+        margin-right: auto;
     }
-    .o_cl_kpi_label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #52514e;
+    .cl-top-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
-    .o_cl_kpi_value {
-        font-size: 1.5rem;
+    .cl-period-group {
+        display: flex;
+        align-items: center;
+    }
+    .cl-period {
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid $cl-line;
+        border-radius: 18px;
+        background: none;
         font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        line-height: 1.2;
+        white-space: nowrap;
+        .fa {
+            color: $cl-muted;
+            margin-right: 4px;
+        }
+    }
+    .cl-icon-btn {
+        width: $cl-tap;
+        height: $cl-tap;
+        padding: 0;
+        border: 0;
+        background: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: $cl-muted;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        &:hover,
+        &:focus-visible {
+            background-color: rgba(127, 127, 127, 0.12);
+        }
+    }
+    .cl-new-desk {
+        align-items: center;
+        gap: 6px;
+    }
+    .cl-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        > button {
+            min-height: $cl-tap;
+            border: 0;
+            background: none;
+            border-bottom: 3px solid transparent;
+            color: $cl-muted;
+            font-weight: 500;
+            white-space: nowrap;
+            &.active {
+                color: $primary;
+                border-bottom-color: $primary;
+                font-weight: 700;
+            }
+        }
+    }
+    .cl-count {
+        display: inline-block;
+        min-width: 20px;
+        padding: 0 6px;
+        margin-left: 4px;
+        border-radius: 10px;
+        background-color: $cl-warn;
+        color: #fff;
+        font-size: 0.75rem;
+        line-height: 20px;
+        font-weight: 600;
+    }
+
+    // ---------------------------------------------------------------- tana
+    .cl-body {
+        padding: 12px 12px 96px;
+    }
+    &.cl-busy .cl-body {
+        opacity: 0.6;
+    }
+    .cl-note,
+    .cl-hint {
+        font-size: 0.82rem;
+        color: $cl-muted;
+        margin: 4px 2px 10px;
+    }
+    .cl-hint {
+        margin: 4px 0 10px;
+        display: block;
+    }
+    .cl-empty {
+        text-align: center;
+        color: $cl-muted;
+        padding: 32px 16px;
+        > .fa {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+    }
+    .cl-banner {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        > .fa {
+            margin-top: 3px;
+        }
+    }
+    .cl-banner-text {
+        flex: 1 1 auto;
+    }
+    .cl-banner-btn {
+        flex: 0 0 auto;
+        align-self: center;
+        border: 1px solid currentColor;
+        color: inherit;
+        font-weight: 600;
+    }
+    .cl-banner-bad {
+        background-color: rgba(196, 49, 75, 0.1);
+        color: $cl-bad;
+        b {
+            color: inherit;
+        }
+    }
+
+    // ---------------------------------------------------------------- ko'rsatkichlar
+    .cl-kpis {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(128px, 1fr);
+        overflow-x: auto;
+        scrollbar-width: none;
+        background-color: $o-view-background-color;
+        border: 1px solid $cl-line;
+        border-radius: $cl-radius;
+        margin-bottom: 12px;
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+    .cl-kpi {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 14px;
+        border-left: 1px solid $cl-line;
+        &:first-child {
+            border-left: 0;
+        }
+    }
+    .cl-kpi-label {
+        font-size: 0.78rem;
+        color: $cl-muted;
+        white-space: nowrap;
+    }
+    .cl-kpi-value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: nowrap;
         small {
             font-size: 0.8rem;
             font-weight: 400;
-            color: #6c6b68;
+            color: $cl-muted;
         }
     }
-    .o_cl_warn {
-        color: #b26a00;
+    .cl-kpi-sub {
+        font-size: 0.78rem;
+        color: $cl-muted;
     }
-    .o_cl_table {
+
+    // ---------------------------------------------------------------- asboblar qatori
+    .cl-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    .cl-search {
+        position: relative;
+        flex: 1 1 100%;
+        > .fa {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: $cl-muted;
+        }
+        > input {
+            height: $cl-tap;
+            padding-left: 36px;
+            border-radius: 10px;
+        }
+    }
+    .cl-search-sheet {
+        margin-bottom: 8px;
+    }
+    .cl-chips {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        max-width: 100%;
+        scrollbar-width: none;
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        > button {
+            flex: 0 0 auto;
+            height: 34px;
+            padding: 0 12px;
+            border-radius: 17px;
+            border: 1px solid $cl-line;
+            background-color: $o-view-background-color;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            > span {
+                color: $cl-muted;
+                margin-left: 2px;
+            }
+            &.active {
+                background-color: $primary;
+                border-color: $primary;
+                color: #fff;
+                > span {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+            }
+        }
+        > .cl-chip-warn:not(.active) {
+            color: $cl-warn;
+            border-color: rgba(154, 98, 0, 0.45);
+        }
+    }
+    .cl-switch {
+        margin: 0;
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
         font-size: 0.875rem;
-        td,
-        th {
-            font-variant-numeric: tabular-nums;
+    }
+    .cl-seg {
+        display: inline-flex;
+        border: 1px solid $cl-line;
+        border-radius: 10px;
+        overflow: hidden;
+        > button {
+            flex: 1 1 0;
+            min-height: 36px;
+            padding: 0 12px;
+            border: 0;
+            border-left: 1px solid $cl-line;
+            background-color: $o-view-background-color;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            &:first-child {
+                border-left: 0;
+            }
+            &.active {
+                background-color: $primary;
+                color: #fff;
+                font-weight: 600;
+            }
         }
+    }
+    .cl-seg-full {
+        display: flex;
+        width: 100%;
+        > button {
+            min-height: $cl-tap;
+        }
+    }
+
+    // ---------------------------------------------------------------- ro'yxat
+    .cl-list {
+        background-color: $o-view-background-color;
+        border: 1px solid $cl-line;
+        border-radius: $cl-radius;
+        overflow: hidden;
+        > * + * {
+            border-top: 1px solid $cl-line;
+        }
+    }
+    .cl-mat,
+    .cl-doc {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 60px;
+        padding: 10px 14px;
+        border: 0;
+        background: none;
+        text-align: left;
+        &:active {
+            background-color: rgba(127, 127, 127, 0.08);
+        }
+        &:focus-visible {
+            outline: 2px solid $primary;
+            outline-offset: -2px;
+        }
+    }
+    .cl-is-low {
+        box-shadow: inset 4px 0 0 $cl-warn;
+    }
+    .cl-is-neg {
+        box-shadow: inset 4px 0 0 $cl-bad;
+    }
+    .cl-mat-main,
+    .cl-doc-main {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .cl-mat-name {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+    .cl-mat-meta {
+        font-size: 0.8rem;
+        color: $cl-muted;
+    }
+    // Qoldiq darajasi: minimal qoldiqqa nisbatan (to'la = 3 × minimal)
+    .cl-gauge {
+        display: block;
+        height: 4px;
+        width: 100%;
+        max-width: 160px;
+        margin-top: 6px;
+        border-radius: 2px;
+        background-color: rgba(127, 127, 127, 0.2);
+        overflow: hidden;
+        > span {
+            display: block;
+            height: 100%;
+            background-color: #7c8b96;
+            border-radius: 2px;
+        }
+    }
+    .cl-is-low .cl-gauge > span {
+        background-color: $cl-warn;
+    }
+    .cl-is-neg .cl-gauge > span {
+        background-color: $cl-bad;
+    }
+    .cl-mat-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        flex: 0 0 auto;
+    }
+    .cl-qty {
+        font-size: 1.15rem;
+        font-weight: 700;
+        white-space: nowrap;
+        small {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: $cl-muted;
+        }
+    }
+    .cl-is-neg .cl-qty {
+        color: $cl-bad;
+    }
+    .cl-flow {
+        display: flex;
+        gap: 8px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    .cl-foot-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+
+    // ---------------------------------------------------------------- kunlik
+    .cl-days {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        > button {
+            flex: 0 0 auto;
+            width: 54px;
+            height: 54px;
+            border-radius: 12px;
+            border: 1px solid $cl-line;
+            background-color: $o-view-background-color;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            &.cl-sun .cl-day-wd {
+                color: $cl-bad;
+            }
+            &.active {
+                background-color: $primary;
+                border-color: $primary;
+                color: #fff;
+                .cl-day-wd {
+                    color: rgba(255, 255, 255, 0.85);
+                }
+            }
+        }
+    }
+    .cl-day-wd {
+        font-size: 0.72rem;
+        color: $cl-muted;
+    }
+    .cl-day-dm {
+        font-weight: 700;
+    }
+    .cl-drow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        min-height: 52px;
+    }
+    .cl-drow-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .cl-drow-val {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    .cl-produced {
+        background-color: rgba(71, 87, 168, 0.08);
+        .cl-drow-name {
+            font-style: italic;
+        }
+    }
+
+    // ---------------------------------------------------------------- hujjatlar
+    .cl-dgroup {
+        margin-bottom: 14px;
+    }
+    .cl-dgroup-head {
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin: 10px 2px 6px;
+    }
+    .cl-doc-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(127, 127, 127, 0.14);
+        color: $cl-muted;
+        &.cl-k-plavka {
+            background-color: rgba(194, 84, 10, 0.14);
+            color: $cl-molten;
+        }
+        &.cl-k-kirim {
+            background-color: rgba(18, 117, 58, 0.12);
+            color: $cl-in;
+        }
+        &.cl-k-kochirish {
+            background-color: rgba(71, 87, 168, 0.12);
+            color: $cl-adj;
+        }
+        &.cl-k-chiqim {
+            background-color: rgba(161, 64, 26, 0.12);
+            color: $cl-out;
+        }
+        &.cl-k-sanash {
+            background-color: rgba(113, 75, 103, 0.14);
+            color: $primary;
+        }
+    }
+    .cl-doc-name {
+        font-weight: 600;
+    }
+    .cl-doc-title {
+        overflow-wrap: anywhere;
+    }
+    .cl-doc-sub {
+        font-size: 0.82rem;
+        color: $cl-muted;
+        overflow-wrap: anywhere;
+    }
+    .cl-doc-warn {
+        font-size: 0.8rem;
+        color: $cl-bad;
+        margin-top: 2px;
+    }
+    .cl-doc-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        flex: 0 0 auto;
+        max-width: 42%;
+        text-align: right;
+    }
+    .cl-doc-total {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .cl-doc-time {
+        font-size: 0.78rem;
+    }
+    .cl-is-cancel {
+        .cl-doc-main {
+            opacity: 0.6;
+        }
+        .cl-doc-name {
+            text-decoration: line-through;
+        }
+    }
+    .cl-state {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        background-color: rgba(127, 127, 127, 0.14);
+        color: $cl-muted;
+    }
+    .cl-st-draft,
+    .cl-st-confirmed,
+    .cl-st-waiting,
+    .cl-st-assigned {
+        background-color: rgba(154, 98, 0, 0.14);
+        color: $cl-warn;
+    }
+    .cl-st-done {
+        background-color: rgba(18, 117, 58, 0.12);
+        color: $cl-in;
+    }
+
+    // ---------------------------------------------------------------- jadvallar
+    .cl-panel {
+        background-color: $o-view-background-color;
+        border: 1px solid $cl-line;
+        border-radius: $cl-radius;
+        overflow: hidden;
+    }
+    .cl-scroll {
+        overflow: auto;
+        max-height: 72vh;
+    }
+    .cl-table {
+        font-size: 0.875rem;
         thead th {
             font-weight: 600;
             white-space: nowrap;
+            color: $cl-muted;
+            border-bottom-width: 1px;
+        }
+        tfoot td {
+            font-weight: 700;
+            border-top: 2px solid $cl-line;
+        }
+        tbody tr[role="button"] {
+            cursor: pointer;
+        }
+        .cl-tname {
+            font-weight: 600;
+        }
+        .cl-tcode {
+            font-size: 0.78rem;
+            color: $cl-muted;
+        }
+        tr.cl-is-low td:first-child {
+            box-shadow: inset 4px 0 0 $cl-warn;
+        }
+        tr.cl-is-neg td:first-child {
+            box-shadow: inset 4px 0 0 $cl-bad;
+        }
+        tr.cl-is-low,
+        tr.cl-is-neg {
+            box-shadow: none;
+        }
+        tr.cl-is-draft td {
+            color: $cl-muted;
+            font-style: italic;
         }
     }
-    .o_cl_name {
-        max-width: 280px;
-    }
-    .o_cl_in {
-        color: #1d6b2f;
-    }
-    .o_cl_out {
-        color: #8a3b12;
-    }
-    .o_cl_low td {
-        background-color: #fff4e5;
-    }
-    .o_cl_neg td {
-        background-color: #fde8e8;
-    }
-    .o_cl_matrix_wrap {
-        max-height: 70vh;
-    }
-    .o_cl_matrix,
-    .o_cl_melts {
+    .cl-matrix {
         thead th {
             position: sticky;
             top: 0;
             background-color: $o-view-background-color;
             z-index: 2;
         }
-        .o_cl_sticky {
+        .cl-sticky {
             position: sticky;
             left: 0;
             background-color: $o-view-background-color;
             z-index: 1;
-            min-width: 170px;
-            box-shadow: 1px 0 0 rgba(11, 11, 11, 0.08);
+            min-width: 180px;
+            box-shadow: 1px 0 0 $cl-line;
         }
-        thead .o_cl_sticky {
+        thead .cl-sticky {
             z-index: 3;
         }
-    }
-    .o_cl_produced td {
-        background-color: #eef5ff;
-        font-style: italic;
-    }
-    .o_cl_produced td.o_cl_sticky {
-        background-color: #eef5ff;
-    }
-    .o_cl_produced_note {
-        background-color: #eef5ff;
-        padding: 0 4px;
-        border-radius: 3px;
-    }
-    .o_cl_sunday {
-        color: #b3261e;
-    }
-    .o_cl_melts thead th.o_cl_col {
-        white-space: normal;
-        min-width: 64px;
-        max-width: 96px;
-        font-size: 0.74rem;
-        line-height: 1.15;
-        vertical-align: bottom;
-    }
-    .o_cl_sum {
-        background-color: rgba(11, 11, 11, 0.025);
-    }
-    .o_cl_aux {
-        color: #6c6b68;
-    }
-    .o_cl_draft td {
-        color: #6c6b68;
-        font-style: italic;
-    }
-    @media (max-width: 575.98px) {
-        .o_cl_card {
-            padding: 12px;
+        tr.cl-produced td,
+        tr.cl-produced td.cl-sticky {
+            background-color: rgba(71, 87, 168, 0.08);
+            font-style: italic;
         }
-        .o_cl_kpi_value {
-            font-size: 1.2rem;
+        .cl-sun {
+            color: $cl-bad;
         }
-        .o_cl_name {
-            max-width: 46vw;
+    }
+    .cl-melts {
+        thead th.cl-col {
+            white-space: normal;
+            min-width: 64px;
+            max-width: 96px;
+            font-size: 0.74rem;
+            line-height: 1.15;
+            vertical-align: bottom;
         }
-        .o_cl_matrix .o_cl_sticky,
-        .o_cl_melts .o_cl_sticky {
-            min-width: 120px;
+        .cl-sum {
+            background-color: rgba(127, 127, 127, 0.06);
         }
-        h2 {
-            font-size: 1.35rem;
+    }
+
+    // ---------------------------------------------------------------- + tugmasi
+    .cl-fab {
+        position: fixed;
+        right: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 0;
+        background-color: $primary;
+        color: #fff;
+        font-size: 1.4rem;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+        z-index: 20;
+        &:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.8);
+            outline-offset: -6px;
         }
+    }
+
+    // ---------------------------------------------------------------- varaq (sheet)
+    .cl-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1055;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    .cl-sheet {
+        width: 100%;
+        max-height: 92vh;
+        max-height: 92dvh;
+        display: flex;
+        flex-direction: column;
+        background-color: $o-view-background-color;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.22);
+        animation: cl-sheet-in 0.18s ease-out;
+    }
+    .cl-sheet-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 6px 6px 16px;
+        border-bottom: 1px solid $cl-line;
+    }
+    .cl-sheet-titles {
+        min-width: 0;
+        padding-top: 6px;
+    }
+    .cl-sheet-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+    .cl-sheet-sub {
+        font-size: 0.82rem;
+        color: $cl-muted;
+        overflow-wrap: anywhere;
+    }
+    .cl-sheet-body {
+        overflow-y: auto;
+        padding: 12px 16px 16px;
+        flex: 1 1 auto;
+        overscroll-behavior: contain;
+    }
+    .cl-sheet-foot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+        border-top: 1px solid $cl-line;
+        > .btn {
+            min-height: $cl-tap;
+        }
+    }
+    .cl-sheet-foot {
+        order: 3;
+    }
+    .cl-sheet-error {
+        order: 2;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 0 12px 8px;
+        padding: 8px 4px 8px 12px;
+        border-radius: 10px;
+        background-color: rgba(196, 49, 75, 0.1);
+        color: $cl-bad;
+        font-size: 0.88rem;
+        max-height: 34vh;
+        overflow-y: auto;
+        > .fa {
+            margin-top: 3px;
+        }
+        .cl-icon-btn {
+            width: 32px;
+            height: 32px;
+            color: $cl-bad;
+        }
+    }
+    .cl-sheet-error-text {
+        flex: 1 1 auto;
+        white-space: pre-line;
+    }
+    .cl-foot-wrap {
+        flex-wrap: wrap;
+    }
+    .cl-btn-lg {
+        min-width: 140px;
+        font-weight: 600;
+    }
+    .cl-foot-sum {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+        font-size: 0.9rem;
+    }
+    .cl-danger-link {
+        color: $cl-bad;
+        padding-left: 0;
+    }
+    .cl-sheet .cl-empty {
+        padding: 20px;
+    }
+
+    // maydonlar
+    .cl-field {
+        display: block;
+        margin-bottom: 12px;
+        min-width: 0;
+        > span {
+            display: block;
+            font-size: 0.82rem;
+            color: $cl-muted;
+            margin-bottom: 4px;
+        }
+        .form-control,
+        .form-select {
+            min-height: $cl-tap;
+            font-size: 1rem; // iOS da kattalashmasin
+        }
+    }
+    .cl-field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .cl-switch-row {
+        min-height: $cl-tap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .cl-grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .cl-opt {
+        min-height: $cl-tap;
+        border: 1px solid $cl-line;
+        border-radius: 10px;
+        background: none;
+        font-weight: 500;
+        &:active {
+            background-color: rgba(127, 127, 127, 0.1);
+        }
+    }
+
+    // qatorlar (kirim, ko'chirish)
+    .cl-lines-head {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin: 6px 0 8px;
+    }
+    .cl-line {
+        border: 1px solid $cl-line;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        > .form-select {
+            min-height: $cl-tap;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .cl-field {
+            margin-bottom: 0;
+        }
+    }
+    .cl-line-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+    .cl-grow {
+        flex: 1 1 auto;
+    }
+    .cl-price {
+        flex: 0 0 110px;
+    }
+    .cl-line-del {
+        color: $cl-bad;
+    }
+    .cl-line-sum {
+        font-size: 0.85rem;
+        color: $cl-muted;
+        margin-top: 4px;
+    }
+    .cl-add-line {
+        min-height: $cl-tap;
+        margin-bottom: 14px;
+    }
+    .cl-route {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        .cl-swap {
+            margin-bottom: 12px;
+        }
+    }
+
+    // sanash qatorlari
+    .cl-crow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid $cl-line;
+        &.cl-crow-done .cl-crow-name b::after {
+            content: " ✓";
+            color: $cl-in;
+        }
+    }
+    .cl-crow-name {
+        flex: 1 1 100px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .cl-crow-input {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+        > input {
+            width: 100px;
+            min-height: $cl-tap;
+            text-align: right;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+    }
+    .cl-eq {
+        width: 40px;
+        height: $cl-tap;
+        border: 1px solid $cl-line;
+        border-radius: 10px;
+        background: none;
+        font-weight: 700;
+        color: $cl-muted;
+    }
+    .cl-unit {
+        width: 30px;
+        font-size: 0.8rem;
+        color: $cl-muted;
+    }
+    .cl-crow-diff {
+        flex: 1 1 100%;
+        text-align: right;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding-right: 36px;
+    }
+
+    // material va hujjat tafsiloti
+    .cl-big {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        margin: 4px 0 8px;
+    }
+    .cl-big-num {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .cl-big-unit {
+        color: $cl-muted;
+    }
+    .cl-big-min {
+        font-size: 0.82rem;
+        color: $cl-muted;
+        flex: 1 1 100%;
+    }
+    .cl-section {
+        margin-top: 14px;
+        h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+    }
+    .cl-subhead {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: $cl-muted;
+        margin: 10px 0 2px;
+    }
+    .cl-kv {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 7px 0;
+        border-bottom: 1px solid $cl-line;
+        > span {
+            flex: 0 0 auto;
+            max-width: 50%;
+            color: $cl-muted;
+        }
+        > b {
+            flex: 1 1 auto;
+            min-width: 0;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+    }
+    .cl-kv-line,
+    .cl-kv-btn {
+        > span {
+            flex: 1 1 auto;
+            max-width: none;
+            min-width: 0;
+            color: inherit;
+            overflow-wrap: anywhere;
+        }
+        > b {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+    }
+    .cl-kv-btn {
+        align-items: center;
+    }
+    .cl-kv-total {
+        border-bottom: 0;
+        font-size: 1.02rem;
+    }
+    .cl-doc-state {
+        margin-bottom: 8px;
+    }
+    .cl-move {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid $cl-line;
+    }
+    .cl-move-main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .cl-move-qty {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    // "Yangi" va menyu
+    .cl-action {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        min-height: 60px;
+        padding: 8px 2px;
+        border: 0;
+        border-bottom: 1px solid $cl-line;
+        background: none;
+        text-align: left;
+        b {
+            display: block;
+        }
+        small {
+            display: block;
+            color: $cl-muted;
+        }
+        &:last-child {
+            border-bottom: 0;
+        }
+    }
+    .cl-menu > button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 50px;
+        border: 0;
+        border-bottom: 1px solid $cl-line;
+        background: none;
+        text-align: left;
+        > .fa {
+            width: 20px;
+            text-align: center;
+            color: $cl-muted;
+        }
+    }
+
+    // ---------------------------------------------------------------- planshet ≥ 768
+    @media (min-width: 768px) {
+        .cl-top {
+            padding: 6px 20px 0;
+        }
+        .cl-body {
+            padding: 16px 20px 96px;
+        }
+        .cl-kpis {
+            grid-auto-flow: row;
+            grid-template-columns: repeat(5, 1fr);
+        }
+        .cl-search {
+            flex: 0 1 300px;
+        }
+        .cl-backdrop {
+            align-items: center;
+            padding: 24px;
+        }
+        .cl-sheet {
+            max-width: 560px;
+            max-height: 86vh;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+        }
+        .cl-sheet-kirim,
+        .cl-sheet-transfer,
+        .cl-sheet-count,
+        .cl-sheet-doc,
+        .cl-sheet-material {
+            max-width: 680px;
+        }
+        .cl-list:not(.cl-docs) {
+            .cl-mat {
+                padding: 10px 18px;
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- kompyuter ≥ 992
+    @media (min-width: 992px) {
+        .cl-top-row {
+            min-height: 52px;
+        }
+        .cl-tabs {
+            display: flex;
+            gap: 24px;
+            > button {
+                padding: 0 2px;
+            }
+        }
+        .cl-body {
+            padding: 18px 24px 32px;
+        }
+        .cl-add-mat {
+            margin-left: auto;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .cl-dgroup .cl-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            > * + * {
+                border-top: 0;
+            }
+            > * {
+                border-bottom: 1px solid $cl-line;
+            }
+            > :nth-child(2n) {
+                border-left: 1px solid $cl-line;
+            }
+        }
+    }
+}
+
+@keyframes cl-sheet-in {
+    from {
+        transform: translateY(24px);
+        opacity: 0.4;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .o_craf_litey .cl-sheet {
+        animation: none;
     }
 }
 
 @media print {
     .o_main_navbar,
-    .o_cl_toolbar,
-    .o_cl_tabs,
-    .o_craf_litey .btn {
+    .o_craf_litey .cl-top,
+    .o_craf_litey .cl-toolbar,
+    .o_craf_litey .cl-fab,
+    .o_craf_litey .cl-foot-links,
+    .o_craf_litey .cl-days {
         display: none !important;
     }
     .o_craf_litey {
         overflow: visible !important;
         height: auto !important;
-    }
-    .o_craf_litey .o_cl_matrix_wrap {
-        max-height: none;
+        .cl-scroll {
+            max-height: none;
+            overflow: visible;
+        }
+        .d-none.d-lg-block,
+        .d-none.d-md-block {
+            display: block !important;
+        }
+        .d-lg-none,
+        .d-md-none {
+            display: none !important;
+        }
     }
 }

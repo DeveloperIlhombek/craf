@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- ============================================================ asosiy -->
+    <t t-name="craf_sotuv.Sotuv">
+        <div class="o_action o_craf_sotuv" t-att-class="{ 'cs-busy': state.busy }">
+            <div class="cs-top">
+                <div class="cs-top-row">
+                    <h2 class="cs-title"><t t-esc="state.init.is_seller ? 'Sotuv' : 'Yuklash'"/> <span class="cs-title-user" t-esc="state.init.user"/></h2>
+                    <button class="btn cs-icon-btn" t-if="state.init.is_seller" t-on-click="toggleSettings" title="Sozlamalar" aria-label="Sozlamalar">
+                        <i class="fa fa-cog"/>
+                    </button>
+                </div>
+                <div class="cs-tabs" role="tablist" t-att-style="'grid-template-columns: repeat(' + tabs.length + ', 1fr)'">
+                    <t t-foreach="tabs" t-as="tb" t-key="tb.key">
+                        <button role="tab" t-att-class="{ active: state.tab === tb.key }" t-on-click="() => this.setTab(tb.key)">
+                            <i t-att-class="'fa ' + tb.icon"/> <span class="cs-tab-label" t-esc="tb.label"/>
+                            <span class="cs-count" t-if="tb.count" t-att-class="{ 'cs-count-alert': tb.key === 'load' }" t-esc="tb.count"/>
+                        </button>
+                    </t>
+                </div>
+            </div>
+
+            <div class="cs-body">
+                <t t-if="state.tab === 'new'" t-call="craf_sotuv.TabNew"/>
+                <t t-elif="state.tab === 'load'" t-call="craf_sotuv.TabLoad"/>
+                <t t-elif="state.tab === 'sales'" t-call="craf_sotuv.TabSales"/>
+                <t t-else="" t-call="craf_sotuv.TabStock"/>
+            </div>
+
+            <div class="cs-bottom cs-bottom-2" t-if="state.tab === 'new' and readyOrders.length > 1">
+                <button class="btn btn-primary cs-big" t-att-disabled="state.busy" t-on-click="sendAll">
+                    <i class="fa fa-send"/> Hammasini yuborish (<t t-esc="readyOrders.length"/>)
+                </button>
+            </div>
+            <t t-if="state.tab === 'load' and state.load.current" t-call="craf_sotuv.LoadBottom"/>
+
+            <datalist id="cs_trucks">
+                <t t-foreach="state.init.trucks || []" t-as="tr" t-key="tr"><option t-att-value="tr"/></t>
+            </datalist>
+            <t t-if="state.picker" t-call="craf_sotuv.Picker"/>
+            <t t-if="state.settings" t-call="craf_sotuv.Settings"/>
+            <t t-if="state.load.finish" t-call="craf_sotuv.FinishSheet"/>
+            <div class="cs-photo-view" t-if="state.photoView" t-on-click="closePhoto" role="dialog" aria-label="Mashina rasmi">
+                <img t-att-src="state.photoView" alt="Mashina rasmi"/>
+                <button class="btn cs-icon-btn cs-photo-view-close" t-on-click="closePhoto" aria-label="Yopish"><i class="fa fa-times"/></button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.PhotoStrip">
+        <div class="cs-photo-strip" t-if="photos and photos.length">
+            <t t-foreach="photos" t-as="p" t-key="p.id">
+                <button class="cs-photo-thumb" t-on-click.stop="() => this.viewPhoto(p)" t-att-aria-label="'Mashina rasmi ' + p.time">
+                    <img t-att-src="p.thumb" alt="" loading="lazy"/>
+                </button>
+            </t>
+        </div>
+    </t>
+
+    <!-- ============================================================ Berildi (yangi) -->
+    <t t-name="craf_sotuv.TabNew">
+        <div class="cs-layout">
+            <div class="cs-side">
+                <div class="cs-card cs-input-card">
+                    <label class="cs-label" for="cs_text">Yangi buyurtma</label>
+                    <textarea id="cs_text" class="form-control cs-textarea" rows="6"
+                              placeholder="Farxod&#10;Zavod&#10;Kraf antrasid&#10;L 28&#10;T 20&#10;Sh1 23"
+                              t-att-value="state.text" t-on-input="onText"/>
+                    <div class="cs-actions">
+                        <button class="btn btn-primary" t-att-disabled="state.busy" t-on-click="parseText">
+                            <i class="fa fa-check-square-o"/> Tekshirish
+                        </button>
+                        <button class="btn btn-light" t-on-click="newManual">
+                            <i class="fa fa-list"/> Ro'yxatdan tanlash
+                        </button>
+                    </div>
+                    <div class="cs-hint">
+                        1-qator — mijoz, keyin joy (Zavod / Parnik / Rohat), seriya va rang (Kraf oq, antrasid …), so'ng
+                        mahsulotlar: <b>L 28</b> — 28 pachka, <b>T 3+5dona</b>, <b>Krishka 10 dona</b>.
+                    </div>
+                </div>
+
+                <div class="cs-card cs-done" t-if="state.done.length">
+                    <div class="cs-label">Shu oynada yuborildi / berildi</div>
+                    <t t-foreach="state.done.slice(0, 8)" t-as="d" t-key="d.id">
+                        <button class="cs-done-row" t-on-click="() => this.openOrder(d.id)">
+                            <i t-att-class="d.load_state === 'done' ? 'fa fa-check-circle text-success' : 'fa fa-truck cs-c-queue'"/>
+                            <span class="cs-done-name"><b t-esc="d.name"/> · <t t-esc="d.partner"/></span>
+                            <span class="cs-done-num"><t t-esc="fmt(d.packs)"/> p · <t t-esc="fmt(d.kg)"/> kg</span>
+                        </button>
+                    </t>
+                </div>
+            </div>
+
+            <div class="cs-main">
+                <div class="cs-list-head" t-if="state.orders.length">
+                    <span><b t-esc="state.orders.length"/> ta qoralama</span>
+                    <button class="btn btn-link btn-sm" t-on-click="clearAll">Tozalash</button>
+                </div>
+                <div class="cs-empty" t-if="!state.orders.length">
+                    <i class="fa fa-pencil-square-o"/>
+                    <div>Buyurtmani yozing va <b>Tekshirish</b> ni bosing. Hammasi to'g'ri bo'lsa — <b>Yuklovchiga yuborish</b>.</div>
+                </div>
+                <div class="cs-orders">
+                    <t t-foreach="state.orders" t-as="order" t-key="order.key">
+                        <t t-call="craf_sotuv.OrderCard"/>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.OrderCard">
+        <t t-set="totals" t-value="orderTotals(order)"/>
+        <div class="cs-card cs-order" t-att-class="{ 'cs-order-dup': order.duplicate and !order.force, 'cs-order-err': order.error }">
+            <div class="cs-order-head">
+                <div class="cs-customer">
+                    <input type="text" class="form-control cs-customer-input" placeholder="Mijoz"
+                           t-att-value="order.customer" t-on-input="(ev) => this.onCustomer(order, ev)"
+                           t-on-blur="closePartnerDrop" autocomplete="off"/>
+                    <div class="cs-drop" t-if="state.partnerDrop and state.partnerDrop.key === order.key and state.partnerDrop.results.length">
+                        <t t-foreach="state.partnerDrop.results" t-as="p" t-key="p.id">
+                            <button class="cs-drop-item" t-on-mousedown.prevent="() => this.pickPartner(order, p)" t-esc="p.name"/>
+                        </t>
+                    </div>
+                </div>
+                <button class="btn cs-icon-btn" t-on-click="() => this.removeOrder(order)" title="Olib tashlash" aria-label="Olib tashlash">
+                    <i class="fa fa-times"/>
+                </button>
+            </div>
+            <div class="cs-meta">
+                <span t-if="order.partner" class="cs-chip cs-chip-ok"><i class="fa fa-user"/> <t t-esc="order.partner.name"/></span>
+                <span t-elif="(order.customer || '').trim()" class="cs-chip cs-chip-new"><i class="fa fa-user-plus"/> Yangi mijoz</span>
+                <t t-if="!order.partner and order.partner_suggestions and order.partner_suggestions.length">
+                    <span class="cs-meta-text">Shumi?</span>
+                    <t t-foreach="order.partner_suggestions" t-as="p" t-key="p.id">
+                        <button class="cs-chip cs-chip-btn" t-on-click="() => this.pickPartner(order, p)" t-esc="p.name"/>
+                    </t>
+                </t>
+            </div>
+            <div class="cs-locs" role="group" aria-label="Qayerdan">
+                <t t-foreach="locations" t-as="loc" t-key="loc.id">
+                    <button class="cs-loc" t-att-class="{ active: order.location_id === loc.id }"
+                            t-on-click="() => this.setLocation(order, loc.id)" t-esc="loc.label"/>
+                </t>
+            </div>
+
+            <div class="cs-alert cs-alert-warn" t-if="order.duplicate and !order.force">
+                <i class="fa fa-clone"/>
+                <span>Bu buyurtma avval kiritilgan: <a href="#" t-on-click.prevent="() => this.openOrder(order.duplicate.id)" t-esc="order.duplicate.name"/></span>
+                <button class="btn btn-link btn-sm" t-on-click="() => this.forceOrder(order)">Baribir kiritish</button>
+            </div>
+            <div class="cs-alert cs-alert-err" t-if="order.error"><i class="fa fa-exclamation-circle"/> <span class="cs-pre" t-esc="order.error"/></div>
+            <div class="cs-alert cs-alert-note" t-foreach="order.notes" t-as="note" t-key="note_index"><i class="fa fa-info-circle"/> <t t-esc="note"/></div>
+
+            <div class="cs-lines">
+                <t t-foreach="order.lines" t-as="line" t-key="line.uid">
+                    <t t-call="craf_sotuv.Line"/>
+                </t>
+            </div>
+
+            <div class="cs-order-tools">
+                <button class="btn btn-light btn-sm" t-on-click="() => this.addLine(order)"><i class="fa fa-plus"/> Qator</button>
+                <div class="cs-scan" t-if="state.init.settings.use_scan">
+                    <input type="text" class="form-control form-control-sm" placeholder="QR / pachka №"
+                           t-att-value="order.scan" t-on-keyup="(ev) => this.onScanInput(order, ev)" enterkeyhint="go"/>
+                    <button class="btn btn-light btn-sm" t-if="canScan" t-on-click="() => this.cameraScan(order)" title="Kamera bilan skanerlash">
+                        <i class="fa fa-camera"/>
+                    </button>
+                </div>
+            </div>
+
+            <div class="cs-order-foot">
+                <div class="cs-totals">
+                    <span><b t-esc="fmt(totals.packs)"/> pachka<t t-if="totals.extra"> + <b t-esc="fmt(totals.extra)"/> dona</t></span>
+                    <span class="cs-dot">·</span>
+                    <span><t t-esc="fmt(totals.pcs)"/> dona</span>
+                    <span class="cs-dot">·</span>
+                    <span><b t-esc="fmt(totals.kg)"/> kg</span>
+                </div>
+                <div class="cs-truck-row">
+                    <label class="cs-truck-label" t-att-for="'tr_' + order.key"><i class="fa fa-truck"/></label>
+                    <input type="text" class="form-control cs-truck" t-att-id="'tr_' + order.key" list="cs_trucks"
+                           placeholder="Mashina raqami (01 A 777 AA)" autocapitalize="characters"
+                           t-att-value="order.truck || ''" t-on-change="(ev) => this.onTruck(order, ev)"/>
+                </div>
+                <input type="text" class="form-control cs-note" placeholder="Yuklovchiga izoh: vaqt, eslatma…"
+                       t-att-value="order.note || ''" t-on-change="(ev) => this.onNote(order, ev)"/>
+                <t t-set="problems" t-value="orderProblems(order, false)"/>
+                <div class="cs-problems" t-if="problems.length" t-esc="problems.join(' · ')"/>
+                <div class="cs-warnline" t-elif="shortCount(order)">
+                    <i class="fa fa-exclamation-triangle"/> <t t-esc="shortCount(order)"/> ta mahsulot omborda yetmaydi — yuklovchi ko'radi
+                </div>
+                <div class="cs-foot-btns">
+                    <button class="btn btn-primary cs-big" t-att-disabled="!canSend(order)" t-on-click="() => this.send(order)">
+                        <i class="fa fa-send"/> Yuklovchiga yuborish
+                    </button>
+                    <button class="btn btn-outline-secondary cs-big cs-big-2" t-att-disabled="!canGive(order)" t-on-click="() => this.give(order)"
+                            title="O'zim yukladim — darhol berildi">
+                        <i class="fa fa-check"/> Berildi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.Line">
+        <t t-set="p" t-value="product(line.product_id)"/>
+        <t t-set="short" t-value="lineShort(order, line)"/>
+        <div class="cs-line" t-att-class="{ 'cs-line-bad': lineBad(line), 'cs-line-short': short }">
+            <div class="cs-line-top">
+                <button class="cs-product" t-on-click="() => this.openPicker(order, line)">
+                    <t t-if="p">
+                        <span class="cs-product-name" t-esc="p.name"/>
+                        <span class="cs-product-code" t-esc="p.code"/>
+                    </t>
+                    <t t-else="">
+                        <span class="cs-product-missing"><i class="fa fa-question-circle"/> Mahsulotni tanlang</span>
+                    </t>
+                    <i class="fa fa-chevron-down cs-product-caret"/>
+                </button>
+                <button class="btn cs-icon-btn cs-line-del" t-on-click="() => this.removeLine(order, line)" title="Qatorni o'chirish" aria-label="Qatorni o'chirish">
+                    <i class="fa fa-trash-o"/>
+                </button>
+            </div>
+            <div class="cs-line-sub">
+                <span class="cs-raw-line" t-if="line.raw" t-esc="line.raw"/>
+                <span class="cs-line-msg" t-if="line.msg" t-att-class="{ 'text-danger': !line.product_id }" t-esc="line.msg"/>
+            </div>
+            <div class="cs-qty">
+                <div class="cs-stepper">
+                    <button class="btn" t-on-click="() => this.step(line, 'packs', -1)" aria-label="Kamaytirish">−</button>
+                    <input type="number" inputmode="numeric" min="0" class="form-control" t-att-value="line.packs"
+                           t-on-change="(ev) => this.onQty(line, 'packs', ev)" aria-label="Pachka"/>
+                    <button class="btn" t-on-click="() => this.step(line, 'packs', 1)" aria-label="Ko'paytirish">+</button>
+                    <span class="cs-unit">pachka</span>
+                </div>
+                <div class="cs-extra">
+                    <span class="cs-plus">+</span>
+                    <input type="number" inputmode="numeric" min="0" class="form-control" t-att-value="line.extra"
+                           t-on-change="(ev) => this.onQty(line, 'extra', ev)" aria-label="Dona"/>
+                    <span class="cs-unit">dona</span>
+                </div>
+            </div>
+            <div class="cs-line-foot" t-if="p">
+                <span class="cs-calc">
+                    <t t-esc="fmt(linePcs(line))"/> dona · <t t-esc="fmt(lineKg(line), 1)"/> kg
+                    <span class="text-muted" t-if="p.per_pack"> (<t t-esc="p.per_pack"/>/pachka)</span>
+                    <span class="text-danger" t-if="!p.per_pack and line.packs"> — dona/pachka kiritilmagan</span>
+                </span>
+                <t t-set="shortHere" t-value="lineShortHere(order, line)"/>
+                <span class="cs-avail" t-att-class="short ? 'cs-avail-short' : (shortHere ? 'cs-avail-warn' : 'cs-avail-ok')" t-if="availText(order, line)">
+                    <i t-att-class="short or shortHere ? 'fa fa-exclamation-triangle' : 'fa fa-check'"/>
+                    <t t-esc="locLabel(order.location_id)"/>: <t t-esc="availText(order, line)"/>
+                    <t t-if="shortHere"> · jami joylarda: <t t-esc="availOther(order, line)"/></t>
+                </span>
+            </div>
+        </div>
+    </t>
+
+    <!-- ============================================================ mahsulot tanlash -->
+    <t t-name="craf_sotuv.Picker">
+        <div class="cs-sheet-backdrop" t-on-click.self="closePicker">
+            <div class="cs-sheet" role="dialog" aria-label="Mahsulot tanlash">
+                <div class="cs-sheet-head">
+                    <div>
+                        <div class="cs-sheet-title">Mahsulot</div>
+                        <div class="cs-sheet-sub" t-if="state.picker.line.raw">Yozilgan: «<t t-esc="state.picker.line.raw"/>»</div>
+                    </div>
+                    <button class="btn cs-icon-btn" t-on-click="closePicker" aria-label="Yopish"><i class="fa fa-times"/></button>
+                </div>
+                <input type="search" class="form-control cs-sheet-search" placeholder="Qidirish: L J306, T бал 9016, коса 80 …"
+                       t-att-value="state.picker.query" t-on-input="onPickerQuery" autofocus="autofocus"/>
+                <div class="cs-sheet-list">
+                    <t t-if="!state.picker.query and state.picker.suggestions.length">
+                        <div class="cs-label">Mos kelishi mumkin</div>
+                        <t t-foreach="state.picker.suggestions" t-as="s" t-key="'s' + s.id">
+                            <t t-call="craf_sotuv.PickerRow"><t t-set="r" t-value="s"/></t>
+                        </t>
+                        <div class="cs-label">Hammasi</div>
+                    </t>
+                    <t t-foreach="state.picker.results" t-as="r" t-key="r.id">
+                        <t t-call="craf_sotuv.PickerRow"/>
+                    </t>
+                    <div class="cs-empty-sm" t-if="!state.picker.loading and !state.picker.results.length">Topilmadi</div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.PickerRow">
+        <t t-set="rp" t-value="product(r.id) || r"/>
+        <t t-set="have" t-value="rp.avail and (state.picker.order.location_id in rp.avail) ? rp.avail[state.picker.order.location_id] : r.avail"/>
+        <button class="cs-pick-row" t-att-class="{ active: state.picker.line.product_id === r.id }" t-on-click="() => this.pickProduct(r)">
+            <span class="cs-pick-name">
+                <span t-esc="r.name"/>
+                <span class="cs-product-code" t-esc="r.code"/>
+            </span>
+            <span class="cs-pick-avail" t-att-class="{ 'text-muted': !(have > 0), 'text-danger': have &lt; 0 }" t-if="have !== undefined" t-esc="availShort(rp, have)"/>
+        </button>
+    </t>
+
+
+    <!-- ============================================================ Yuklash (yuklovchi) -->
+    <t t-name="craf_sotuv.TabLoad">
+        <t t-set="L" t-value="state.load"/>
+        <t t-if="L.result" t-call="craf_sotuv.LoadResult"/>
+        <t t-elif="L.current" t-call="craf_sotuv.LoadDetail"/>
+        <t t-else="">
+            <div class="cs-loading" t-if="!L.queue"><i class="fa fa-spinner fa-spin"/> Yuklanmoqda…</div>
+            <t t-else="">
+                <div class="cs-list-head">
+                    <span><b t-esc="L.queue.length"/> ta buyurtma navbatda</span>
+                    <button class="btn btn-link btn-sm" t-on-click="loadQueue"><i class="fa fa-refresh"/> Yangilash</button>
+                </div>
+                <div class="cs-empty" t-if="!L.queue.length">
+                    <i class="fa fa-check-circle-o"/>
+                    <div>Navbat bo'sh. Yangi buyurtma kelsa shu yerda o'zi chiqadi.</div>
+                </div>
+                <div class="cs-orders">
+                    <t t-foreach="L.queue" t-as="o" t-key="o.id">
+                        <button class="cs-card cs-qcard" t-att-class="statusClass(o)" t-on-click="() => this.openLoad(o)">
+                            <div class="cs-qcard-top">
+                                <div class="cs-qcard-who">
+                                    <div class="cs-qcard-name" t-esc="o.partner"/>
+                                    <div class="cs-sale-meta"><t t-esc="o.name"/> · <t t-esc="o.sent_time"/> · <t t-esc="ageText(o.age_min)"/> · sotuvchi: <t t-esc="o.seller"/></div>
+                                </div>
+                                <span class="cs-loc-badge" t-esc="o.location"/>
+                            </div>
+                            <div class="cs-truck-badge" t-if="o.truck"><i class="fa fa-truck"/> <t t-esc="o.truck"/></div>
+                            <div class="cs-qcard-note" t-if="o.note"><i class="fa fa-sticky-note-o"/> <t t-esc="o.note"/></div>
+                            <div class="cs-qcard-lines">
+                                <t t-foreach="o.lines.slice(0, 4)" t-as="l" t-key="l_index">
+                                    <div class="cs-qcard-line"><span t-esc="l.product"/><b t-esc="l.text"/></div>
+                                </t>
+                                <div class="cs-sale-meta" t-if="o.lines.length > 4">… yana <t t-esc="o.lines.length - 4"/> qator</div>
+                            </div>
+                            <div class="cs-qcard-foot">
+                                <span class="cs-status" t-att-class="statusClass(o)">
+                                    <t t-if="o.load_state === 'loading'"><i class="fa fa-hourglass-half"/> <t t-esc="o.is_mine ? 'Siz' : o.loader"/> yuklamoqda<t t-if="o.accepted_time"> · <t t-esc="o.accepted_time"/> dan</t> · <t t-esc="o.progress.done"/>/<t t-esc="o.progress.total"/></t>
+                                    <t t-elif="o.partial"><i class="fa fa-adjust"/> Qisman berildi — qolganini qabul qiling</t>
+                                    <t t-else=""><i class="fa fa-circle"/> Yangi — qabul qilinmagan</t>
+                                </span>
+                                <span class="cs-qcard-sum"><b t-esc="fmt(o.packs)"/> p · <t t-esc="fmt(o.kg)"/> kg</span>
+                            </div>
+                        </button>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </t>
+
+    <t t-name="craf_sotuv.LoadDetail">
+        <t t-set="cur" t-value="state.load.current"/>
+        <t t-set="st" t-value="loadStats(cur)"/>
+        <t t-set="mode" t-value="ldMode(cur)"/>
+        <div class="cs-ld" t-att-class="{ 'cs-ld-busy': state.load.busy, 'cs-ld-preview': mode !== 'mine' }">
+            <div class="cs-ld-head">
+                <button class="btn cs-icon-btn" t-on-click="backToQueue" aria-label="Navbatga"><i class="fa fa-arrow-left"/></button>
+                <div class="cs-ld-title">
+                    <div class="cs-qcard-name" t-esc="cur.partner"/>
+                    <div class="cs-sale-meta"><t t-esc="cur.name"/> · <t t-esc="cur.sent_time"/> · sotuvchi: <t t-esc="cur.seller"/></div>
+                </div>
+                <span class="cs-loc-badge cs-loc-badge-lg" t-esc="cur.location"/>
+            </div>
+            <div class="cs-ld-state cs-ld-state-new" t-if="mode === 'new'">
+                <i class="fa fa-inbox"/>
+                <span><b t-esc="cur.partial ? 'Qisman berilgan — qolgani' : 'Yangi buyurtma'"/> — ko'rib chiqing va pastdagi «Qabul qilish» ni bosing.</span>
+            </div>
+            <div class="cs-ld-state cs-ld-state-other" t-elif="mode === 'other'">
+                <i class="fa fa-hourglass-half"/>
+                <span><b t-esc="cur.loader"/> yuklamoqda<t t-if="cur.accepted_time"> (<t t-esc="cur.accepted_time"/> dan)</t> · <t t-esc="st.done"/>/<t t-esc="st.total"/> qator</span>
+            </div>
+            <div class="cs-ld-state cs-ld-state-mine" t-else="">
+                <i class="fa fa-truck"/>
+                <span><b>Yuklanmoqda</b> — siz qabul qildingiz<t t-if="cur.accepted_time"> (<t t-esc="cur.accepted_time"/>)</t></span>
+            </div>
+            <div class="cs-truck-badge" t-if="mode !== 'mine' and cur.truck"><i class="fa fa-truck"/> <t t-esc="cur.truck"/></div>
+            <div class="cs-truck-row cs-truck-row-ld" t-if="mode === 'mine'" t-att-class="{ 'cs-truck-missing': !cur.truck }">
+                <label class="cs-truck-label" for="cs_ld_truck"><i class="fa fa-truck"/></label>
+                <input type="text" id="cs_ld_truck" class="form-control cs-truck" list="cs_trucks"
+                       placeholder="Mashina raqami — yozing" autocapitalize="characters"
+                       t-att-value="cur.truck || ''" t-on-change="onLoadTruck"/>
+            </div>
+            <div class="cs-qcard-note" t-if="cur.note"><i class="fa fa-sticky-note-o"/> <t t-esc="cur.note"/></div>
+            <div class="cs-alert cs-alert-note" t-if="cur.given_before.length">
+                <i class="fa fa-info-circle"/>
+                <span>Avval berilgan: <t t-esc="cur.given_before.map((g) => g.product + ' ' + g.text).join('; ')"/></span>
+            </div>
+            <div class="cs-ld-scan" t-if="state.init.settings.use_scan and mode === 'mine'">
+                <input type="text" class="form-control" placeholder="Pachka QR / raqami — skanerlang"
+                       t-att-value="state.load.scan" t-on-keyup="onLoadScanKey" enterkeyhint="go"/>
+                <button class="btn btn-light" t-if="canScan" t-on-click="cameraLoadScan" aria-label="Kamera"><i class="fa fa-camera"/></button>
+            </div>
+            <div class="cs-ld-lines">
+                <t t-foreach="cur.lines_open" t-as="line" t-key="line.move_id">
+                    <t t-set="ls" t-value="lineState(line)"/>
+                    <div class="cs-ldl" t-att-class="'cs-ldl-' + ls">
+                        <button class="cs-ldl-check" t-if="mode === 'mine'" t-on-click="() => this.toggleLoad(line)" t-att-aria-pressed="line.picked ? 'true' : 'false'"
+                                t-att-aria-label="line.picked ? 'Yuklanmadi deb belgilash' : 'Yuklandi deb belgilash'">
+                            <i t-att-class="ls === 'todo' ? 'fa fa-circle-thin' : 'fa fa-check'"/>
+                        </button>
+                        <span class="cs-ldl-check cs-ldl-num" t-else="" aria-hidden="true"><i t-esc="line_index + 1"/></span>
+                        <div class="cs-ldl-body" t-on-click="() => mode === 'mine' and this.toggleLoad(line)">
+                            <div class="cs-ldl-name"><t t-esc="line.product.name"/> <span class="cs-product-code" t-esc="line.product.code"/></div>
+                            <div class="cs-ldl-qty" t-esc="line.demand_text"/>
+                            <div class="cs-ldl-sub">
+                                <span t-if="ls === 'less'" class="cs-ldl-less">yuklandi: <t t-esc="line.loaded_text"/></span>
+                                <span t-if="ls === 'more'" class="cs-ldl-more">yuklandi: <t t-esc="line.loaded_text"/> (ko'p)</span>
+                                <t t-if="line.split">
+                                    <t t-foreach="line.stock.filter((s) => s.qty)" t-as="s" t-key="s.location_id">
+                                        <span class="cs-ldl-from"><t t-esc="s.label"/>: <b t-esc="s.qty_text"/></span>
+                                    </t>
+                                </t>
+                                <span t-else="" t-att-class="line.onhand &lt; line.demand ? 'text-danger' : ''">
+                                    <t t-esc="locLabel(line.primary_id) || 'omborda'"/>: <t t-esc="line.onhand_text"/>
+                                </span>
+                                <span t-if="line.packs.length and state.init.settings.use_scan"><i class="fa fa-qrcode"/> <t t-esc="line.packs.length"/></span>
+                            </div>
+                        </div>
+                        <button class="btn cs-icon-btn cs-ldl-edit" t-if="mode === 'mine'" t-on-click="() => this.editLoad(line)" aria-label="Miqdorni o'zgartirish">
+                            <i class="fa fa-pencil"/>
+                        </button>
+                    </div>
+                    <div class="cs-ldl-editor" t-if="state.load.edit and state.load.edit.move_id === line.move_id">
+                        <t t-set="ed" t-value="state.load.edit"/>
+                        <div class="cs-label">Qaysi joydan qancha yuklandi</div>
+                        <t t-foreach="ed.rows" t-as="row" t-key="row.location_id">
+                            <div class="cs-alloc">
+                                <div class="cs-alloc-head">
+                                    <b t-esc="row.label"/>
+                                    <span class="cs-sale-meta">omborda: <t t-esc="row.onhand_text"/></span>
+                                </div>
+                                <div class="cs-qty">
+                                    <div class="cs-stepper">
+                                        <button class="btn" t-on-click="() => this.stepEdit(row, 'packs', -1)" aria-label="Kamaytirish">−</button>
+                                        <input type="number" inputmode="numeric" min="0" class="form-control" t-att-value="row.packs"
+                                               t-on-change="(ev) => this.onEditQty(row, 'packs', ev)" t-att-aria-label="row.label + ' pachka'"/>
+                                        <button class="btn" t-on-click="() => this.stepEdit(row, 'packs', 1)" aria-label="Ko'paytirish">+</button>
+                                        <span class="cs-unit">pachka</span>
+                                    </div>
+                                    <div class="cs-extra">
+                                        <span class="cs-plus">+</span>
+                                        <input type="number" inputmode="numeric" min="0" class="form-control" t-att-value="row.extra"
+                                               t-on-change="(ev) => this.onEditQty(row, 'extra', ev)" t-att-aria-label="row.label + ' dona'"/>
+                                        <span class="cs-unit">dona</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-set="et" t-value="editTotal()"/>
+                        <div class="cs-alloc-total" t-att-class="et.pcs === line.demand ? 'cs-alloc-ok' : 'cs-alloc-diff'">
+                            Jami: <b t-esc="et.text"/> · buyurtma <t t-esc="line.demand_text"/>
+                        </div>
+                        <div class="cs-ldl-editor-btns">
+                            <button class="btn btn-light" t-on-click="cancelEdit">Bekor</button>
+                            <button class="btn btn-primary" t-on-click="saveEdit">Saqlash</button>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            <div class="cs-photos" t-if="mode === 'mine'" t-att-class="{ 'cs-photos-missing': !tripPhotos(cur).length }">
+                <div class="cs-photos-head">
+                    <span class="cs-label"><i class="fa fa-camera"/> Yuklangan mashina rasmi</span>
+                    <span class="cs-sale-meta" t-if="!tripPhotos(cur).length">yuklab bo'lgach rasmga oling — «Berildi» uchun kerak</span>
+                </div>
+                <div class="cs-photo-grid">
+                    <t t-foreach="tripPhotos(cur)" t-as="p" t-key="p.id">
+                        <div class="cs-photo">
+                            <img t-att-src="p.thumb" alt="Mashina rasmi" t-on-click="() => this.viewPhoto(p)"/>
+                            <button class="cs-photo-del" t-on-click="() => this.removePhoto(p)" aria-label="Rasmni o'chirish"><i class="fa fa-times"/></button>
+                        </div>
+                    </t>
+                    <label class="cs-photo-add" t-att-class="{ 'cs-photo-add-main': !tripPhotos(cur).length, 'cs-photo-add-busy': state.load.photoBusy }">
+                        <input type="file" accept="image/*" capture="environment" class="d-none" t-att-disabled="state.load.photoBusy" t-on-change="onPhotoPick"/>
+                        <i t-att-class="state.load.photoBusy ? 'fa fa-spinner fa-spin' : 'fa fa-camera'"/>
+                        <span t-if="state.load.photoBusy">Yuklanmoqda…</span>
+                        <span t-elif="tripPhotos(cur).length">Yana rasm</span>
+                        <span t-else="">Rasmga olish</span>
+                    </label>
+                </div>
+                <label class="btn btn-link btn-sm cs-photo-gallery">
+                    <input type="file" accept="image/*" multiple="multiple" class="d-none" t-att-disabled="state.load.photoBusy" t-on-change="onPhotoPick"/>
+                    <i class="fa fa-picture-o"/> Galereyadan tanlash
+                </label>
+            </div>
+            <div class="cs-ld-extra" t-if="mode === 'mine'">
+                <button class="btn btn-link btn-sm" t-on-click="releaseCurrent"><i class="fa fa-undo"/> Qabulni bekor qilish — navbatga qaytarish</button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.LoadBottom">
+        <t t-set="cur" t-value="state.load.current"/>
+        <t t-set="st" t-value="loadStats(cur)"/>
+        <t t-set="mode" t-value="ldMode(cur)"/>
+        <div class="cs-bottom cs-ld-bottom" t-if="mode !== 'mine'">
+            <div class="cs-ld-bottom-row">
+                <div class="cs-ld-count">
+                    <b t-esc="st.total"/> qator
+                    <div class="cs-sale-meta"><t t-esc="fmt(st.totalKg)"/> kg</div>
+                </div>
+                <button class="btn btn-primary cs-big cs-accept" t-if="mode === 'new'" t-att-disabled="state.load.busy" t-on-click="() => this.acceptLoad()">
+                    <i class="fa fa-check-square-o"/> Qabul qilish
+                    <div class="cs-finish-sub">holat «Yuklanmoqda» bo'ladi</div>
+                </button>
+                <button class="btn btn-outline-primary cs-big" t-else="" t-att-disabled="state.load.busy" t-on-click="() => this.acceptLoad()">
+                    <i class="fa fa-exchange"/> Men davom ettiraman
+                    <div class="cs-finish-sub"><t t-esc="cur.loader"/> o'rniga</div>
+                </button>
+            </div>
+        </div>
+        <div class="cs-bottom cs-ld-bottom" t-else="">
+            <div class="cs-progress" role="progressbar" t-att-aria-valuenow="st.pct" aria-valuemin="0" aria-valuemax="100">
+                <div class="cs-progress-bar" t-att-class="{ 'cs-progress-ok': st.complete }" t-att-style="'width: ' + st.pct + '%'"/>
+            </div>
+            <div class="cs-ld-bottom-row">
+                <div class="cs-ld-count">
+                    <b><t t-esc="st.done"/>/<t t-esc="st.total"/></b> qator
+                    <div class="cs-sale-meta"><t t-esc="fmt(st.loadedKg)"/> / <t t-esc="fmt(st.totalKg)"/> kg</div>
+                </div>
+                <button class="btn cs-big" t-att-class="st.complete ? 'btn-success' : 'btn-primary'"
+                        t-att-disabled="!st.done or !cur.truck or !tripPhotos(cur).length or state.load.busy" t-on-click="finishLoad">
+                    <i class="fa fa-check-circle"/> Berildi
+                    <div class="cs-finish-sub" t-if="!cur.truck">avval mashina raqami</div>
+                    <div class="cs-finish-sub" t-elif="!tripPhotos(cur).length">avval mashina rasmi</div>
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.FinishSheet">
+        <t t-set="cur" t-value="state.load.current"/>
+        <t t-set="st" t-value="loadStats(cur)"/>
+        <div class="cs-sheet-backdrop" t-on-click.self="closeFinish">
+            <div class="cs-sheet cs-sheet-short" role="dialog" aria-label="To'liq yuklanmadi">
+                <div class="cs-sheet-head">
+                    <div>
+                        <div class="cs-sheet-title">To'liq yuklanmadi</div>
+                        <div class="cs-sheet-sub"><t t-esc="st.total - st.full"/> ta qator to'liq emas. Yuklanganlari beriladi. Qolgani-chi?</div>
+                    </div>
+                    <button class="btn cs-icon-btn" t-on-click="closeFinish" aria-label="Yopish"><i class="fa fa-times"/></button>
+                </div>
+                <div class="cs-sheet-list cs-finish">
+                    <button class="btn btn-primary cs-big" t-on-click="() => this._finish('backorder')">
+                        <i class="fa fa-clock-o"/> Qolgani navbatda qolsin
+                        <div class="cs-finish-sub">keyin yuklanadi (mahsulot kelganda)</div>
+                    </button>
+                    <button class="btn btn-outline-danger cs-big" t-on-click="() => this._finish('cancel')">
+                        <i class="fa fa-ban"/> Qolganini bekor qilish
+                        <div class="cs-finish-sub">mijoz shuncha oldi</div>
+                    </button>
+                    <button class="btn btn-light cs-big" t-on-click="closeFinish">Ortga — yuklashni davom ettirish</button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sotuv.LoadResult">
+        <t t-set="r" t-value="state.load.result"/>
+        <div class="cs-card cs-result">
+            <div class="cs-result-icon" t-att-class="{ 'cs-result-partial': r.card.load_state !== 'done' }">
+                <i t-att-class="r.card.load_state === 'done' ? 'fa fa-check' : 'fa fa-adjust'"/>
+            </div>
+            <div class="cs-result-title"><t t-esc="r.card.load_state === 'done' ? 'Berildi' : 'Qisman berildi'"/></div>
+            <div class="cs-result-sub"><t t-esc="r.card.name"/> · <t t-esc="r.card.partner"/></div>
+            <div class="cs-truck-badge cs-truck-badge-lg" t-if="r.card.truck"><i class="fa fa-truck"/> <t t-esc="r.card.truck"/></div>
+            <t t-call="craf_sotuv.PhotoStrip"><t t-set="photos" t-value="r.card.photos"/></t>
+            <div class="cs-sale-meta" t-if="r.card.load_state !== 'done'">Qolgani navbatda qoldi.</div>
+            <div class="cs-result-lines">
+                <t t-foreach="r.card.lines" t-as="l" t-key="l_index">
+                    <div class="cs-qcard-line" t-if="l.delivered"><span t-esc="l.product"/><b t-esc="l.delivered_text"/></div>
+                </t>
+            </div>
+            <div class="cs-sale-meta">Mahsulot ombordan ayrildi.</div>
+            <div class="cs-result-btns">
+                <button class="btn btn-primary cs-big" t-on-click="closeResult"><i class="fa fa-list"/> Navbatga</button>
+            </div>
+        </div>
+    </t>
+
+    <!-- ============================================================ Sotuvlar -->
+    <t t-name="craf_sotuv.TabSales">
+        <t t-set="s" t-value="state.sales"/>
+        <div class="cs-loading" t-if="!s"><i class="fa fa-spinner fa-spin"/> Yuklanmoqda…</div>
+        <t t-else="">
+            <div class="cs-daynav">
+                <button class="btn btn-light" t-on-click="() => this.loadSales(s.prev)" aria-label="Oldingi kun"><i class="fa fa-chevron-left"/></button>
+                <input type="date" class="form-control" t-att-value="s.date" t-on-change="onSalesDate"/>
+                <button class="btn btn-light" t-on-click="() => this.loadSales(s.next)" aria-label="Keyingi kun"><i class="fa fa-chevron-right"/></button>
+                <button class="btn btn-light" t-if="!s.is_today" t-on-click="() => this.loadSales(state.init.today)">Bugun</button>
+            </div>
+            <div class="cs-kpis">
+                <div class="cs-kpi"><div class="cs-kpi-v" t-esc="s.orders.length"/><div class="cs-kpi-l">sotuv</div></div>
+                <div class="cs-kpi"><div class="cs-kpi-v" t-esc="fmt(s.total_packs)"/><div class="cs-kpi-l">pachka</div></div>
+                <div class="cs-kpi"><div class="cs-kpi-v" t-esc="fmt(s.total_pcs)"/><div class="cs-kpi-l">dona</div></div>
+                <div class="cs-kpi"><div class="cs-kpi-v" t-esc="fmt(s.total_kg)"/><div class="cs-kpi-l">kg</div></div>
+            </div>
+            <div class="cs-c1" t-if="s.orders.length and state.init.is_seller">
+                <span t-if="s.c1_new" class="cs-chip cs-chip-new"><i class="fa fa-exclamation-circle"/> 1C ga kiritilmagan: <t t-esc="s.c1_new"/></span>
+                <span t-else="" class="cs-chip cs-chip-ok"><i class="fa fa-check"/> Hammasi 1C da</span>
+                <button class="btn btn-sm btn-outline-primary" t-att-disabled="!s.c1_new" t-on-click="markC1">1C ga kiritildi</button>
+            </div>
+            <div class="cs-filter" role="group">
+                <button t-att-class="{ active: state.salesFilter === 'all' }" t-on-click="() => this.setSalesFilter('all')">Hammasi <b t-esc="s.orders.length"/></button>
+                <button t-att-class="{ active: state.salesFilter === 'wait' }" t-on-click="() => this.setSalesFilter('wait')">Yuklashda <b t-esc="s.waiting"/></button>
+                <button t-att-class="{ active: state.salesFilter === 'done' }" t-on-click="() => this.setSalesFilter('done')">Berildi <b t-esc="s.orders.length - s.waiting"/></button>
+            </div>
+            <div class="cs-layout cs-layout-sales">
+                <div class="cs-main">
+                    <div class="cs-empty" t-if="!salesOrders.length"><i class="fa fa-inbox"/><div>Bu kunda yo'q</div></div>
+                    <t t-foreach="salesOrders" t-as="o" t-key="o.id">
+                        <div class="cs-card cs-sale">
+                            <button class="cs-sale-head" t-on-click="() => this.toggleCard(o.id)">
+                                <div class="cs-sale-who">
+                                    <b t-esc="o.partner"/>
+                                    <div class="cs-sale-meta">
+                                        <t t-esc="o.time"/> · <t t-esc="o.location"/> · <t t-esc="o.name"/>
+                                        <span class="cs-badge cs-badge-c1" t-if="o.c1 === 'done' and state.init.is_seller">1C ✓</span>
+                                    </div>
+                                    <div class="cs-truck-badge" t-if="o.truck"><i class="fa fa-truck"/> <t t-esc="o.truck"/>
+                                        <span class="cs-photo-count" t-if="o.photos and o.photos.length"><i class="fa fa-camera"/> <t t-esc="o.photos.length"/></span>
+                                    </div>
+                                    <div class="cs-status" t-att-class="statusClass(o)">
+                                        <t t-esc="o.load_label"/>
+                                        <t t-if="o.load_state === 'loading'"> · <t t-esc="o.loader"/><t t-if="o.accepted_time"> · <t t-esc="o.accepted_time"/> dan</t> · <t t-esc="o.progress.done"/>/<t t-esc="o.progress.total"/></t>
+                                        <t t-if="o.load_state === 'done' and o.loader"> · <t t-esc="o.loader"/> <t t-esc="o.given_time"/></t>
+                                        <t t-if="o.load_state === 'queue'"> · <t t-esc="ageText(o.age_min)"/></t>
+                                    </div>
+                                </div>
+                                <div class="cs-sale-num">
+                                    <b><t t-esc="fmt(o.packs)"/> p</b>
+                                    <div class="cs-sale-meta"><t t-esc="fmt(o.kg)"/> kg</div>
+                                </div>
+                            </button>
+                            <div class="cs-sale-lines" t-if="state.expanded['s' + o.id]">
+                                <t t-foreach="o.lines" t-as="l" t-key="l_index">
+                                    <div class="cs-sale-line">
+                                        <span class="cs-sale-prod"><t t-esc="l.product"/> <span class="cs-product-code" t-esc="l.code"/></span>
+                                        <span class="cs-sale-qty"><t t-esc="l.text"/> <span class="text-muted">· <t t-esc="fmt(l.kg)"/> kg</span>
+                                            <div class="cs-sale-meta" t-if="o.load_state !== 'draft' and l.delivered and l.delivered !== l.pcs">berildi: <t t-esc="fmt(l.delivered)"/> dona</div>
+                                        </span>
+                                    </div>
+                                </t>
+                                <div class="cs-sale-note" t-if="o.note"><i class="fa fa-sticky-note-o"/> <t t-esc="o.note"/></div>
+                                <t t-call="craf_sotuv.PhotoStrip"><t t-set="photos" t-value="o.photos"/></t>
+                                <div class="cs-sale-actions">
+                                    <button class="btn btn-light btn-sm" t-if="state.init.is_seller" t-on-click="() => this.openOrder(o.id)"><i class="fa fa-external-link"/> Ochish</button>
+                                    <button class="btn btn-primary btn-sm" t-if="['queue', 'loading'].includes(o.load_state)" t-on-click="() => this.openLoad(o)"><i class="fa fa-truck"/> <t t-if="o.load_state === 'queue'">Ko'rish / qabul qilish</t><t t-else="">Yuklashni ko'rish</t></button>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div class="cs-side" t-if="s.products.length">
+                    <div class="cs-card">
+                        <div class="cs-label">Mahsulotlar bo'yicha</div>
+                        <t t-foreach="s.products" t-as="pr" t-key="pr.id">
+                            <div class="cs-prod-row">
+                                <span class="cs-prod-name"><t t-esc="pr.name"/> <span class="cs-product-code" t-esc="pr.code"/></span>
+                                <span class="cs-prod-qty"><b t-esc="pr.text"/><div class="text-muted small"><t t-esc="fmt(pr.kg)"/> kg</div></span>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </t>
+
+    <!-- ============================================================ Qoldiq -->
+    <t t-name="craf_sotuv.TabStock">
+        <div class="cs-locs cs-locs-stock">
+            <t t-foreach="locations" t-as="loc" t-key="loc.id">
+                <button class="cs-loc" t-att-class="{ active: state.stockLoc === loc.id }"
+                        t-on-click="() => this.setStockLoc(loc.id)" t-esc="loc.label"/>
+            </t>
+        </div>
+        <div class="cs-stock-tools">
+            <input type="search" class="form-control" placeholder="Qidirish…"
+                   t-att-value="state.stockQuery" t-on-input="onStockQuery"/>
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="cs_all" t-att-checked="state.stockAll" t-on-change="toggleStockAll"/>
+                <label class="form-check-label" for="cs_all">Nollar ham</label>
+            </div>
+        </div>
+        <t t-set="st" t-value="state.stock"/>
+        <div class="cs-loading" t-if="!st"><i class="fa fa-spinner fa-spin"/> Yuklanmoqda…</div>
+        <t t-else="">
+            <div class="cs-stock-sum"><b t-esc="st.count"/> xil · <t t-esc="fmt(st.total_pcs)"/> dona · <b t-esc="fmt(st.total_kg)"/> kg</div>
+            <div class="cs-card cs-stock-list">
+                <t t-foreach="st.rows" t-as="r" t-key="r.id">
+                    <button class="cs-stock-row" t-att-class="{ 'cs-stock-low': r.low, 'cs-stock-neg': r.negative }" t-on-click="() => this.openProduct(r.id)">
+                        <span class="cs-stock-name">
+                            <span t-esc="r.name"/>
+                            <span class="cs-product-code" t-esc="r.code"/>
+                        </span>
+                        <span class="cs-stock-qty">
+                            <b t-esc="r.text"/>
+                            <div class="cs-sale-meta"><t t-esc="fmt(r.qty)"/> d · <t t-esc="fmt(r.kg)"/> kg
+                                <t t-if="r.free !== r.qty"> · band: <t t-esc="fmt(r.qty - r.free)"/></t>
+                            </div>
+                        </span>
+                    </button>
+                </t>
+                <div class="cs-empty-sm" t-if="!st.rows.length">Bu joyda mahsulot yo'q</div>
+            </div>
+        </t>
+    </t>
+
+    <!-- ============================================================ sozlamalar -->
+    <t t-name="craf_sotuv.Settings">
+        <t t-set="cfg" t-value="state.init.settings"/>
+        <div class="cs-sheet-backdrop" t-on-click.self="toggleSettings">
+            <div class="cs-sheet cs-sheet-short" role="dialog" aria-label="Sozlamalar">
+                <div class="cs-sheet-head">
+                    <div class="cs-sheet-title">Sozlamalar</div>
+                    <button class="btn cs-icon-btn" t-on-click="toggleSettings" aria-label="Yopish"><i class="fa fa-times"/></button>
+                </div>
+                <div class="cs-sheet-list">
+                    <div class="cs-set">
+                        <label class="cs-label" for="cs_defloc">Joy yozilmasa — qayerdan</label>
+                        <select id="cs_defloc" class="form-select" t-att-disabled="!state.init.is_manager"
+                                t-on-change="onDefaultLoc">
+                            <t t-foreach="locations" t-as="loc" t-key="loc.id">
+                                <option t-att-value="loc.id" t-att-selected="loc.id === cfg.location_id" t-esc="loc.label"/>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="cs-set form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="cs_neg" t-att-checked="cfg.allow_negative"
+                               t-att-disabled="!state.init.is_manager"
+                               t-on-change="(ev) => this.saveSetting('allow_negative', ev.target.checked)"/>
+                        <label class="form-check-label" for="cs_neg">Qoldiq yetmasa ham berish
+                            <div class="cs-hint">Haqiqiy sanoq kiritilguncha vaqtincha. Qoldiq manfiy bo'lib qoladi.</div>
+                        </label>
+                    </div>
+                    <div class="cs-set form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="cs_price" t-att-checked="cfg.use_price"
+                               t-att-disabled="!state.init.is_manager"
+                               t-on-change="(ev) => this.saveSetting('use_price', ev.target.checked)"/>
+                        <label class="form-check-label" for="cs_price">Narxlarni hisoblash
+                            <div class="cs-hint">O'chiq: faqat miqdor (narx 0).</div>
+                        </label>
+                    </div>
+                    <div class="cs-set form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="cs_scan" t-att-checked="cfg.use_scan"
+                               t-att-disabled="!state.init.is_manager"
+                               t-on-change="(ev) => this.saveSetting('use_scan', ev.target.checked)"/>
+                        <label class="form-check-label" for="cs_scan">Pachka QR skaneri
+                            <div class="cs-hint">Pachkalarga QR yorliq yopishtirilsa yoqing. Hozir o'chiq — skaner maydoni ko'rinmaydi.</div>
+                        </label>
+                    </div>
+                    <div class="cs-hint" t-if="!state.init.is_manager">Sozlamalarni sotuv rahbari o'zgartiradi.</div>
+                    <div class="cs-set-links">
+                        <button class="btn btn-light" t-on-click="() => this.openAction('craf_sotuv.action_craf_sotuv_alias')"><i class="fa fa-book"/> Qisqartmalar lug'ati</button>
+                        <button class="btn btn-light" t-on-click="() => this.openAction('craf_sotuv.action_craf_sale_points')"><i class="fa fa-map-marker"/> Sotuv joylari</button>
+                        <button class="btn btn-light" t-on-click="() => this.openAction('craf_sotuv.action_craf_sale_lines')"><i class="fa fa-cubes"/> Berilgan mahsulotlar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

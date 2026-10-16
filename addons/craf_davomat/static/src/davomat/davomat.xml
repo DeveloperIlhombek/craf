@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="craf_davomat.Davomat">
+        <div class="o_action o_craf_litey o_craf_davomat" t-att-class="{ 'cl-busy': state.busy or state.loading }">
+            <header class="cl-top">
+                <div class="cl-top-row">
+                    <h1 class="cl-title">Davomat</h1>
+                    <div class="cl-top-actions">
+                        <div class="cl-period-group" t-if="state.tab === 'bugun' and state.dayData">
+                            <button class="cl-icon-btn" t-on-click="() => this.shiftDay(-1)" aria-label="Oldingi kun"><i class="fa fa-chevron-left"/></button>
+                            <button class="cl-period" t-on-click="openDay"><i class="fa fa-calendar-o"/> <span t-esc="dayLabel"/></button>
+                            <button class="cl-icon-btn" t-on-click="() => this.shiftDay(1)" aria-label="Keyingi kun" t-att-disabled="state.dayData.day === state.dayData.today"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <div class="cl-period-group" t-if="(state.tab === 'tabel' or state.tab === 'kpi') and state.month">
+                            <button class="cl-icon-btn" t-on-click="() => this.shiftMonth(-1)" aria-label="Oldingi oy"><i class="fa fa-chevron-left"/></button>
+                            <span class="cl-period dv-month" t-esc="monthLabel"/>
+                            <button class="cl-icon-btn" t-on-click="() => this.shiftMonth(1)" aria-label="Keyingi oy"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <button class="btn btn-primary cl-new-desk d-none d-lg-inline-flex" t-if="state.tab === 'terminal' and state.devData" t-on-click="() => this.openDevice()"><i class="fa fa-plus"/> Qurilma</button>
+                    </div>
+                </div>
+                <nav class="cl-tabs" role="tablist">
+                    <button role="tab" t-att-class="{ active: state.tab === 'bugun' }" t-on-click="() => this.setTab('bugun')">Kun</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'tabel' }" t-on-click="() => this.setTab('tabel')">Tabel</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'kpi' }" t-on-click="() => this.setTab('kpi')">KPI</button>
+                    <button role="tab" t-att-class="{ active: state.tab === 'terminal' }" t-on-click="() => this.setTab('terminal')">Terminal</button>
+                </nav>
+            </header>
+            <main class="cl-body">
+                <div class="cl-empty" t-if="!ready"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+                <t t-else="">
+                    <t t-if="state.tab === 'bugun'" t-call="craf_davomat.TabDay"/>
+                    <t t-if="state.tab === 'tabel'" t-call="craf_davomat.TabMonth"/>
+                    <t t-if="state.tab === 'kpi'" t-call="craf_davomat.TabKpi"/>
+                    <t t-if="state.tab === 'terminal'" t-call="craf_davomat.TabTerminal"/>
+                </t>
+            </main>
+            <button class="cl-fab d-lg-none" t-if="state.tab === 'terminal' and state.devData" t-on-click="() => this.openDevice()" aria-label="Qurilma qo'shish"><i class="fa fa-plus"/></button>
+            <t t-if="state.sheet" t-call="craf_davomat.Sheet"/>
+        </div>
+    </t>
+
+    <!-- KUN -->
+    <t t-name="craf_davomat.TabDay">
+        <t t-set="d" t-value="state.dayData"/>
+        <div class="dv-todo" t-if="d.unknown or (d.devices and d.devices_offline)">
+            <button t-if="d.unknown" t-on-click="() => this.setTab('terminal')"><i class="fa fa-question-circle"/><span><b>Noma'lum Terminal ID:</b> <t t-esc="d.unknown"/> ta yozuv — xodimga biriktiring</span><i class="fa fa-chevron-right"/></button>
+            <button t-if="d.devices and d.devices_offline" t-on-click="() => this.setTab('terminal')"><i class="fa fa-plug"/><span><b>Aloqa yo'q:</b> <t t-esc="d.devices_offline"/> / <t t-esc="d.devices"/> terminal 30 daqiqadan beri jim</span><i class="fa fa-chevron-right"/></button>
+        </div>
+        <div class="dv-todo" t-elif="!d.devices">
+            <button t-on-click="() => this.setTab('terminal')"><i class="fa fa-info-circle"/><span><b>Terminal ulanmagan</b> — davomat qo'lda yoki terminal qo'shilgach avtomatik yoziladi</span><i class="fa fa-chevron-right"/></button>
+        </div>
+        <div class="cl-kpis dv-kpis">
+            <div class="cl-kpi" t-foreach="d.kpi" t-as="k" t-key="k_index">
+                <span class="cl-kpi-label" t-esc="k.label"/>
+                <span class="cl-kpi-value" t-att-class="toneClass(k.tone)"><t t-esc="k.value"/><small t-if="k.unit"> <t t-esc="k.unit"/></small></span>
+            </div>
+        </div>
+        <div class="cl-toolbar">
+            <div class="cl-search">
+                <i class="fa fa-search"/>
+                <input type="search" class="form-control" placeholder="Xodim, lavozim yoki ID" t-model="state.q" aria-label="Qidirish"/>
+            </div>
+            <div class="cl-chips" role="group" aria-label="Filtr">
+                <button t-att-class="{ active: state.filter === 'all' }" t-on-click="() => state.filter = 'all'">Hammasi <span t-esc="d.rows.length"/></button>
+                <button t-att-class="{ active: state.filter === 'ishda' }" t-on-click="() => state.filter = 'ishda'">Ishda <span t-esc="countStatus('ishda')"/></button>
+                <button class="cl-chip-warn" t-if="countStatus('late')" t-att-class="{ active: state.filter === 'late' }" t-on-click="() => state.filter = 'late'">Kechikdi <span t-esc="countStatus('late')"/></button>
+                <button t-if="countStatus('kelmadi')" t-att-class="{ active: state.filter === 'kelmadi' }" t-on-click="() => state.filter = 'kelmadi'">Kelmadi <span t-esc="countStatus('kelmadi')"/></button>
+                <button t-if="countStatus('ketdi')" t-att-class="{ active: state.filter === 'ketdi' }" t-on-click="() => state.filter = 'ketdi'">Ketdi <span t-esc="countStatus('ketdi')"/></button>
+            </div>
+        </div>
+        <div class="cl-empty" t-if="!dayRows.length">Mos xodim yo'q.</div>
+        <div class="cl-list" t-else="">
+            <button class="cl-mat dv-emp" t-foreach="dayRows" t-as="r" t-key="r.id" t-on-click="() => this.openEmployee(r.id)">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name"><t t-esc="r.name"/><i class="fa fa-pencil dv-manual" t-if="r.manual and r.count" title="Qo'lda yozilgan"/></span>
+                    <span class="cl-mat-meta">
+                        <t t-if="r.count"><t t-esc="r.in"/> → <t t-esc="r.out or '…'"/> · <t t-esc="hours(r.hours)"/></t>
+                        <t t-elif="r.workday">jadval <t t-esc="r.start"/><t t-if="r.job"> · <t t-esc="r.job"/></t></t>
+                        <t t-else=""><t t-esc="r.job"/></t>
+                        <span class="cl-warn" t-if="r.forgot"> · chiqish unutilgan</span>
+                    </span>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="dv-st" t-att-class="'dv-st-' + (r.status or 'none')" t-esc="r.status_label"/>
+                    <span class="dv-late" t-if="r.late">+<t t-esc="r.late"/> daq</span>
+                </span>
+            </button>
+        </div>
+    </t>
+
+    <!-- TABEL -->
+    <t t-name="craf_davomat.TabMonth">
+        <t t-set="m" t-value="state.monthData"/>
+        <div class="dv-legend">
+            <span><i class="dv-sw dv-c-work"/> soat</span><span><i class="dv-sw dv-c-late"/> kechikdi</span>
+            <span><i class="dv-sw dv-c-abs"/> K — kelmadi</span><span><i class="dv-sw dv-c-rest"/> D — dam</span>
+            <button class="btn btn-sm btn-outline-secondary ms-auto" t-on-click="downloadTabel"><i class="fa fa-file-excel-o"/> Excel</button>
+        </div>
+        <div class="dv-grid-wrap">
+            <table class="dv-grid">
+                <thead>
+                    <tr>
+                        <th class="dv-name">Xodim</th>
+                        <th t-foreach="m.days" t-as="day" t-key="day.iso" t-att-class="{ 'dv-sun': day.weekend, 'dv-today': day.iso === m.today }"><t t-esc="day.d"/><small t-esc="day.wd"/></th>
+                        <th class="dv-tot">Kun</th>
+                        <th class="dv-tot">Soat</th>
+                        <th class="dv-tot">Kech.</th>
+                        <th class="dv-tot">K</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="m.rows" t-as="r" t-key="r.id">
+                        <th class="dv-name" role="button" t-on-click="() => this.openEmployee(r.id)"><t t-esc="r.name"/><small t-if="r.job" t-esc="r.job"/></th>
+                        <td t-foreach="r.cells" t-as="c" t-key="c_index" t-att-class="cellClass(c)" t-esc="c.code"/>
+                        <td class="dv-tot"><t t-esc="r.worked"/><small>/<t t-esc="r.planned"/></small></td>
+                        <td class="dv-tot" t-esc="num(r.hours, 0)"/>
+                        <td class="dv-tot" t-att-class="{ 'cl-warn': r.late_days }" t-esc="r.late_days or ''"/>
+                        <td class="dv-tot" t-att-class="{ 'cl-bad': r.absent }" t-esc="r.absent or ''"/>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="cl-note">Raqam — o'sha kuni ishlagan soat. Ism ustiga bosing — kunlar ro'yxati va qo'lda tuzatish. Excel da KPI ham bor.</p>
+    </t>
+
+    <!-- KPI -->
+    <t t-name="craf_davomat.TabKpi">
+        <t t-set="k" t-value="state.kpiData"/>
+        <div class="cl-banner dv-banner-info" t-if="k.trial">
+            <i class="fa fa-flask"/>
+            <div class="cl-banner-text"><b>Sinov rejimi</b> — KPI hisoblanadi va ko'rinadi, lekin maoshga ta'sir qilmaydi. 1 oy kuzatib, me'yorlarni to'g'rilang.</div>
+            <button class="btn btn-sm cl-banner-btn" t-if="k.roles.manager" t-on-click="openKpiSettings">Sozlash</button>
+        </div>
+        <div class="dv-kpi-head" t-else="">
+            <span>Ulushlar: davomat <t t-esc="k.settings.w_att"/>%, intizom <t t-esc="k.settings.w_punct"/>%, ishlab chiqarish <t t-esc="k.settings.w_prod"/>%</span>
+            <button class="btn btn-sm btn-outline-secondary" t-if="k.roles.manager" t-on-click="openKpiSettings"><i class="fa fa-sliders"/> Sozlash</button>
+        </div>
+        <div class="cl-list">
+            <button class="cl-mat dv-kpi-row" t-foreach="k.rows" t-as="r" t-key="r.id" t-on-click="() => this.openEmployee(r.id)">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name" t-esc="r.name"/>
+                    <span class="cl-mat-meta">
+                        <t t-if="r.att !== null">Davomat <b t-esc="num(r.att, 0) + '%'"/> (<t t-esc="r.worked"/>/<t t-esc="r.planned"/>)</t>
+                        <t t-if="r.punct !== null"> · Intizom <b t-esc="num(r.punct, 0) + '%'"/></t>
+                        <t t-if="r.prod !== null"> · Ish <b t-esc="num(r.prod, 0)"/></t>
+                    </span>
+                    <span class="cl-mat-meta dv-prod" t-if="r.prod_text" t-esc="r.prod_text"/>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="dv-score" t-if="r.total !== null"><t t-esc="num(r.total, 0)"/><small t-esc="'ball'"/></span>
+                    <span class="dv-grade" t-if="r.grade" t-att-class="gradeClass(r.grade)" t-esc="r.grade"/>
+                    <span class="cl-muted small" t-if="r.total === null">ma'lumot yo'q</span>
+                </span>
+            </button>
+        </div>
+        <p class="cl-note">Davomat — ish kunlarining necha foizida keldi; intizom — kelgan kunlarning necha foizida kechikmadi; ish — xodim mas'ul bo'lgan hujjatlardagi ko'rsatkich (Литейка угар, press chiqishi, bo'yash braki) me'yorga nisbatan. A ≥ 90, B ≥ 75, C ≥ 60.</p>
+    </t>
+
+    <!-- TERMINAL -->
+    <t t-name="craf_davomat.TabTerminal">
+        <t t-set="v" t-value="state.devData"/>
+        <h2 class="dv-h">Qurilmalar</h2>
+        <div class="cl-empty" t-if="!v.devices.length">
+            <i class="fa fa-id-card-o"/>
+            <div>Hikvision terminali hali qo'shilmagan.</div>
+            <button class="btn btn-primary mt-2" t-on-click="() => this.openDevice()"><i class="fa fa-plus"/> Qurilma qo'shish</button>
+        </div>
+        <div class="cl-list" t-else="">
+            <button class="cl-mat" t-foreach="v.devices" t-as="dev" t-key="dev.id" t-on-click="() => this.openDevice(dev)" t-att-class="{ 'dv-off': !dev.active }">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name"><i class="fa fa-circle dv-dot" t-att-class="dev.online ? 'cl-ok' : 'cl-bad'"/> <t t-esc="dev.name"/></span>
+                    <span class="cl-mat-meta"><t t-esc="dev.place_label"/><t t-if="dev.serial"> · <t t-esc="dev.serial"/></t> · <t t-if="dev.last_seen">aloqa <t t-esc="dev.last_seen"/></t><t t-else="">hali aloqa yo'q</t></span>
+                </span>
+                <span class="cl-mat-right"><span class="cl-qty"><t t-esc="dev.today"/><small> bugun</small></span></span>
+            </button>
+        </div>
+
+        <t t-if="v.unknown.length">
+            <h2 class="dv-h">Noma'lum Terminal ID</h2>
+            <div class="cl-list">
+                <button class="cl-mat" t-foreach="v.unknown" t-as="u" t-key="u.no" t-on-click="() => this.openAssign(u)">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name">ID <t t-esc="u.no or '?'"/><t t-if="u.name"> · <t t-esc="u.name"/></t></span>
+                        <span class="cl-mat-meta"><t t-esc="u.count"/> ta yozuv davomatga o'tmagan</span>
+                    </span>
+                    <span class="cl-mat-right"><span class="btn btn-sm btn-outline-primary">Biriktirish</span></span>
+                </button>
+            </div>
+        </t>
+
+        <div class="dv-h-row">
+            <h2 class="dv-h">Oxirgi yozuvlar</h2>
+            <span>
+                <button class="btn btn-link cl-link" t-on-click="openSchedules">Ish jadvallari</button>
+                <button class="btn btn-link cl-link" t-on-click="goLogs">Hammasi</button>
+            </span>
+        </div>
+        <div class="cl-empty" t-if="!v.logs.length">Hali yozuv kelmagan.</div>
+        <div class="cl-list" t-else="">
+            <div class="cl-doc dv-log" t-foreach="v.logs" t-as="l" t-key="l.id">
+                <span class="cl-doc-icon" t-att-class="l.result === 'done' ? (l.action === 'in' ? 'cl-k-kirim' : 'cl-k-chiqim') : 'cl-k-plavka'">
+                    <i t-att-class="l.result === 'done' ? (l.action === 'in' ? 'fa fa-sign-in' : 'fa fa-sign-out') : 'fa fa-exclamation'"/>
+                </span>
+                <span class="cl-doc-main">
+                    <span class="cl-doc-name"><t t-esc="l.employee or l.name or ('ID ' + l.employee_no)"/></span>
+                    <span class="cl-doc-sub"><t t-esc="l.time"/> · <t t-esc="l.device"/><t t-if="l.note"> · <t t-esc="l.note"/></t></span>
+                </span>
+                <span class="cl-doc-right"><span class="dv-res" t-att-class="'dv-res-' + l.result" t-esc="l.result === 'done' ? (l.action === 'in' ? 'Kirish' : 'Chiqish') : l.result_label"/></span>
+            </div>
+        </div>
+    </t>
+
+    <!-- varaqlar -->
+    <t t-name="craf_davomat.Sheet">
+        <t t-set="s" t-value="state.sheet"/>
+        <div class="cl-backdrop" t-on-click.self="closeSheet">
+            <div class="cl-sheet" t-att-class="'cl-sheet-' + s.type + (s.type === 'emp' or s.type === 'dev' ? ' dv-sheet-wide' : '')" role="dialog" aria-modal="true">
+                <t t-if="s.type === 'day'" t-call="craf_davomat.SheetDay"/>
+                <t t-elif="s.type === 'emp'" t-call="craf_davomat.SheetEmp"/>
+                <t t-elif="s.type === 'att'" t-call="craf_davomat.SheetAtt"/>
+                <t t-elif="s.type === 'kpiset'" t-call="craf_davomat.SheetKpiSet"/>
+                <t t-elif="s.type === 'dev'" t-call="craf_davomat.SheetDev"/>
+                <t t-elif="s.type === 'assign'" t-call="craf_davomat.SheetAssign"/>
+                <t t-elif="s.type === 'scheds'" t-call="craf_davomat.SheetScheds"/>
+                <t t-elif="s.type === 'sched'" t-call="craf_davomat.SheetSched"/>
+                <div class="cl-sheet-error" t-if="s.error" role="alert">
+                    <i class="fa fa-exclamation-circle"/>
+                    <div class="cl-sheet-error-text" t-esc="s.error"/>
+                    <button class="cl-icon-btn" t-on-click="() => s.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_davomat.Head">
+        <div class="cl-sheet-head">
+            <button class="cl-icon-btn" t-if="back" t-on-click="back" aria-label="Orqaga"><i class="fa fa-arrow-left"/></button>
+            <div class="cl-sheet-titles">
+                <div class="cl-sheet-title" t-esc="title"/>
+                <div class="cl-sheet-sub" t-if="sub" t-esc="sub"/>
+            </div>
+            <button class="cl-icon-btn" t-on-click="closeSheet" aria-label="Yopish"><i class="fa fa-times"/></button>
+        </div>
+    </t>
+
+    <t t-name="craf_davomat.SheetDay">
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="'Kun'"/><t t-set="sub" t-value="dayLabel"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-grid2">
+                <button class="cl-opt" t-on-click="() => this.applyDay(state.dayData.today)">Bugun</button>
+                <button class="cl-opt" t-on-click="() => this.applyDay(state.dayData.today.slice(0, 8) + '01')">Oy boshi</button>
+            </div>
+            <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="s.day" t-att-max="state.dayData.today"/></label>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="() => this.applyDay(s.day)">Ko'rsatish</button></div>
+    </t>
+
+    <!-- xodim -->
+    <t t-name="craf_davomat.SheetEmp">
+        <t t-set="e" t-value="s.e"/>
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="e.name"/><t t-set="sub" t-value="(e.job ? e.job + ' · ' : '') + e.schedule"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Terminal ID</span><input type="text" class="form-control" t-model="s.f.terminal" placeholder="masalan 12" t-att-disabled="!e.roles.accountant"/></label>
+                <label class="cl-field"><span>Joy</span>
+                    <select class="form-select" t-model="s.f.place" t-att-disabled="!e.roles.accountant">
+                        <option value="">—</option>
+                        <option t-foreach="e.places" t-as="p" t-key="p.key" t-att-value="p.key" t-att-selected="eq(s.f.place, p.key)" t-esc="p.label"/>
+                    </select>
+                </label>
+            </div>
+            <div class="dv-inline">
+                <label class="cl-field"><span>Ish jadvali</span>
+                    <select class="form-select" t-model="s.f.schedule_id" t-att-disabled="!e.roles.accountant">
+                        <option value="">Asosiy (birinchi jadval)</option>
+                        <option t-foreach="e.schedules" t-as="sc" t-key="sc.id" t-att-value="sc.id" t-att-selected="eq(s.f.schedule_id, sc.id)" t-esc="sc.name"/>
+                    </select>
+                </label>
+                <button class="btn btn-outline-primary" t-if="e.roles.accountant" t-on-click="saveEmployee" t-att-disabled="state.busy">Saqlash</button>
+            </div>
+            <div class="dv-h-row">
+                <h3 class="cl-lines-head">Kunlar (<t t-esc="e.month"/>/<t t-esc="e.year"/>) <span class="cl-muted" t-esc="e.rows.length"/></h3>
+                <button class="btn btn-link cl-link" t-if="e.roles.accountant" t-on-click="newAttendance"><i class="fa fa-plus"/> Qo'shish</button>
+            </div>
+            <div class="cl-empty" t-if="!e.rows.length">Bu oyda davomat yo'q.</div>
+            <div class="cl-list" t-else="">
+                <button class="cl-doc dv-att" t-foreach="e.rows" t-as="r" t-key="r.id" t-on-click="() => this.editAttendance(r)" t-att-disabled="!e.roles.accountant">
+                    <span class="cl-doc-icon" t-att-class="r.source === 'terminal' ? 'cl-k-kirim' : 'cl-k-kochirish'"><i t-att-class="r.source === 'terminal' ? 'fa fa-id-card-o' : 'fa fa-pencil'"/></span>
+                    <span class="cl-doc-main">
+                        <span class="cl-doc-name"><t t-esc="dmy(r.date)"/> <span class="cl-muted" t-esc="r.wd"/></span>
+                        <span class="cl-doc-sub"><t t-esc="r.in"/> → <t t-esc="r.out or 'ishda'"/><t t-if="r.out_date and r.out_date !== r.date"> (ertasi)</t><span class="cl-warn" t-if="r.forgot"> · chiqish unutilgan</span></span>
+                    </span>
+                    <span class="cl-doc-right"><span class="cl-doc-total" t-esc="hours(r.hours)"/></span>
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_davomat.SheetAtt">
+        <t t-call="craf_davomat.Head">
+            <t t-set="title" t-value="s.f.id ? 'Davomatni tuzatish' : &quot;Davomat qo'shish&quot;"/>
+            <t t-set="sub" t-value="s.e.name"/>
+            <t t-set="back" t-value="() => this.backToEmployee()"/>
+        </t>
+        <div class="cl-sheet-body">
+            <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="s.f.date"/></label>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Keldi</span><input type="time" class="form-control dv-time" t-model="s.f.time_in"/></label>
+                <label class="cl-field"><span>Ketdi</span><input type="time" class="form-control dv-time" t-model="s.f.time_out"/></label>
+            </div>
+            <div class="form-check form-switch cl-switch">
+                <input class="form-check-input" type="checkbox" id="dv_next" t-model="s.f.out_next_day"/>
+                <label class="form-check-label" for="dv_next">Ertasi kuni ketdi (tungi smena)</label>
+            </div>
+            <p class="cl-hint">«Ketdi» bo'sh qolsa — xodim hali ishda. Qo'lda yozilgan davomat belgilanadi.</p>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="s.f.id" t-on-click="deleteAttendance">O'chirish</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveAttendance" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
+    <t t-name="craf_davomat.SheetKpiSet">
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="'KPI sozlamasi'"/><t t-set="sub" t-value="&quot;Ulushlar va me'yorlar&quot;"/></t>
+        <div class="cl-sheet-body">
+            <h3 class="cl-lines-head">Ulushlar, %</h3>
+            <div class="dv-3">
+                <label class="cl-field"><span>Davomat</span><input type="text" inputmode="numeric" class="form-control" t-model="s.f.w_att"/></label>
+                <label class="cl-field"><span>Intizom</span><input type="text" inputmode="numeric" class="form-control" t-model="s.f.w_punct"/></label>
+                <label class="cl-field"><span>Ishlab chiqarish</span><input type="text" inputmode="numeric" class="form-control" t-model="s.f.w_prod"/></label>
+            </div>
+            <h3 class="cl-lines-head">Me'yorlar</h3>
+            <div class="dv-3">
+                <label class="cl-field"><span>Литейка угар ≤ %</span><input type="text" inputmode="decimal" class="form-control" t-model="s.f.litey_loss"/></label>
+                <label class="cl-field"><span>Press chiqishi ≥ %</span><input type="text" inputmode="decimal" class="form-control" t-model="s.f.press_yield"/></label>
+                <label class="cl-field"><span>Bo'yash braki ≤ %</span><input type="text" inputmode="decimal" class="form-control" t-model="s.f.paint_defect"/></label>
+            </div>
+            <div class="form-check form-switch cl-switch">
+                <input class="form-check-input" type="checkbox" id="dv_trial" t-model="s.f.trial"/>
+                <label class="form-check-label" for="dv_trial">Sinov rejimi (maoshga ta'sir qilmaydi)</label>
+            </div>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="saveKpiSettings" t-att-disabled="state.busy">Saqlash</button></div>
+    </t>
+
+    <!-- qurilma -->
+    <t t-name="craf_davomat.SheetDev">
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="s.f.id ? s.f.name : 'Yangi terminal'"/><t t-set="sub" t-value="'Hikvision yuz terminali'"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Nomi</span><input type="text" class="form-control" t-model="s.f.name" placeholder="Zavod kirish"/></label>
+                <label class="cl-field"><span>Joy</span>
+                    <select class="form-select" t-model="s.f.place">
+                        <option t-foreach="state.devData.places" t-as="p" t-key="p.key" t-att-value="p.key" t-att-selected="eq(s.f.place, p.key)" t-esc="p.label"/>
+                    </select>
+                </label>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Seriya / MAC</span><input type="text" class="form-control" t-model="s.f.serial" placeholder="ixtiyoriy"/></label>
+                <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="s.f.note" placeholder="ixtiyoriy"/></label>
+            </div>
+            <t t-if="s.d">
+                <div class="cl-field">
+                    <span>Qurilma yuboradigan manzil (HTTP Listening)</span>
+                    <div class="dv-url">
+                        <code t-esc="s.d.url"/>
+                        <button class="cl-icon-btn" t-on-click="() => this.copyUrl(s.d.url)" aria-label="Nusxalash"><i class="fa fa-copy"/></button>
+                    </div>
+                    <p class="cl-hint cl-warn" t-if="s.d.url.includes('localhost') or s.d.url.includes('127.0.0.1')">Manzilda «localhost» — qurilma uni topa olmaydi. Qurilmaga Odoo kompyuterining tarmoqdagi IP manzilini (masalan http://192.168.1.10:8069/…) yoki server manzilini (craf.mentorme.uz) yozing; oxiridagi /craf/davomat/hik/… qismi o'zgarmaydi.</p>
+                </div>
+                <div class="dv-steps">
+                    <b>Qurilmada sozlash</b>
+                    <ol>
+                        <li>Tarmoq va internet; vaqt — NTP, mintaqa Toshkent (UTC+5).</li>
+                        <li>Configuration → Network → Advanced → HTTP Listening (yoki «Event Alarm» → HTTP): manzil — yuqoridagi to'liq URL, protokol HTTPS (bo'lmasa HTTP).</li>
+                        <li>Xodimlarni qurilmaga yozing (yuz + raqam). Odoo da xodimga xuddi shu raqamni «Terminal ID» qilib bering.</li>
+                        <li>Pastdagi «Sinov yozuvi» bilan Odoo tomonini tekshiring, keyin qurilmada yuzni tanitib ko'ring.</li>
+                    </ol>
+                </div>
+                <h3 class="cl-lines-head">Sinov yozuvi</h3>
+                <div class="dv-inline">
+                    <select class="form-select" t-model="s.testEmp" aria-label="Xodim">
+                        <option value="">Terminal ID si bor xodim…</option>
+                        <option t-foreach="withTerminal" t-as="emp" t-key="emp.id" t-att-value="emp.id"><t t-esc="emp.name"/> (ID <t t-esc="emp.terminal"/>)</option>
+                    </select>
+                    <button class="btn btn-outline-primary" t-on-click="testDevice" t-att-disabled="state.busy">Yuborish</button>
+                </div>
+                <p class="cl-hint cl-ok" t-if="s.testResult" t-esc="s.testResult"/>
+            </t>
+            <div class="form-check form-switch cl-switch" t-if="s.f.id">
+                <input class="form-check-input" type="checkbox" id="dv_active" t-model="s.f.active"/>
+                <label class="form-check-label" for="dv_active">Faol (o'chirilsa — yozuvlar qabul qilinmaydi)</label>
+            </div>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="saveDevice" t-att-disabled="state.busy">Saqlash</button></div>
+    </t>
+
+    <t t-name="craf_davomat.SheetAssign">
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="'Terminal ID ' + s.u.no"/><t t-set="sub" t-value="(s.u.name ? s.u.name + ' · ' : '') + s.u.count + ' ta yozuv'"/></t>
+        <div class="cl-sheet-body">
+            <p class="cl-hint">Qurilmada shu raqam bilan yozilgan odam kim? Xodimni tanlang — unga Terminal ID beriladi va yozuvlari davomatga o'tadi.</p>
+            <label class="cl-field"><span>Xodim</span>
+                <select class="form-select" t-model="s.emp">
+                    <option value="">Tanlang…</option>
+                    <option t-foreach="state.devData.employees" t-as="emp" t-key="emp.id" t-att-value="emp.id" t-att-disabled="emp.terminal and emp.terminal !== s.u.no"><t t-esc="emp.name"/><t t-if="emp.terminal"> (ID <t t-esc="emp.terminal"/>)</t></option>
+                </select>
+            </label>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="saveAssign" t-att-disabled="state.busy">Biriktirish</button></div>
+    </t>
+
+    <t t-name="craf_davomat.SheetScheds">
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="'Ish jadvallari'"/><t t-set="sub" t-value="&quot;Kechikish va kelmadi shu bo'yicha hisoblanadi&quot;"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-list">
+                <button class="cl-mat" t-foreach="s.rows" t-as="r" t-key="r.id" t-on-click="() => this.editSchedule(r)" t-att-disabled="!roles.manager">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name" t-esc="r.name"/>
+                        <span class="cl-mat-meta"><t t-esc="r.start"/>–<t t-esc="r.end"/> · <t t-esc="num(r.hours)"/> soat · kechikish <t t-esc="r.grace"/> daq</span>
+                    </span>
+                    <span class="cl-mat-right"><span class="cl-qty"><t t-esc="r.count"/><small> xodim</small></span></span>
+                </button>
+            </div>
+            <p class="cl-hint">Xodimga jadval uning kartochkasida beriladi; berilmagan bo'lsa — birinchi jadval.</p>
+        </div>
+        <div class="cl-sheet-foot" t-if="roles.manager"><button class="btn btn-outline-primary cl-btn-lg" t-on-click="() => this.editSchedule()"><i class="fa fa-plus"/> Jadval</button></div>
+    </t>
+
+    <t t-name="craf_davomat.SheetSched">
+        <t t-call="craf_davomat.Head"><t t-set="title" t-value="s.f.id ? s.f.name : 'Yangi jadval'"/><t t-set="sub" t-value="''"/><t t-set="back" t-value="() => this.openSchedules()"/></t>
+        <div class="cl-sheet-body">
+            <label class="cl-field"><span>Nomi</span><input type="text" class="form-control" t-model="s.f.name" placeholder="Kunduzgi"/></label>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Boshlanishi</span><input type="time" class="form-control dv-time" t-model="s.f.start"/></label>
+                <label class="cl-field"><span>Tugashi</span><input type="time" class="form-control dv-time" t-model="s.f.end"/></label>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Tanaffus, soat</span><input type="text" inputmode="decimal" class="form-control" t-model="s.f.break"/></label>
+                <label class="cl-field"><span>Kechikish chegarasi, daq</span><input type="text" inputmode="numeric" class="form-control" t-model="s.f.grace"/></label>
+            </div>
+            <div class="cl-field">
+                <span>Ish kunlari</span>
+                <div class="cl-seg cl-seg-full dv-days" role="group">
+                    <button t-foreach="days7" t-as="dd" t-key="dd[0]" t-att-class="{ active: s.f.days.includes(dd[0]) }" t-on-click="() => this.toggleDay(dd[0])" t-esc="dd[1]"/>
+                </div>
+            </div>
+            <p class="cl-hint">Tugash vaqti boshlanishdan oldin bo'lsa — tungi smena (ertasi kuni tugaydi).</p>
+        </div>
+        <div class="cl-sheet-foot"><button class="btn btn-primary cl-btn-lg" t-on-click="saveSchedule" t-att-disabled="state.busy">Saqlash</button></div>
+    </t>
+</templates>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_sotuv_alias_view_list" model="ir.ui.view">
+        <field name="name">craf.sotuv.alias.list</field>
+        <field name="model">craf.sotuv.alias</field>
+        <field name="arch" type="xml">
+            <list string="Sotuv qisqartmalari" editable="bottom">
+                <field name="kind"/>
+                <field name="name"/>
+                <field name="section_type" invisible="kind != 'item'" optional="show"/>
+                <field name="series" invisible="kind not in ('item', 'group')" optional="show"/>
+                <field name="color_id" invisible="kind != 'group'" options="{'no_create': True}" optional="show"/>
+                <field name="family_type" invisible="kind != 'group'" optional="hide"/>
+                <field name="filter_words" invisible="kind not in ('item', 'group')" optional="show"/>
+                <field name="length_m" invisible="kind != 'group'" optional="hide"/>
+                <field name="location_id" invisible="kind != 'location'" options="{'no_create': True}" optional="show"/>
+                <field name="product_id" invisible="kind != 'product'" options="{'no_create': True}" optional="show"/>
+                <field name="partner_id" invisible="kind != 'partner'" options="{'no_create': True}" optional="show"/>
+                <field name="note" optional="hide"/>
+                <field name="key" optional="hide"/>
+                <field name="active" widget="boolean_toggle" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_sotuv_alias_view_form" model="ir.ui.view">
+        <field name="name">craf.sotuv.alias.form</field>
+        <field name="model">craf.sotuv.alias</field>
+        <field name="arch" type="xml">
+            <form string="Qisqartma">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="name"/>
+                            <field name="key"/>
+                        </group>
+                        <group>
+                            <field name="section_type" invisible="kind != 'item'"/>
+                            <field name="series" invisible="kind not in ('item', 'group')"/>
+                            <field name="color_id" invisible="kind != 'group'" options="{'no_create': True}"/>
+                            <field name="family_type" invisible="kind != 'group'"/>
+                            <field name="filter_words" invisible="kind not in ('item', 'group')"/>
+                            <field name="length_m" invisible="kind != 'group'"/>
+                            <field name="location_id" invisible="kind != 'location'" options="{'no_create': True}"/>
+                            <field name="product_id" invisible="kind != 'product'" options="{'no_create': True}"/>
+                            <field name="partner_id" invisible="kind != 'partner'" options="{'no_create': True}"/>
+                            <field name="note"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_sotuv_alias_view_search" model="ir.ui.view">
+        <field name="name">craf.sotuv.alias.search</field>
+        <field name="model">craf.sotuv.alias</field>
+        <field name="arch" type="xml">
+            <search string="Qisqartmalar">
+                <field name="name"/>
+                <field name="section_type"/>
+                <field name="product_id"/>
+                <filter name="f_item" string="Mahsulot turlari" domain="[('kind', '=', 'item')]"/>
+                <filter name="f_group" string="Seriya / rang" domain="[('kind', '=', 'group')]"/>
+                <filter name="f_location" string="Joylar" domain="[('kind', '=', 'location')]"/>
+                <filter name="f_learned" string="O'rgatilgan" domain="[('kind', 'in', ('product', 'partner'))]"/>
+                <separator/>
+                <filter name="archived" string="Arxiv" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_kind" string="Turi" context="{'group_by': 'kind'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_sotuv_alias" model="ir.actions.act_window">
+        <field name="name">Sotuv qisqartmalari</field>
+        <field name="res_model">craf.sotuv.alias</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_kind': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Buyurtma matnidagi qisqartmalar</p>
+            <p>L, T, Z, TB, Sh1 — mahsulot turi; Kraf antrasid, Alusam oq — seriya va rang; Zavod, Parnik — joy.
+               Sotuv sahifasida tanlangan mahsulotlar «O'rgatilgan» bo'lib shu yerga yoziladi.</p>
+        </field>
+    </record>
+</odoo>

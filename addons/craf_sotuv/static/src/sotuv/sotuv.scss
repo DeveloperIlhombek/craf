@@ -1,0 +1,1704 @@
+// Craf → Sotuv — telefon birinchi (mobile first): asosiy uslub telefon uchun,
+// planshet (≥768px) va kompyuter (≥992px) uchun kengaytiriladi.
+
+$cs-radius: 12px;
+$cs-border: rgba(11, 11, 11, 0.12);
+$cs-muted: #6c6b67;
+$cs-ok: #0f8a3c;
+$cs-ok-bg: #e7f6ec;
+$cs-bad: #c4314b;
+$cs-bad-bg: #fdecef;
+$cs-warn: #9a6200;
+$cs-warn-bg: #fff4e0;
+$cs-tap: 44px;
+
+.o_craf_sotuv {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: $o-webclient-background-color;
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+
+    &.cs-busy .cs-body {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    // ---------------------------------------------------------------- yuqori panel
+    .cs-top {
+        position: sticky;
+        top: 0;
+        z-index: 6;
+        background-color: $o-view-background-color;
+        border-bottom: 1px solid $cs-border;
+        padding: 6px 12px 0;
+    }
+    .cs-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .cs-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .cs-icon-btn {
+        width: $cs-tap;
+        height: $cs-tap;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: $cs-muted;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        &:hover,
+        &:focus-visible {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    }
+    .cs-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        > button {
+            min-height: $cs-tap;
+            border: 0;
+            background: none;
+            border-bottom: 3px solid transparent;
+            color: $cs-muted;
+            font-weight: 500;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            &.active {
+                color: $primary;
+                border-bottom-color: $primary;
+                font-weight: 700;
+            }
+        }
+    }
+    .cs-count {
+        display: inline-block;
+        min-width: 20px;
+        padding: 0 6px;
+        margin-left: 2px;
+        border-radius: 10px;
+        background-color: $primary;
+        color: #fff;
+        font-size: 0.75rem;
+        line-height: 20px;
+    }
+
+    // ---------------------------------------------------------------- tana
+    .cs-body {
+        padding: 12px 12px 96px;
+    }
+    .cs-card {
+        background-color: $o-view-background-color;
+        border: 1px solid $cs-border;
+        border-radius: $cs-radius;
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    .cs-label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $cs-muted;
+        margin: 2px 0 6px;
+    }
+    .cs-hint {
+        font-size: 0.8rem;
+        color: $cs-muted;
+        margin-top: 6px;
+    }
+    .cs-hide-xs {
+        display: none;
+        @media (min-width: 340px) {
+            display: inline;
+        }
+    }
+    .cs-empty {
+        text-align: center;
+        color: $cs-muted;
+        padding: 28px 16px;
+        > .fa {
+            font-size: 2.2rem;
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+    }
+    .cs-empty-sm {
+        color: $cs-muted;
+        padding: 16px;
+        text-align: center;
+    }
+    .cs-loading {
+        color: $cs-muted;
+        padding: 32px;
+        text-align: center;
+    }
+    input.form-control,
+    textarea.form-control,
+    .form-select {
+        font-size: 16px; // iOS da kattalashib ketmasligi uchun
+    }
+
+    // ---------------------------------------------------------------- matn kiritish
+    .cs-textarea {
+        min-height: 128px;
+        resize: vertical;
+    }
+    .cs-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        > .btn {
+            min-height: $cs-tap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex: 1 1 auto;
+        }
+        > .btn-primary {
+            flex: 2 1 100%;
+            font-weight: 600;
+        }
+    }
+    .cs-done-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-height: $cs-tap;
+        border: 0;
+        border-top: 1px solid $cs-border;
+        background: none;
+        text-align: left;
+        padding: 6px 0;
+        &:first-of-type {
+            border-top: 0;
+        }
+    }
+    .cs-done-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .cs-done-num {
+        color: $cs-muted;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+    .cs-list-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 4px 2px 8px;
+        color: $cs-muted;
+    }
+
+    // ---------------------------------------------------------------- sotuv kartochkasi
+    .cs-order {
+        padding: 10px 12px 12px;
+        &.cs-order-dup {
+            opacity: 0.75;
+        }
+        &.cs-order-err {
+            border-color: $cs-bad;
+        }
+    }
+    .cs-order-head {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .cs-customer {
+        position: relative;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .cs-customer-input {
+        height: $cs-tap;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-color: transparent;
+        background-color: rgba(0, 0, 0, 0.03);
+        &:focus {
+            background-color: $o-view-background-color;
+            border-color: $primary;
+        }
+    }
+    .cs-drop {
+        position: absolute;
+        z-index: 8;
+        top: calc(100% + 2px);
+        left: 0;
+        right: 0;
+        background-color: $o-view-background-color;
+        border: 1px solid $cs-border;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+    }
+    .cs-drop-item {
+        display: block;
+        width: 100%;
+        min-height: $cs-tap;
+        border: 0;
+        border-bottom: 1px solid $cs-border;
+        background: none;
+        text-align: left;
+        padding: 8px 12px;
+        &:last-child {
+            border-bottom: 0;
+        }
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+    }
+    .cs-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin: 6px 0 8px;
+    }
+    .cs-meta-text {
+        font-size: 0.8rem;
+        color: $cs-muted;
+    }
+    .cs-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        border: 1px solid transparent;
+        line-height: 1.4;
+    }
+    .cs-chip-ok {
+        background-color: $cs-ok-bg;
+        color: $cs-ok;
+    }
+    .cs-chip-new {
+        background-color: $cs-warn-bg;
+        color: $cs-warn;
+    }
+    .cs-chip-btn {
+        background: none;
+        border-color: $cs-border;
+        min-height: 32px;
+    }
+    .cs-date {
+        margin-left: auto;
+        border: 0;
+        background: none;
+        color: $cs-muted;
+        font-size: 0.85rem;
+        max-width: 190px;
+        padding: 2px 0;
+    }
+    .cs-locs {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+    .cs-loc {
+        flex: 0 0 auto;
+        min-height: 36px;
+        padding: 0 16px;
+        border-radius: 18px;
+        border: 1px solid $cs-border;
+        background-color: $o-view-background-color;
+        font-weight: 500;
+        &.active {
+            background-color: $primary;
+            border-color: $primary;
+            color: #fff;
+        }
+    }
+    .cs-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        flex-wrap: wrap;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-top: 8px;
+        font-size: 0.875rem;
+        .btn-link {
+            padding: 0;
+            margin-left: auto;
+        }
+    }
+    .cs-alert-warn {
+        background-color: $cs-warn-bg;
+        color: $cs-warn;
+    }
+    .cs-alert-err {
+        background-color: $cs-bad-bg;
+        color: $cs-bad;
+    }
+    .cs-alert-note {
+        background-color: rgba(0, 0, 0, 0.04);
+        color: $cs-muted;
+    }
+    .cs-pre {
+        white-space: pre-wrap;
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    // ---------------------------------------------------------------- mahsulot qatori
+    .cs-lines {
+        margin-top: 8px;
+    }
+    .cs-line {
+        padding: 10px 0;
+        border-top: 1px dashed $cs-border;
+        &:first-child {
+            border-top: 0;
+        }
+    }
+    .cs-line-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .cs-product {
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: $cs-tap;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        column-gap: 8px;
+        text-align: left;
+        border: 1px solid $cs-border;
+        border-radius: 8px;
+        background-color: $o-view-background-color;
+        padding: 6px 30px 6px 10px;
+        position: relative;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+    .cs-product-name {
+        overflow-wrap: anywhere;
+    }
+    .cs-product-code {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: $cs-muted;
+        margin-left: 4px;
+    }
+    .cs-product-missing {
+        color: $cs-bad;
+    }
+    .cs-product-caret {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $cs-muted;
+        font-size: 0.75rem;
+    }
+    .cs-line-bad .cs-product {
+        border-color: $cs-bad;
+        background-color: $cs-bad-bg;
+    }
+    .cs-line-sub {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        font-size: 0.78rem;
+        color: $cs-muted;
+        margin: 4px 2px 6px;
+        &:empty {
+            display: none;
+        }
+    }
+    .cs-raw-line {
+        font-family: $font-family-monospace;
+        background-color: rgba(0, 0, 0, 0.04);
+        border-radius: 4px;
+        padding: 0 5px;
+    }
+    .cs-line-msg {
+        font-style: italic;
+    }
+    .cs-qty {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+    }
+    .cs-stepper,
+    .cs-extra {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        input {
+            height: $cs-tap;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 0 4px;
+            -moz-appearance: textfield;
+            &::-webkit-inner-spin-button,
+            &::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+        }
+    }
+    .cs-stepper {
+        .btn {
+            width: 40px;
+            height: $cs-tap;
+            padding: 0;
+            font-size: 1.35rem;
+            line-height: 1;
+            border: 1px solid $cs-border;
+            border-radius: 8px;
+            background-color: $o-view-background-color;
+        }
+        input {
+            width: 58px;
+        }
+    }
+    .cs-extra input {
+        width: 54px;
+    }
+    .cs-plus {
+        color: $cs-muted;
+        font-weight: 700;
+    }
+    .cs-unit {
+        font-size: 0.8rem;
+        color: $cs-muted;
+    }
+    .cs-line-foot {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 4px 10px;
+        margin-top: 6px;
+        font-size: 0.82rem;
+    }
+    .cs-avail {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 999px;
+        padding: 1px 8px;
+    }
+    .cs-avail-ok {
+        background-color: $cs-ok-bg;
+        color: $cs-ok;
+    }
+    .cs-avail-short {
+        background-color: $cs-bad-bg;
+        color: $cs-bad;
+        font-weight: 600;
+    }
+
+    // ---------------------------------------------------------------- kartochka pasti
+    .cs-order-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid $cs-border;
+        .btn-sm {
+            min-height: 38px;
+        }
+    }
+    .cs-scan {
+        display: flex;
+        gap: 4px;
+        flex: 1 1 160px;
+        input {
+            min-height: 38px;
+        }
+    }
+    .cs-raw-btn {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .cs-raw {
+        background-color: rgba(0, 0, 0, 0.04);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin: 8px 0 0;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+    }
+    .cs-order-foot {
+        margin-top: 10px;
+    }
+    .cs-totals {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 6px;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+    }
+    .cs-dot {
+        color: $cs-muted;
+    }
+    .cs-problems {
+        font-size: 0.82rem;
+        color: $cs-bad;
+        margin-bottom: 6px;
+    }
+    .cs-big {
+        width: 100%;
+        min-height: 50px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        border-radius: 10px;
+    }
+    .cs-bottom {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        background-color: $o-view-background-color;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    // ---------------------------------------------------------------- pastdan chiquvchi oyna (sheet)
+    .cs-sheet-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        background-color: rgba(0, 0, 0, 0.38);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    .cs-sheet {
+        width: 100%;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        background-color: $o-view-background-color;
+        border-radius: 16px 16px 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .cs-sheet-short {
+        max-height: 80vh;
+    }
+    .cs-sheet-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 12px 8px 6px 16px;
+    }
+    .cs-sheet-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    .cs-sheet-sub {
+        font-size: 0.85rem;
+        color: $cs-muted;
+    }
+    .cs-sheet-search {
+        margin: 0 12px 8px;
+        width: auto;
+        height: $cs-tap;
+    }
+    .cs-sheet-list {
+        overflow-y: auto;
+        padding: 0 12px 12px;
+        flex: 1 1 auto;
+    }
+    .cs-pick-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        min-height: 52px;
+        border: 0;
+        border-bottom: 1px solid $cs-border;
+        background: none;
+        text-align: left;
+        padding: 8px 4px;
+        &.active {
+            background-color: rgba(0, 0, 0, 0.05);
+            font-weight: 700;
+        }
+    }
+    .cs-pick-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .cs-pick-avail {
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+    .cs-set {
+        padding: 10px 0;
+        border-bottom: 1px solid $cs-border;
+        &.form-switch {
+            padding-left: 2.6em;
+        }
+    }
+    .cs-set-links {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+        .btn {
+            min-height: $cs-tap;
+            text-align: left;
+        }
+    }
+
+    // ---------------------------------------------------------------- Sotuvlar
+    .cs-daynav {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+        .btn {
+            min-height: $cs-tap;
+            min-width: $cs-tap;
+            padding: 0 10px;
+        }
+        input {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: $cs-tap;
+        }
+    }
+    .cs-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    .cs-kpi {
+        background-color: $o-view-background-color;
+        border: 1px solid $cs-border;
+        border-radius: 10px;
+        padding: 8px 6px;
+        text-align: center;
+    }
+    .cs-kpi-v {
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+    .cs-kpi-l {
+        font-size: 0.72rem;
+        color: $cs-muted;
+    }
+    .cs-c1 {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+        .btn {
+            min-height: 38px;
+        }
+    }
+    .cs-sale {
+        padding: 0;
+        overflow: hidden;
+    }
+    .cs-sale-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 56px;
+        border: 0;
+        background: none;
+        text-align: left;
+        padding: 10px 12px;
+    }
+    .cs-sale-who {
+        min-width: 0;
+    }
+    .cs-sale-num {
+        text-align: right;
+        white-space: nowrap;
+    }
+    .cs-sale-meta {
+        font-size: 0.78rem;
+        color: $cs-muted;
+    }
+    .cs-badge {
+        display: inline-block;
+        padding: 0 6px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        margin-left: 4px;
+    }
+    .cs-badge-c1 {
+        background-color: $cs-ok-bg;
+        color: $cs-ok;
+    }
+    .cs-badge-wait {
+        background-color: $cs-warn-bg;
+        color: $cs-warn;
+    }
+    .cs-sale-lines {
+        border-top: 1px solid $cs-border;
+        padding: 6px 12px 10px;
+    }
+    .cs-sale-line,
+    .cs-prod-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 0;
+        border-bottom: 1px dashed $cs-border;
+        font-size: 0.875rem;
+    }
+    .cs-sale-qty,
+    .cs-prod-qty {
+        text-align: right;
+        white-space: nowrap;
+    }
+    .cs-sale-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 8px;
+        .btn {
+            min-height: 38px;
+        }
+    }
+
+    // ---------------------------------------------------------------- Qoldiq
+    .cs-locs-stock {
+        margin-bottom: 10px;
+    }
+    .cs-stock-tools {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        input[type="search"] {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: $cs-tap;
+        }
+        .form-check {
+            white-space: nowrap;
+        }
+    }
+    .cs-stock-sum {
+        font-size: 0.85rem;
+        color: $cs-muted;
+        margin: 0 2px 8px;
+    }
+    .cs-stock-list {
+        padding: 0 12px;
+    }
+    .cs-stock-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 52px;
+        border: 0;
+        border-bottom: 1px solid $cs-border;
+        background: none;
+        text-align: left;
+        padding: 8px 0;
+        &:last-of-type {
+            border-bottom: 0;
+        }
+        &.cs-stock-low .cs-stock-qty b {
+            color: $cs-warn;
+        }
+        &.cs-stock-neg .cs-stock-qty b {
+            color: $cs-bad;
+        }
+    }
+    .cs-stock-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .cs-stock-qty {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    // ================================================================ ≥ 400px
+    @media (min-width: 400px) {
+        .cs-actions > .btn-primary {
+            flex: 2 1 auto;
+        }
+    }
+
+    // ================================================================ planshet ≥ 768px
+    @media (min-width: 768px) {
+        .cs-top {
+            padding: 8px 20px 0;
+        }
+        .cs-tabs {
+            grid-template-columns: repeat(3, minmax(0, 180px));
+        }
+        .cs-body {
+            padding: 16px 20px 96px;
+        }
+        .cs-sheet-backdrop {
+            align-items: center;
+        }
+        .cs-sheet {
+            max-width: 560px;
+            border-radius: 16px;
+            max-height: 80vh;
+        }
+        .cs-kpi-v {
+            font-size: 1.35rem;
+        }
+        .cs-bottom {
+            display: flex;
+            justify-content: flex-end;
+            .cs-big {
+                width: auto;
+                padding: 0 32px;
+            }
+        }
+    }
+
+    // ================================================================ kompyuter ≥ 992px
+    @media (min-width: 992px) {
+        .cs-layout {
+            display: grid;
+            grid-template-columns: 340px minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+        .cs-layout .cs-side {
+            position: sticky;
+            top: 104px;
+        }
+        .cs-layout-sales {
+            grid-template-columns: minmax(0, 1fr) 360px;
+        }
+        .cs-layout-sales .cs-side {
+            order: 2;
+        }
+        .cs-orders {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 16px;
+            align-items: start;
+            .cs-card {
+                margin-bottom: 0;
+            }
+        }
+        .cs-stock-list {
+            column-count: 2;
+            column-gap: 32px;
+            .cs-stock-row {
+                break-inside: avoid;
+            }
+        }
+        .cs-stock-tools input[type="search"] {
+            max-width: 420px;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .cs-stock-list {
+            column-count: 3;
+        }
+    }
+}
+
+// ==================================================================== rollar: buyurtma va yuklash
+$cs-blue: #1f6fb2;
+$cs-blue-bg: #e8f1fa;
+$cs-orange: #b25e00;
+$cs-orange-bg: #fff1e0;
+
+.o_craf_sotuv {
+    .cs-title-user {
+        font-size: 0.8rem;
+        font-weight: 400;
+        color: $cs-muted;
+        margin-left: 6px;
+    }
+    // telefonda: belgi ustida, matn ostida (4 ta varaq sig'adi)
+    .cs-tabs > button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        font-size: 0.78rem;
+        min-height: 52px;
+        position: relative;
+        padding: 4px 2px;
+        .fa {
+            font-size: 1.15rem;
+        }
+        .cs-count {
+            position: absolute;
+            top: 4px;
+            left: calc(50% + 8px);
+            margin: 0;
+        }
+    }
+    .cs-count-alert {
+        background-color: $cs-bad;
+    }
+    .cs-c-queue {
+        color: $cs-blue;
+    }
+
+    // ---------------------------------------------------------------- buyurtma kartochkasi
+    .cs-note {
+        margin-bottom: 8px;
+        height: 40px;
+        font-size: 0.95rem;
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    .cs-warnline {
+        font-size: 0.82rem;
+        color: $cs-warn;
+        margin-bottom: 6px;
+    }
+    .cs-foot-btns {
+        display: flex;
+        gap: 8px;
+        .cs-big {
+            flex: 1 1 auto;
+        }
+        .cs-big-2 {
+            flex: 0 0 auto;
+            width: auto;
+            padding: 0 14px;
+            font-weight: 600;
+        }
+    }
+    .cs-bottom-2 {
+        display: flex;
+        gap: 8px;
+        .cs-big {
+            flex: 1 1 auto;
+        }
+        .cs-big-2 {
+            flex: 0 0 auto;
+            width: auto;
+            padding: 0 14px;
+        }
+    }
+
+    // ---------------------------------------------------------------- holatlar
+    .cs-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-top: 4px;
+        &.cs-st-queue {
+            background-color: $cs-blue-bg;
+            color: $cs-blue;
+        }
+        &.cs-st-loading {
+            background-color: $cs-orange-bg;
+            color: $cs-orange;
+        }
+        &.cs-st-done {
+            background-color: $cs-ok-bg;
+            color: $cs-ok;
+        }
+        &.cs-st-cancel,
+        &.cs-st-draft {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: $cs-muted;
+        }
+    }
+    .cs-filter {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        margin-bottom: 10px;
+        > button {
+            flex: 0 0 auto;
+            min-height: 36px;
+            padding: 0 14px;
+            border-radius: 18px;
+            border: 1px solid $cs-border;
+            background-color: $o-view-background-color;
+            &.active {
+                background-color: $primary;
+                border-color: $primary;
+                color: #fff;
+            }
+        }
+    }
+    .cs-sale-note,
+    .cs-qcard-note {
+        background-color: $cs-warn-bg;
+        color: $cs-warn;
+        border-radius: 8px;
+        padding: 6px 10px;
+        margin: 8px 0 0;
+        font-size: 0.875rem;
+    }
+
+    // ---------------------------------------------------------------- navbat kartochkasi
+    .cs-qcard {
+        display: block;
+        width: 100%;
+        text-align: left;
+        color: inherit;
+        font: inherit;
+        border-left-width: 5px;
+        &.cs-st-queue {
+            border-left-color: $cs-blue;
+        }
+        &.cs-st-loading {
+            border-left-color: $cs-orange;
+        }
+        &:active {
+            transform: scale(0.995);
+        }
+    }
+    .cs-qcard-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .cs-qcard-who {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .cs-qcard-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+    .cs-loc-badge {
+        flex: 0 0 auto;
+        border-radius: 8px;
+        padding: 3px 10px;
+        background-color: $primary;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .cs-loc-badge-lg {
+        font-size: 1rem;
+        padding: 6px 12px;
+    }
+    .cs-qcard-lines {
+        margin-top: 8px;
+    }
+    .cs-qcard-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 0.9rem;
+        padding: 3px 0;
+        border-bottom: 1px dashed $cs-border;
+        span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        b {
+            white-space: nowrap;
+        }
+    }
+    .cs-qcard-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .cs-qcard-sum {
+        white-space: nowrap;
+    }
+
+    // ---------------------------------------------------------------- yuklash ro'yxati
+    .cs-ld-busy .cs-ld-lines {
+        opacity: 0.6;
+    }
+    .cs-ld-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: -4px 0 8px;
+    }
+    .cs-ld-title {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .cs-ld-scan {
+        display: flex;
+        gap: 6px;
+        margin: 10px 0;
+        input {
+            height: $cs-tap;
+        }
+        .btn {
+            min-width: $cs-tap;
+        }
+    }
+    .cs-ld-lines {
+        background-color: $o-view-background-color;
+        border: 1px solid $cs-border;
+        border-radius: $cs-radius;
+        overflow: hidden;
+    }
+    .cs-ldl {
+        display: flex;
+        align-items: stretch;
+        border-top: 1px solid $cs-border;
+        &:first-child {
+            border-top: 0;
+        }
+        &.cs-ldl-ok {
+            background-color: $cs-ok-bg;
+        }
+        &.cs-ldl-less,
+        &.cs-ldl-more {
+            background-color: $cs-orange-bg;
+        }
+    }
+    .cs-ldl-check {
+        flex: 0 0 64px;
+        border: 0;
+        background: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .fa {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid $cs-border;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: transparent;
+        }
+    }
+    .cs-ldl-ok .cs-ldl-check .fa {
+        background-color: $cs-ok;
+        border-color: $cs-ok;
+        color: #fff;
+    }
+    .cs-ldl-less .cs-ldl-check .fa,
+    .cs-ldl-more .cs-ldl-check .fa {
+        background-color: $cs-orange;
+        border-color: $cs-orange;
+        color: #fff;
+    }
+    .cs-ldl-body {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 10px 4px 10px 0;
+        cursor: pointer;
+    }
+    .cs-ldl-name {
+        font-weight: 600;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+    .cs-ldl-qty {
+        font-size: 1.4rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin: 2px 0;
+    }
+    .cs-ldl-ok .cs-ldl-qty {
+        color: $cs-ok;
+    }
+    .cs-ldl-sub {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 10px;
+        font-size: 0.8rem;
+        color: $cs-muted;
+    }
+    .cs-ldl-less,
+    .cs-ldl-more {
+        color: $cs-orange;
+        font-weight: 700;
+    }
+    .cs-ldl-edit {
+        align-self: center;
+        margin-right: 4px;
+    }
+    .cs-ldl-editor {
+        border-top: 1px dashed $cs-border;
+        padding: 10px 12px 12px;
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    .cs-ldl-editor-btns {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 10px;
+        .btn {
+            min-height: $cs-tap;
+            min-width: 96px;
+        }
+    }
+    .cs-ld-extra {
+        text-align: center;
+        margin-top: 8px;
+    }
+    .cs-ld-bottom {
+        padding-top: 0;
+    }
+    .cs-progress {
+        height: 5px;
+        margin: 0 -12px 8px;
+        background-color: rgba(0, 0, 0, 0.06);
+    }
+    .cs-progress-bar {
+        height: 100%;
+        background-color: $cs-orange;
+        transition: width 0.25s ease;
+        &.cs-progress-ok {
+            background-color: $cs-ok;
+        }
+    }
+    .cs-ld-bottom-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        .cs-big {
+            flex: 1 1 auto;
+        }
+    }
+    .cs-ld-count {
+        white-space: nowrap;
+        font-size: 1rem;
+    }
+    .cs-finish {
+        display: grid;
+        gap: 10px;
+        padding-bottom: 16px;
+        .cs-big {
+            min-height: 60px;
+        }
+    }
+    .cs-finish-sub {
+        font-size: 0.78rem;
+        font-weight: 400;
+        opacity: 0.85;
+    }
+    .cs-result {
+        text-align: center;
+        padding: 24px 16px;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+    .cs-result-icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 10px;
+        border-radius: 50%;
+        background-color: $cs-ok;
+        color: #fff;
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        &.cs-result-partial {
+            background-color: $cs-orange;
+        }
+    }
+    .cs-result-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+    .cs-result-sub {
+        color: $cs-muted;
+        margin-bottom: 6px;
+    }
+    .cs-result-text {
+        text-align: left;
+        max-height: 220px;
+        overflow: auto;
+    }
+    .cs-result-btns {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    @media (min-width: 768px) {
+        .cs-tabs > button {
+            flex-direction: row;
+            gap: 6px;
+            font-size: 0.95rem;
+            min-height: $cs-tap;
+            .fa {
+                font-size: 1rem;
+            }
+            .cs-count {
+                position: static;
+            }
+        }
+        .cs-tabs {
+            grid-template-columns: repeat(4, minmax(0, 170px)) !important;
+        }
+        .cs-ld {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .cs-ld-bottom-row {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .cs-bottom.cs-ld-bottom {
+            display: block;
+        }
+    }
+}
+
+.o_craf_sotuv .cs-result-lines {
+    text-align: left;
+    margin: 12px 0 6px;
+}
+
+// ==================================================================== mashina va joylar bo'yicha yuklash
+.o_craf_sotuv {
+    .cs-truck-row {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin-bottom: 8px;
+        border: 1px solid $cs-border;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: $o-view-background-color;
+        &:focus-within {
+            border-color: $primary;
+        }
+    }
+    .cs-truck-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        margin: 0;
+        background-color: rgba(0, 0, 0, 0.04);
+        color: $cs-muted;
+    }
+    .cs-truck {
+        border: 0;
+        border-radius: 0;
+        height: $cs-tap;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        &::placeholder {
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        &:focus {
+            box-shadow: none;
+        }
+    }
+    .cs-truck-row-ld {
+        margin: 6px 0 8px;
+        &.cs-truck-missing {
+            border-color: $cs-warn;
+            .cs-truck-label {
+                background-color: $cs-warn-bg;
+                color: $cs-warn;
+            }
+        }
+    }
+    .cs-truck-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        padding: 2px 10px;
+        border: 2px solid #23221f;
+        border-radius: 6px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        font-size: 0.9rem;
+        background-color: #fff;
+        color: #23221f;
+    }
+    .cs-truck-badge-lg {
+        font-size: 1.1rem;
+        margin: 6px auto 4px;
+    }
+    .cs-ldl-from {
+        color: $cs-blue;
+        b {
+            font-weight: 700;
+        }
+    }
+    .cs-alloc {
+        padding: 8px 0;
+        border-bottom: 1px dashed $cs-border;
+    }
+    .cs-alloc-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    .cs-alloc-total {
+        margin-top: 8px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        padding: 6px 10px;
+        &.cs-alloc-ok {
+            background-color: $cs-ok-bg;
+            color: $cs-ok;
+        }
+        &.cs-alloc-diff {
+            background-color: $cs-orange-bg;
+            color: $cs-orange;
+        }
+    }
+    .cs-ld-bottom .cs-big .cs-finish-sub {
+        display: block;
+        line-height: 1.1;
+    }
+}
+
+.o_craf_sotuv .cs-avail-warn {
+    background-color: $cs-warn-bg;
+    color: $cs-warn;
+    font-weight: 600;
+}
+
+// ==================================================================== «Qabul qilish»
+.o_craf_sotuv {
+    .cs-ld-state {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin: 6px 0 8px;
+        font-size: 0.9rem;
+        line-height: 1.3;
+        .fa {
+            margin-top: 2px;
+        }
+    }
+    .cs-ld-state-new {
+        background-color: $cs-blue-bg;
+        color: $cs-blue;
+    }
+    .cs-ld-state-other,
+    .cs-ld-state-mine {
+        background-color: $cs-orange-bg;
+        color: $cs-orange;
+    }
+    .cs-ldl-num .fa,
+    .cs-ldl-num > i {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid $cs-border;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-style: normal;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: $cs-muted;
+    }
+    .cs-ld-preview .cs-ldl-body {
+        cursor: default;
+    }
+    .cs-ld-preview .cs-ldl {
+        min-height: 56px;
+    }
+    .cs-accept {
+        min-height: 56px;
+        font-size: 1.15rem;
+    }
+}
+
+// ==================================================================== mashina rasmi
+.o_craf_sotuv {
+    .cs-photos {
+        margin-top: 10px;
+        padding: 10px 12px 6px;
+        border: 1px solid $cs-border;
+        border-radius: $cs-radius;
+        background-color: $o-view-background-color;
+        &.cs-photos-missing {
+            border-color: $cs-warn;
+            border-style: dashed;
+        }
+    }
+    .cs-photos-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px 10px;
+        margin-bottom: 8px;
+        .cs-label {
+            margin: 0;
+        }
+    }
+    .cs-photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        gap: 8px;
+    }
+    .cs-photo {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: rgba(0, 0, 0, 0.05);
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: zoom-in;
+        }
+    }
+    .cs-photo-del {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cs-photo-add {
+        aspect-ratio: 1;
+        margin: 0;
+        border: 2px dashed $cs-border;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: $primary;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-align: center;
+        .fa {
+            font-size: 1.6rem;
+        }
+        &.cs-photo-add-main {
+            grid-column: 1 / -1;
+            aspect-ratio: auto;
+            min-height: 64px;
+            flex-direction: row;
+            gap: 10px;
+            border-style: solid;
+            border-color: $primary;
+            background-color: $primary;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+        &.cs-photo-add-busy {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    }
+    .cs-photo-gallery {
+        padding-left: 0;
+        margin-top: 2px;
+    }
+    .cs-photo-strip {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        margin: 8px 0 4px;
+    }
+    .cs-result .cs-photo-strip {
+        justify-content: center;
+    }
+    .cs-photo-thumb {
+        flex: 0 0 auto;
+        width: 72px;
+        height: 72px;
+        padding: 0;
+        border: 1px solid $cs-border;
+        border-radius: 8px;
+        overflow: hidden;
+        background: none;
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+    .cs-photo-count {
+        margin-left: 6px;
+        padding-left: 6px;
+        border-left: 1px solid rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        letter-spacing: 0;
+    }
+    .cs-photo-view {
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
+        background-color: rgba(0, 0, 0, 0.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    }
+    .cs-photo-view-close {
+        position: absolute;
+        top: calc(10px + env(safe-area-inset-top, 0px));
+        right: 10px;
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+    }
+}

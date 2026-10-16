@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_litey_count_view_list" model="ir.ui.view">
+        <field name="name">craf.litey.count.list</field>
+        <field name="model">craf.litey.count</field>
+        <field name="arch" type="xml">
+            <list string="Литейка: sanash" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="location_id"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="counted_count"/>
+                <field name="diff_count"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_litey_count_view_search" model="ir.ui.view">
+        <field name="name">craf.litey.count.search</field>
+        <field name="model">craf.litey.count</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="location_id"/>
+                <field name="user_id"/>
+                <field name="line_ids" string="Material" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Tasdiqlangan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="date" string="Sana" date="date"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="craf_litey_count_view_form" model="ir.ui.view">
+        <field name="name">craf.litey.count.form</field>
+        <field name="model">craf.litey.count</field>
+        <field name="arch" type="xml">
+            <form string="Литейка: sanash">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary"
+                            invisible="state != 'draft'" groups="stock.group_stock_manager"
+                            confirm="Sanalgan miqdorlar qoldiqqa yoziladi (farqlar inventarizatsiya bo'lib tuzatiladi). Davom etasizmi?"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-exchange"
+                                invisible="not move_ids">
+                            <div class="o_stat_info"><span class="o_stat_text">Tuzatishlar</span></div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="user_id" readonly="state != 'draft'"/>
+                            <field name="done_date" invisible="not done_date"/>
+                            <field name="counted_count"/>
+                            <field name="diff_count"/>
+                        </group>
+                    </group>
+                    <field name="line_ids" readonly="state != 'draft'">
+                        <list editable="bottom" decoration-warning="state == 'done' and diff_qty != 0">
+                            <field name="sequence" widget="handle"/>
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="counted_text" placeholder="993+600"/>
+                            <field name="counted_qty"/>
+                            <field name="uom_name" string=""/>
+                            <field name="counted" widget="boolean_toggle"/>
+                            <field name="system_qty" column_invisible="parent.state != 'done'"/>
+                            <field name="diff_qty" column_invisible="parent.state != 'done'"/>
+                            <field name="state" column_invisible="1"/>
+                        </list>
+                        <kanban class="o_kanban_mobile">
+                            <templates>
+                                <t t-name="card">
+                                    <div class="d-flex align-items-baseline gap-2">
+                                        <field name="product_id" class="fw-bold"/>
+                                        <span class="ms-auto text-nowrap"><field name="counted_qty" class="fw-bold"/> <field name="uom_name"/></span>
+                                    </div>
+                                    <div class="text-muted small" invisible="state != 'done'">
+                                        tizimda <field name="system_qty"/> · farq <field name="diff_qty"/>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+                        <form string="Sanash qatori">
+                            <group>
+                                <field name="product_id" options="{'no_create': True}"/>
+                                <field name="counted_text"/>
+                                <field name="counted_qty"/>
+                                <field name="counted"/>
+                                <field name="state" invisible="1"/>
+                            </group>
+                        </form>
+                    </field>
+                    <field name="note" placeholder="Izoh" readonly="state == 'done'"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_litey_count" model="ir.actions.act_window">
+        <field name="name">Литейка: sanash</field>
+        <field name="res_model">craf.litey.count</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Литейка qoldig'ini sanash</p>
+            <p>Sanashni Craf → Литейка hisoboti → «+» → Sanash dan telefonda qilish qulay.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_craf_litey_count" name="Литейка: sanash" parent="stock.menu_stock_adjustments"
+              action="action_craf_litey_count" sequence="15"/>
+
+    <!-- Inventarizatsiya → Mahsulotlar: "Литейка materiallari" filtri -->
+    <record id="product_template_search_craf_litey" model="ir.ui.view">
+        <field name="name">product.template.search.craf.litey</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_to_sell']" position="before">
+                <filter name="craf_litey" string="Литейка materiallari"
+                        domain="[('craf_litey_seq', '&gt;', 0), ('craf_litey_hidden', '=', False)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

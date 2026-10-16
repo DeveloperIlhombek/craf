@@ -1,0 +1,397 @@
+// Craf → Davomat. Asosiy uslub Литейка sahifasidan (o_craf_litey); bu yerda davomatga xos qismlar.
+$dv-line: rgba(127, 127, 127, 0.22);
+$dv-muted: #63707a;
+$dv-ok: #12753a;
+$dv-warn: #9a6200;
+$dv-bad: #c4314b;
+$dv-tap: 44px;
+
+.o_craf_litey.o_craf_davomat {
+    .dv-month {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: default;
+        min-width: 128px;
+    }
+    .cl-tabs {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .dv-kpis {
+        grid-auto-columns: minmax(0, 1fr);
+        .cl-kpi {
+            min-width: 0;
+        }
+    }
+    .dv-todo {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(154, 98, 0, 0.35);
+        background-color: rgba(154, 98, 0, 0.07);
+        overflow: hidden;
+        > button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: $dv-tap;
+            padding: 6px 12px;
+            border: 0;
+            background: none;
+            text-align: left;
+            color: $dv-warn;
+            font-size: 0.9rem;
+            + button {
+                border-top: 1px solid rgba(154, 98, 0, 0.2);
+            }
+            > span {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            b {
+                color: inherit;
+            }
+        }
+    }
+    .dv-banner-info {
+        background-color: rgba(71, 87, 168, 0.1);
+        color: #4757a8;
+        b {
+            color: inherit;
+        }
+    }
+    .dv-kpis {
+        margin-bottom: 12px;
+    }
+    .dv-emp,
+    .dv-kpi-row {
+        width: 100%;
+        text-align: left;
+    }
+    .dv-manual {
+        margin-left: 6px;
+        font-size: 0.75rem;
+        color: $dv-muted;
+    }
+    .dv-st {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        background-color: rgba(127, 127, 127, 0.12);
+        color: $dv-muted;
+        &.dv-st-ishda {
+            background-color: rgba(18, 117, 58, 0.12);
+            color: $dv-ok;
+        }
+        &.dv-st-kelmadi {
+            background-color: rgba(196, 49, 75, 0.12);
+            color: $dv-bad;
+        }
+        &.dv-st-kutilmoqda {
+            background-color: rgba(154, 98, 0, 0.1);
+            color: $dv-warn;
+        }
+        &.dv-st-none {
+            display: none;
+        }
+    }
+    .dv-late {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: $dv-warn;
+        white-space: nowrap;
+    }
+    .dv-h {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin: 16px 2px 8px;
+    }
+    .dv-h-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        .dv-h,
+        .cl-lines-head {
+            margin-bottom: 8px;
+        }
+        .btn-link {
+            padding: 0 0 0 10px;
+        }
+    }
+    .dv-dot {
+        font-size: 0.6rem;
+        vertical-align: middle;
+    }
+    .dv-off {
+        opacity: 0.55;
+    }
+    .dv-res {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 1px 8px;
+        border-radius: 8px;
+        border: 1px solid $dv-line;
+        color: $dv-muted;
+        white-space: nowrap;
+        &.dv-res-done {
+            border-color: rgba(18, 117, 58, 0.4);
+            color: $dv-ok;
+        }
+        &.dv-res-unknown,
+        &.dv-res-error {
+            border-color: rgba(196, 49, 75, 0.4);
+            color: $dv-bad;
+        }
+    }
+    .dv-log {
+        cursor: default;
+    }
+
+    // tabel
+    .dv-legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 14px;
+        margin-bottom: 8px;
+        font-size: 0.8rem;
+        color: $dv-muted;
+    }
+    .dv-sw {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        vertical-align: -1px;
+        margin-right: 3px;
+        border: 1px solid $dv-line;
+    }
+    .dv-grid-wrap {
+        overflow-x: auto;
+        border: 1px solid $dv-line;
+        border-radius: 12px;
+        background-color: $o-view-background-color;
+        -webkit-overflow-scrolling: touch;
+    }
+    .dv-grid {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.8rem;
+        min-width: 100%;
+        th,
+        td {
+            padding: 4px 3px;
+            text-align: center;
+            border-bottom: 1px solid $dv-line;
+            border-right: 1px solid rgba(127, 127, 127, 0.1);
+            white-space: nowrap;
+            min-width: 30px;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: $o-view-background-color;
+            font-weight: 600;
+            small {
+                display: block;
+                font-weight: 400;
+                font-size: 0.68rem;
+                color: $dv-muted;
+            }
+            &.dv-sun {
+                color: $dv-bad;
+            }
+            &.dv-today {
+                background-color: rgba(113, 75, 103, 0.12);
+            }
+        }
+        .dv-name {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            text-align: left;
+            min-width: 128px;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background-color: $o-view-background-color;
+            font-weight: 600;
+            small {
+                display: block;
+                font-weight: 400;
+                font-size: 0.7rem;
+                color: $dv-muted;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+        thead .dv-name {
+            z-index: 2;
+        }
+        tbody .dv-name {
+            cursor: pointer;
+        }
+        .dv-tot {
+            font-weight: 600;
+            min-width: 40px;
+            small {
+                font-weight: 400;
+                color: $dv-muted;
+            }
+        }
+    }
+    .dv-c-work {
+        background-color: rgba(18, 117, 58, 0.08);
+    }
+    .dv-c-late {
+        background-color: rgba(154, 98, 0, 0.18);
+        color: $dv-warn;
+        font-weight: 600;
+    }
+    .dv-c-abs {
+        background-color: rgba(196, 49, 75, 0.12);
+        color: $dv-bad;
+        font-weight: 600;
+    }
+    .dv-c-rest {
+        color: $dv-muted;
+    }
+
+    // KPI
+    .dv-kpi-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+        color: $dv-muted;
+    }
+    .dv-prod {
+        font-size: 0.78rem;
+    }
+    .dv-score {
+        font-size: 1.35rem;
+        font-weight: 700;
+        line-height: 1.1;
+        small {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: $dv-muted;
+            margin-left: 3px;
+        }
+    }
+    .dv-grade {
+        display: inline-block;
+        min-width: 26px;
+        text-align: center;
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #fff;
+        &.dv-g-a {
+            background-color: $dv-ok;
+        }
+        &.dv-g-b {
+            background-color: #4757a8;
+        }
+        &.dv-g-c {
+            background-color: $dv-warn;
+        }
+        &.dv-g-d {
+            background-color: $dv-bad;
+        }
+    }
+
+    // varaqlar
+    .dv-inline {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        margin-bottom: 12px;
+        > .cl-field,
+        > select {
+            flex: 1 1 auto;
+            margin-bottom: 0;
+            min-width: 0;
+        }
+        > select {
+            min-height: $dv-tap;
+        }
+        > .btn {
+            flex: 0 0 auto;
+            min-height: $dv-tap;
+        }
+    }
+    .dv-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        .cl-field > span {
+            min-height: 2.4em;
+        }
+    }
+    .dv-time {
+        font-size: 1.15rem;
+        font-weight: 600;
+        text-align: center;
+        min-height: 48px;
+    }
+    .dv-url {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 6px 6px 10px;
+        border-radius: 10px;
+        border: 1px dashed $dv-line;
+        background-color: rgba(127, 127, 127, 0.06);
+        code {
+            flex: 1 1 auto;
+            min-width: 0;
+            word-break: break-all;
+            font-size: 0.78rem;
+            color: inherit;
+        }
+    }
+    .dv-steps {
+        margin: 10px 0 4px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background-color: rgba(71, 87, 168, 0.07);
+        font-size: 0.85rem;
+        ol {
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+        li + li {
+            margin-top: 4px;
+        }
+    }
+    .dv-days > button {
+        padding: 0;
+    }
+    .dv-att:disabled {
+        opacity: 1;
+    }
+
+    @media (min-width: 768px) {
+        .cl-sheet.dv-sheet-wide {
+            max-width: 680px;
+        }
+    }
+    @media (min-width: 992px) {
+        .dv-kpis {
+            grid-auto-flow: row;
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .dv-grid {
+            font-size: 0.85rem;
+        }
+    }
+}

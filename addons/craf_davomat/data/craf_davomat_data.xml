@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="schedule_day" model="craf.davomat.schedule">
+        <field name="name">Kunduzgi 08:00–17:00 (Du–Sha)</field>
+        <field name="sequence">1</field>
+        <field name="start">8.0</field>
+        <field name="end">17.0</field>
+        <field name="break_hours">1.0</field>
+        <field name="grace">10</field>
+        <field name="days">123456</field>
+    </record>
+    <record id="schedule_night" model="craf.davomat.schedule">
+        <field name="name">Tungi 20:00–08:00</field>
+        <field name="sequence">5</field>
+        <field name="start">20.0</field>
+        <field name="end">8.0</field>
+        <field name="break_hours">1.0</field>
+        <field name="grace">10</field>
+        <field name="night">True</field>
+        <field name="days">123456</field>
+    </record>
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_craf_sex" model="ir.actions.client">
+        <field name="name">Sexlar</field>
+        <field name="tag">craf_sex</field>
+        <field name="path">craf-sex</field>
+    </record>
+    <menuitem id="menu_craf_sex" name="Sexlar" parent="craf_profile.menu_craf_root"
+              action="action_craf_sex" sequence="4"/>
+
+    <record id="view_users_form_craf_sex" model="ir.ui.view">
+        <field name="name">res.users.form.craf.sex</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']/group[1]" position="after">
+                <group string="Craf" invisible="share">
+                    <field name="craf_work_stage"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

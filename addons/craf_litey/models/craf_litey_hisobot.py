@@ -4,7 +4,10 @@ from datetime import datetime, time, timedelta
 import pytz
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 from odoo.tools import SQL
+
+from odoo.addons.craf_production.models.craf_production_mixin import fmt
 
 MAX_DAYS = 93
 PRODUCED_ROW = ("Ишлаб чикарилган литейка", 75)   # Excel dagi qator: kunlik chiqqan stalba
@@ -25,10 +28,65 @@ class CrafLiteyHisobot(models.AbstractModel):
     def _utc(self, day, at=time.min):
         return self._tz().localize(datetime.combine(day, at)).astimezone(pytz.utc).replace(tzinfo=None)
 
+    def _local(self, dt, pattern="%d.%m.%Y %H:%M"):
+        return pytz.utc.localize(dt).astimezone(self._tz()).strftime(pattern) if dt else ""
+
     @api.model
-    def _products(self):
-        products = self.env["product.product"].search([("craf_litey_seq", ">", 0)])
+    def _products(self, hidden=False):
+        """Литейка materiallari (hisobot tartibida). hidden=True — ro'yxatdan chiqarilganlari."""
+        products = self.env["product.product"].search(
+            [("craf_litey_seq", ">", 0), ("craf_litey_hidden", "=", bool(hidden))])
         return products.sorted(lambda p: (p.craf_litey_seq, p.default_code or ""))
+
+    @api.model
+    def _litey_location(self):
+        return self.env["craf.production.mixin"]._craf_loc("Литейка")
+
+    # ------------------------------------------------------------------ sana va qulf
+    @api.model
+    def _moment(self, day, at=time(12, 0)):
+        """Hujjat sanasi → ombor harakati vaqti (UTC).
+
+        Bugungi sana → None (harakat hozirgi vaqt bilan yoziladi). O'tgan kun → shu kunning `at` vaqti.
+        Kelajak sanasi bilan yozib bo'lmaydi.
+        """
+        day = fields.Date.to_date(day) if day else None
+        today = fields.Date.context_today(self)
+        if not day or day == today:
+            return None
+        if day > today:
+            raise UserError("Kelajak sanasi bilan yozib bo'lmaydi: %s." % day.strftime("%d.%m.%Y"))
+        return self._utc(day, at)
+
+    @api.model
+    def _last_count_move(self, products=None, after=None):
+        """Oxirgi qoldiq sanash (inventarizatsiya) harakati: Sanash hujjati, Excel qoldig'i yoki Odoo da qo'lda."""
+        domain = [("is_inventory", "=", True), ("state", "=", "done"), ("company_id", "=", self.env.company.id)]
+        if products is not None:
+            domain.append(("product_id", "in", products.ids))
+        if after:
+            domain.append(("date", ">=", after))
+        return self.env["stock.move"].search(domain, order="date desc, id desc", limit=1)
+
+    @api.model
+    def _check_lock(self, products, moment, what):
+        """O'tgan sanaga yoziladigan harakatdan keyin qoldiq sanalgan bo'lsa — to'xtatadi.
+
+        Sanashdan oldingi vaqtga harakat yozilsa, u sanalgan qoldiqqa ikkinchi marta qo'shiladi.
+        """
+        if not moment or not products:
+            return
+        move = self._last_count_move(products, moment)
+        if not move:
+            return
+        raise UserError(
+            "%s: %s sanasiga yozib bo'lmaydi.\n\n"
+            "%s da «%s» qoldig'i sanalgan (%s). Bu sanagacha bo'lgan sarf va kirim o'sha sanashga kirib bo'lgan — "
+            "yana yozilsa, ikki marta hisoblanadi.\n\n"
+            "• Hujjat sanashdan keyin bo'lgan bo'lsa — sanasini o'zgartiring.\n"
+            "• Sanashga kirgan bo'lsa — hujjatni bekor qiling." % (
+                what, self._local(moment, "%d.%m.%Y"), self._local(move.date), move.product_id.display_name,
+                move.reference or move.inventory_name or "inventarizatsiya"))
 
     def _uom(self, product):
         kg = self.env.ref("uom.product_uom_kgm", raise_if_not_found=False)
@@ -118,6 +176,47 @@ class CrafLiteyHisobot(models.AbstractModel):
             ["product_id"], ["quantity:sum"])
         return {product.id: qty for product, qty in groups}
 
+    def _by_location(self, products):
+        """{product_id: [{id, name, qty}]} — hozirgi qoldiq joylar bo'yicha (0 bo'lmaganlari)."""
+        groups = self.env["stock.quant"]._read_group(
+            [("product_id", "in", products.ids), ("location_id.usage", "=", "internal"),
+             ("company_id", "in", [self.env.company.id, False])],
+            ["product_id", "location_id"], ["quantity:sum"])
+        res = defaultdict(list)
+        for product, location, qty in groups:
+            if abs(qty) > 1e-6:
+                res[product.id].append({"id": location.id, "name": location.name, "qty": round(qty, 3)})
+        for rows in res.values():
+            rows.sort(key=lambda r: -abs(r["qty"]))
+        return res
+
+    def _material_info(self, product):
+        tmpl = product.product_tmpl_id
+        return {
+            "tmpl_id": tmpl.id,
+            "kind": "aux" if tmpl.craf_not_metal else "metal",
+            "melt": tmpl.craf_melt_seq > 0,
+            "seq": tmpl.craf_litey_seq,
+            "min_qty": tmpl.craf_min_qty,
+            "main_location": tmpl.craf_litey_location_id.name or "",
+        }
+
+    def _count_info(self):
+        """Oxirgi sanash va undan oldingi sanadagi qoralama plavkalar."""
+        move = self._last_count_move(self._products() | self._products(hidden=True))
+        if not move:
+            return {"last_count": False, "stale_drafts": [], "draft_limit": False}
+        day = pytz.utc.localize(move.date).astimezone(self._tz()).date()
+        # Bugun sanalgan bo'lsa, bugungi plavka sanashdan keyin yoziladi; o'tgan kun sanalgan bo'lsa — o'sha kun ham yopiq
+        limit = day - timedelta(days=1) if day >= fields.Date.context_today(self) else day
+        stale = self.env["craf.foundry.melt"].search([("state", "=", "draft"), ("date", "<=", limit)], order="date, id")
+        return {
+            "last_count": {"label": self._local(move.date), "date": fields.Date.to_string(day),
+                           "name": move.reference or move.inventory_name or ""},
+            "stale_drafts": [{"id": m.id, "name": m.name, "date_label": m.date.strftime("%d.%m.%Y")} for m in stale],
+            "draft_limit": fields.Date.to_string(limit),
+        }
+
     # ------------------------------------------------------------------ asosiy
     @api.model
     def get_data(self, date_from=None, date_to=None):
@@ -131,6 +230,7 @@ class CrafLiteyHisobot(models.AbstractModel):
 
         flows = self._flows(all_products, start)
         on_hand = self._on_hand(all_products)
+        by_loc = self._by_location(products)
 
         def net(day, pid):
             return sum(flows.get(day, {}).get(pid, {}).values())
@@ -165,6 +265,8 @@ class CrafLiteyHisobot(models.AbstractModel):
                 "opening": round(opening, 2), "closing": round(close, 2),
                 **{k: round(v, 2) for k, v in row.items()},
                 "min_qty": min_qty, "low": bool(min_qty) and close < min_qty, "negative": close < -1e-6,
+                "on_hand": round(on_hand.get(pid, 0.0), 3), "locs": by_loc.get(pid, []),
+                **self._material_info(product),
             })
 
         # 2) kunlik jadval (Excel Лист1 ko'rinishi)
@@ -259,6 +361,10 @@ class CrafLiteyHisobot(models.AbstractModel):
             "kpi": kpi,
             "receipts": receipts,
             "receipt_total": round(sum(r["amount"] for r in receipts), 2),
+            "drafts_total": Melt.search_count([("state", "=", "draft")]),
+            "count_drafts": self.env["craf.litey.count"].search_count([("state", "=", "draft")]),
+            "is_manager": self.env.user.has_group("stock.group_stock_manager"),
+            **self._count_info(),
         }
 
     # ------------------------------------------------------------------ tugmalar

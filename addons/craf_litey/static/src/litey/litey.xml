@@ -1,259 +1,784 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
+
+    <!-- sahifa -->
     <t t-name="craf_litey.Litey">
-        <div class="o_action o_craf_litey h-100 overflow-auto">
-            <div class="container-fluid py-2 py-md-3 px-2 px-sm-3 px-lg-4" t-att-class="{ 'o_cl_loading': state.loading }">
-                <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                    <div class="me-auto">
-                        <h2 class="mb-0">Литейка hisoboti</h2>
-                        <div class="text-muted small">Qoldiq → plavkaga sarf → chiqqan stalba → otxod va шлак</div>
+        <div class="o_action o_craf_litey" t-att-class="{ 'cl-busy': state.busy or state.loading }">
+            <header class="cl-top">
+                <div class="cl-top-row">
+                    <h1 class="cl-title">Литейка</h1>
+                    <div class="cl-top-actions">
+                        <div class="cl-period-group" t-if="state.data">
+                            <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(-1)" aria-label="Oldingi davr"><i class="fa fa-chevron-left"/></button>
+                            <button class="cl-period" t-on-click="openPeriod" aria-label="Davrni tanlash">
+                                <i class="fa fa-calendar-o"/> <span t-esc="periodLabel"/>
+                            </button>
+                            <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(1)" aria-label="Keyingi davr"><i class="fa fa-chevron-right"/></button>
+                        </div>
+                        <button class="btn btn-primary cl-new-desk d-none d-lg-inline-flex" t-on-click="openNew"><i class="fa fa-plus"/> Yangi</button>
+                        <button class="cl-icon-btn" t-on-click="openMenu" aria-label="Boshqa amallar"><i class="fa fa-ellipsis-v"/></button>
                     </div>
                 </div>
-                <t t-if="state.data">
+                <nav class="cl-tabs" role="tablist">
+                    <button role="tab" t-att-aria-selected="state.tab === 'qoldiq' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'qoldiq' }" t-on-click="() => this.setTab('qoldiq')">Qoldiq</button>
+                    <button role="tab" t-att-aria-selected="state.tab === 'kunlik' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'kunlik' }" t-on-click="() => this.setTab('kunlik')">Kunlik</button>
+                    <button role="tab" t-att-aria-selected="state.tab === 'hujjat' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'hujjat' }" t-on-click="() => this.setTab('hujjat')">
+                        Hujjatlar<span class="cl-count" t-if="state.data and state.data.drafts_total" t-esc="state.data.drafts_total" title="Qoralama plavkalar"/>
+                    </button>
+                </nav>
+            </header>
+
+            <main class="cl-body">
+                <div class="cl-empty" t-if="!state.data"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+                <t t-else="">
                     <t t-set="d" t-value="state.data"/>
-                    <div class="o_cl_toolbar d-flex flex-wrap align-items-center gap-2 mb-3">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Davr">
-                            <button class="btn btn-outline-secondary" t-on-click="() => this.shift(-1)" title="Oldingi davr"><i class="fa fa-chevron-left"/></button>
-                            <input type="date" class="form-control form-control-sm o_cl_date" t-att-value="d.date_from" t-on-change="onFrom" aria-label="Boshlanish"/>
-                            <input type="date" class="form-control form-control-sm o_cl_date" t-att-value="d.date_to" t-on-change="onTo" aria-label="Tugash"/>
-                            <button class="btn btn-outline-secondary" t-on-click="() => this.shift(1)" title="Keyingi davr"><i class="fa fa-chevron-right"/></button>
-                        </div>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Tayyor davrlar">
-                            <button class="btn btn-light" t-on-click="() => this.preset('today')">Bugun</button>
-                            <button class="btn btn-light" t-on-click="() => this.preset('7')">7 kun</button>
-                            <button class="btn btn-light" t-on-click="() => this.preset('30')">30 kun</button>
-                            <button class="btn btn-light" t-on-click="() => this.preset('month')">Shu oy</button>
-                        </div>
-                        <button class="btn btn-sm btn-light" t-on-click="() => this.downloadXlsx()"><i class="fa fa-file-excel-o"/> Excel</button>
-                        <button class="btn btn-sm btn-light d-none d-md-inline-block" t-on-click="() => this.print()"><i class="fa fa-print"/> Chop etish</button>
-                        <div class="ms-md-auto d-flex flex-wrap gap-2">
-                            <button class="btn btn-sm btn-primary" t-on-click="() => this.newMelt()"><i class="fa fa-plus"/> Plavka</button>
-                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.newKirim()"><i class="fa fa-truck"/> Kirim</button>
-                            <button class="btn btn-sm btn-light" t-on-click="() => this.inventory()" title="Qoldiqni sanash va tuzatish"><i class="fa fa-balance-scale"/> Sanash</button>
-                            <button class="btn btn-sm btn-light" t-on-click="() => this.importExcel()" title="Excel jadvalidagi qoldiq bilan taqqoslash va yuklash"><i class="fa fa-upload"/> Excel qoldig'i</button>
-                            <button class="btn btn-sm btn-light d-none d-lg-inline-block" t-on-click="() => this.openMelts()"><i class="fa fa-list"/> Plavkalar</button>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-danger py-2 d-flex align-items-center gap-2" t-if="d.negative_count" role="alert">
+                    <div class="cl-banner cl-banner-bad" t-if="d.stale_drafts.length" role="alert">
                         <i class="fa fa-exclamation-triangle"/>
-                        <span><b t-esc="d.negative_count"/> ta material qoldig'i manfiy — kirim yozilmagan yoki qoldiq tuzatilmagan.</span>
+                        <div class="cl-banner-text">
+                            <b><t t-esc="d.stale_drafts.length"/> ta qoralama plavka</b> oxirgi sanashdan (<t t-esc="d.last_count.label"/>) oldingi kunda. Ularning sarfi sanashga kirgan — bekor qilish kerak.
+                        </div>
+                        <button class="btn btn-sm cl-banner-btn" t-if="state.tab !== 'hujjat' or !state.docDrafts" t-on-click="goStale">Ko'rish</button>
                     </div>
-                    <div class="alert alert-warning py-2 d-flex align-items-center gap-2" t-if="d.low_count" role="alert">
-                        <i class="fa fa-exclamation-circle"/>
-                        <span><b t-esc="d.low_count"/> ta material minimal qoldiqdan kam.</span>
-                    </div>
+                    <t t-if="state.tab === 'qoldiq'" t-call="craf_litey.TabQoldiq"/>
+                    <t t-if="state.tab === 'kunlik'" t-call="craf_litey.TabKunlik"/>
+                    <t t-if="state.tab === 'hujjat'" t-call="craf_litey.TabHujjat"/>
+                </t>
+            </main>
 
-                    <!-- Ko'rsatkichlar -->
-                    <div class="row g-2 mb-3 o_cl_kpis">
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <div class="o_cl_card o_cl_kpi">
-                                <div class="o_cl_kpi_label">Plavkalar</div>
-                                <div class="o_cl_kpi_value"><t t-esc="d.kpi.melts"/></div>
-                                <div class="small text-muted" t-if="d.kpi.drafts"><t t-esc="d.kpi.drafts"/> ta qoralama</div>
-                                <div class="small text-muted" t-else=""><t t-esc="d.label"/></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <div class="o_cl_card o_cl_kpi">
-                                <div class="o_cl_kpi_label">Pechga solindi (metall)</div>
-                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.metal, 0)"/> <small>kg</small></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <div class="o_cl_card o_cl_kpi">
-                                <div class="o_cl_kpi_label">Stalba chiqdi</div>
-                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.billet, 0)"/> <small>kg</small></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <div class="o_cl_card o_cl_kpi">
-                                <div class="o_cl_kpi_label">Otxod (ст + лит)</div>
-                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.waste, 0)"/> <small>kg</small></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <div class="o_cl_card o_cl_kpi">
-                                <div class="o_cl_kpi_label">Шлак</div>
-                                <div class="o_cl_kpi_value"><t t-esc="fmt(d.kpi.slag, 0)"/> <small>kg</small></div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4 col-xl-2">
-                            <div class="o_cl_card o_cl_kpi">
-                                <div class="o_cl_kpi_label">Угар</div>
-                                <div class="o_cl_kpi_value" t-att-class="lossClass(kpiLossState)">
-                                    <t t-if="d.kpi.metal"><t t-esc="num(d.kpi.loss_pct, 2)"/> <small>%</small></t>
-                                    <t t-else="">—</t>
-                                </div>
-                                <div class="small text-muted" t-if="d.kpi.metal"><t t-esc="fmt(d.kpi.loss, 0)"/> kg</div>
-                            </div>
-                        </div>
-                    </div>
+            <button class="cl-fab d-lg-none" t-on-click="openNew" aria-label="Yangi hujjat yoki material"><i class="fa fa-plus"/></button>
+            <t t-if="state.sheet" t-call="craf_litey.Sheet"/>
+        </div>
+    </t>
 
-                    <ul class="nav nav-tabs mb-0 o_cl_tabs">
-                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'harakat' }" t-on-click.prevent="() => this.setTab('harakat')">Qoldiq va harakat</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'kunlik' }" t-on-click.prevent="() => this.setTab('kunlik')">Kunlik qoldiq (Excel)</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'plavka' }" t-on-click.prevent="() => this.setTab('plavka')">Plavkalar <span class="badge text-bg-light" t-esc="d.melts.length"/></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link" t-att-class="{ active: state.tab === 'kirim' }" t-on-click.prevent="() => this.setTab('kirim')">Kirimlar <span class="badge text-bg-light" t-esc="d.receipts.length"/></a></li>
-                    </ul>
+    <!-- ko'rsatkichlar -->
+    <t t-name="craf_litey.Kpi">
+        <div class="cl-kpis" aria-label="Davr ko'rsatkichlari">
+            <div class="cl-kpi">
+                <span class="cl-kpi-label">Plavka</span>
+                <span class="cl-kpi-value"><t t-esc="d.kpi.melts"/></span>
+                <span class="cl-kpi-sub" t-if="d.kpi.drafts"><t t-esc="d.kpi.drafts"/> qoralama</span>
+            </div>
+            <div class="cl-kpi">
+                <span class="cl-kpi-label">Pechga metall</span>
+                <span class="cl-kpi-value"><t t-esc="fmt(d.kpi.metal, 0)"/><small> kg</small></span>
+            </div>
+            <div class="cl-kpi">
+                <span class="cl-kpi-label">Stalba chiqdi</span>
+                <span class="cl-kpi-value"><t t-esc="fmt(d.kpi.billet, 0)"/><small> kg</small></span>
+            </div>
+            <div class="cl-kpi">
+                <span class="cl-kpi-label">Угар</span>
+                <span class="cl-kpi-value" t-att-class="lossClass(kpiLossState)">
+                    <t t-if="d.kpi.metal"><t t-esc="num(d.kpi.loss_pct, 2)"/><small> %</small></t><t t-else="">—</t>
+                </span>
+                <span class="cl-kpi-sub" t-if="d.kpi.metal"><t t-esc="fmt(d.kpi.loss, 0)"/> kg</span>
+            </div>
+            <div class="cl-kpi">
+                <span class="cl-kpi-label">Otxod va шлак</span>
+                <span class="cl-kpi-value"><t t-esc="fmt(d.kpi.waste + d.kpi.slag, 0)"/><small> kg</small></span>
+                <span class="cl-kpi-sub" t-if="d.kpi.slag">шлак <t t-esc="fmt(d.kpi.slag, 0)"/></span>
+            </div>
+        </div>
+    </t>
 
-                    <!-- 1) Harakat -->
-                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'harakat'">
-                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                            <div class="small text-muted me-auto">
-                                <t t-esc="d.label"/> · boshlang'ich + kirim + ishlab chiqarishdan − sarf ± tuzatish = oxirgi. Qatorni bosing — harakatlar ro'yxati.
-                            </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="cl_active" t-att-checked="state.onlyActive" t-on-change="toggleActive"/>
-                                <label class="form-check-label small" for="cl_active">Faqat harakatlanganlar</label>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0 o_cl_table">
-                                <thead>
-                                    <tr>
-                                        <th>Material</th>
-                                        <th class="text-end d-none d-sm-table-cell">Boshlang'ich</th>
-                                        <th class="text-end">Kirim</th>
-                                        <th class="text-end" title="Plavkadan chiqqan: stalba, Сталба/Литейка отход, шлак">Plavkadan</th>
-                                        <th class="text-end d-none d-md-table-cell" title="Pressdan va boshqa ishlab chiqarishdan qaytgan otxod">Pressdan</th>
-                                        <th class="text-end">Plavkaga sarf</th>
-                                        <th class="text-end d-none d-md-table-cell" title="Press va boshqa bo'limlarga sarf">Boshqa sarf</th>
-                                        <th class="text-end d-none d-lg-table-cell">Tuzatish</th>
-                                        <th class="text-end">Oxirgi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="movementRows" t-as="r" t-key="r.product_id" role="button"
-                                        t-att-class="{ o_cl_low: r.low, o_cl_neg: r.negative }" t-on-click="() => this.openMoves(r)">
-                                        <td class="o_cl_name">
-                                            <t t-esc="r.excel_name"/>
-                                            <span class="text-muted small"> (<t t-esc="r.uom"/>)</span>
-                                        </td>
-                                        <td class="text-end d-none d-sm-table-cell" t-esc="fmt(r.opening)"/>
-                                        <td class="text-end" t-esc="fmt(r.kirim)"/>
-                                        <td class="text-end o_cl_in" t-esc="fmt(r.chiqish_plavka)"/>
-                                        <td class="text-end o_cl_in d-none d-md-table-cell" t-esc="fmt(r.chiqish_boshqa)"/>
-                                        <td class="text-end o_cl_out" t-esc="fmt(r.sarf_plavka)"/>
-                                        <td class="text-end o_cl_out d-none d-md-table-cell" t-esc="fmt(r.sarf_boshqa)"/>
-                                        <td class="text-end d-none d-lg-table-cell" t-esc="fmt(r.tuzatish + r.boshqa)"/>
-                                        <td class="text-end fw-bold" t-esc="fmt(r.closing)"/>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+    <!-- Qoldiq -->
+    <t t-name="craf_litey.TabQoldiq">
+        <t t-call="craf_litey.Kpi"/>
+        <div class="cl-toolbar">
+            <div class="cl-search">
+                <i class="fa fa-search"/>
+                <input type="search" class="form-control" placeholder="Material yoki kod" t-model="state.q" aria-label="Materialni qidirish"/>
+            </div>
+            <div class="cl-chips" role="group" aria-label="Filtr">
+                <button t-att-class="{ active: state.filter === 'all' }" t-on-click="() => state.filter = 'all'">Hammasi <span t-esc="d.movement.length"/></button>
+                <button t-att-class="{ active: state.filter === 'metal' }" t-on-click="() => state.filter = 'metal'">Metall</button>
+                <button t-att-class="{ active: state.filter === 'aux' }" t-on-click="() => state.filter = 'aux'">Qo'shimcha</button>
+                <button t-att-class="{ active: state.filter === 'active' }" t-on-click="() => state.filter = 'active'">Harakatlangan</button>
+                <button class="cl-chip-warn" t-if="alertCount" t-att-class="{ active: state.filter === 'low' }" t-on-click="() => state.filter = 'low'">Kam qolgan <span t-esc="alertCount"/></button>
+            </div>
+            <button class="btn btn-outline-primary cl-add-mat d-none d-lg-inline-flex" t-if="d.is_manager" t-on-click="() => this.openMaterialForm()"><i class="fa fa-plus"/> Material</button>
+        </div>
+        <p class="cl-note">
+            Zavod bo'yicha qoldiq (barcha joylar), <t t-esc="dmy(d.date_to)"/> kun oxiri.
+            <t t-if="d.last_count">Oxirgi sanash: <t t-esc="d.last_count.label"/>.</t>
+        </p>
 
-                    <!-- 2) Kunlik qoldiq (Excel Лист1) -->
-                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'kunlik'">
-                        <div class="small text-muted mb-2">Har kun oxiridagi qoldiq — Excel jadvalingiz (Лист1) ko'rinishida. <span class="o_cl_produced_note">Rangli qatorlar</span> — shu kuni chiqqan miqdor.</div>
-                        <div class="table-responsive o_cl_matrix_wrap">
-                            <table class="table table-sm mb-0 o_cl_table o_cl_matrix">
-                                <thead>
-                                    <tr>
-                                        <th class="o_cl_sticky">Наименование</th>
-                                        <th>Ед.</th>
-                                        <th t-foreach="d.days" t-as="day" t-key="day.date" class="text-end"
-                                            t-att-class="{ o_cl_sunday: day.weekday === 6 }" t-att-title="day.full" t-esc="day.label"/>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="d.matrix" t-as="row" t-key="row.key" t-att-class="{ o_cl_produced: row.kind === 'produced' }">
-                                        <td class="o_cl_sticky o_cl_name" t-esc="row.label"/>
-                                        <td class="text-muted small" t-esc="row.uom"/>
-                                        <td t-foreach="row.values" t-as="v" t-key="v_index" class="text-end text-nowrap"
-                                            t-att-class="{ 'text-danger': v &lt; -0.005 }" t-esc="fmt(v)"/>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <div class="cl-empty" t-if="!materials.length">
+            <i class="fa fa-cube"/>
+            <div>Material topilmadi.</div>
+            <button class="btn btn-link" t-if="state.q or state.filter !== 'all'" t-on-click="clearFilter">Filtrni tozalash</button>
+        </div>
 
-                    <!-- 3) Plavkalar (daftar) -->
-                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'plavka'">
-                        <div class="small text-muted mb-2" t-if="d.melts.length">Har bir plavka — ishchi daftaridagi kabi. Raqam ustiga kelsangiz, tortishlar ko'rinadi; qatorni bosing — hujjat ochiladi.</div>
-                        <div class="text-muted py-3" t-if="!d.melts.length">Bu davrda plavka yo'q. <a href="#" t-on-click.prevent="() => this.newMelt()">Plavka yozish</a></div>
-                        <div class="table-responsive o_cl_matrix_wrap" t-if="d.melts.length">
-                            <table class="table table-sm table-hover mb-0 o_cl_table o_cl_melts">
-                                <thead>
-                                    <tr>
-                                        <th class="o_cl_sticky">Plavka</th>
-                                        <th t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end o_cl_col" t-att-title="c.name" t-esc="c.short"/>
-                                        <th class="text-end o_cl_sum">Kirdi</th>
-                                        <th class="text-end o_cl_sum">Stalba</th>
-                                        <th class="text-end">Uzunl., m</th>
-                                        <th class="text-end">Ст-от</th>
-                                        <th class="text-end">Лит-от</th>
-                                        <th class="text-end">Шлак</th>
-                                        <th class="text-end o_cl_sum">Угар</th>
-                                        <th t-foreach="d.aux_cols" t-as="c" t-key="c.product_id" class="text-end o_cl_col o_cl_aux" t-att-title="c.name" t-esc="c.short"/>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="d.melts" t-as="m" t-key="m.id" role="button" t-on-click="() => this.openMelt(m)"
-                                        t-att-class="{ o_cl_draft: m.state === 'draft' }">
-                                        <td class="o_cl_sticky text-nowrap">
-                                            <b t-esc="m.date_label"/>
-                                            <span class="text-muted small"> <t t-esc="m.pech"/><t t-if="m.day_no"> · <t t-esc="m.day_no"/></t></span>
-                                            <div class="small text-muted"><t t-esc="m.name"/><t t-if="m.state === 'draft'"> · qoralama</t></div>
-                                        </td>
-                                        <td t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end" t-att-title="meltText(m, c)">
-                                            <t t-esc="fmt(meltQty(m, c))"/><sup t-if="meltText(m, c)" class="text-muted">+</sup>
-                                        </td>
-                                        <td class="text-end fw-bold o_cl_sum" t-esc="fmt(m.charge_metal, 0)"/>
-                                        <td class="text-end fw-bold o_cl_sum" t-esc="fmt(m.billet_qty, 0)"/>
-                                        <td class="text-end" t-esc="fmt(m.billet_length, 2)"/>
-                                        <td class="text-end" t-esc="fmt(m.cut_waste_qty)"/>
-                                        <td class="text-end" t-esc="fmt(m.foundry_waste_qty)"/>
-                                        <td class="text-end" t-esc="fmt(m.slag_qty)"/>
-                                        <td class="text-end text-nowrap o_cl_sum" t-att-class="lossClass(m.balance_state)" t-att-title="m.note">
-                                            <t t-esc="fmt(m.loss_qty, 0)"/><span class="small"> · <t t-esc="num(m.loss_pct, 2)"/>%</span>
-                                        </td>
-                                        <td t-foreach="d.aux_cols" t-as="c" t-key="c.product_id" class="text-end o_cl_aux" t-esc="fmt(meltQty(m, c), 2)"/>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <!-- telefon va planshet: ro'yxat -->
+        <div class="cl-list d-lg-none" t-if="materials.length">
+            <button t-foreach="materials" t-as="r" t-key="r.product_id" class="cl-mat"
+                    t-att-class="{ 'cl-is-low': r.low and !r.negative, 'cl-is-neg': r.negative }" t-on-click="() => this.openMaterial(r)">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name" t-esc="r.excel_name"/>
+                    <span class="cl-mat-meta">
+                        <t t-esc="r.code"/><t t-if="r.kind === 'aux'">, qo'shimcha</t><t t-if="r.locs.length &gt; 1">, <t t-esc="r.locs.length"/> joyda</t>
+                    </span>
+                    <span class="cl-gauge" t-if="level(r) !== null" t-att-title="'Minimal qoldiq: ' + num(r.min_qty) + ' ' + r.uom">
+                        <span t-att-style="'width:' + level(r) + '%'"/>
+                    </span>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="cl-qty" t-att-class="{ 'cl-zero': Math.abs(r.closing) &lt; 0.0005 }"><t t-esc="num(r.closing)"/><small> <t t-esc="r.uom"/></small></span>
+                    <span class="cl-flow">
+                        <span class="cl-in" t-if="periodIn(r) &gt; 0.0005">+<t t-esc="num(periodIn(r))"/></span>
+                        <span class="cl-out" t-if="periodOut(r) &gt; 0.0005">−<t t-esc="num(periodOut(r))"/></span>
+                        <span t-if="Math.abs(r.tuzatish + r.boshqa) &gt; 0.0005" class="cl-adj" title="Sanash / tuzatish"><t t-esc="signed(r.tuzatish + r.boshqa)"/></span>
+                    </span>
+                </span>
+            </button>
+        </div>
 
-                    <!-- 4) Kirimlar -->
-                    <div class="o_cl_card o_cl_tabcard mb-3" t-if="state.tab === 'kirim'">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="small text-muted me-auto">Mashina bo'yicha kirimlar (Excel Лист2 o'rniga)</div>
-                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.newKirim()"><i class="fa fa-plus"/> Kirim</button>
-                        </div>
-                        <div class="text-muted py-3" t-if="!d.receipts.length">Bu davrda kirim yozilmagan.</div>
-                        <div class="table-responsive" t-if="d.receipts.length">
-                            <table class="table table-sm table-hover mb-0 o_cl_table">
-                                <thead>
-                                    <tr>
-                                        <th>Sana</th><th>Mashina</th><th class="d-none d-md-table-cell">Yetkazib beruvchi</th>
-                                        <th>Material</th><th class="text-end">Miqdor</th>
-                                        <th class="text-end d-none d-sm-table-cell">Narx</th><th class="text-end">Summa</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="d.receipts" t-as="r" t-key="r_index" role="button" t-on-click="() => this.openPicking(r)">
-                                        <td class="text-nowrap"><t t-esc="r.date_label"/><div class="small text-muted" t-esc="r.name"/></td>
-                                        <td t-esc="r.vehicle or '—'"/>
-                                        <td class="d-none d-md-table-cell" t-esc="r.partner or '—'"/>
-                                        <td t-esc="r.product"/>
-                                        <td class="text-end text-nowrap"><t t-esc="fmt(r.qty)"/> <span class="text-muted small" t-esc="r.uom"/></td>
-                                        <td class="text-end d-none d-sm-table-cell" t-esc="fmt(r.price, 0)"/>
-                                        <td class="text-end" t-esc="fmt(r.amount, 0)"/>
-                                    </tr>
-                                </tbody>
-                                <tfoot t-if="d.receipt_total">
-                                    <tr class="fw-bold">
-                                        <td>Jami</td><td/><td class="d-none d-md-table-cell"/><td/><td/>
-                                        <td class="d-none d-sm-table-cell"/><td class="text-end" t-esc="fmt(d.receipt_total, 0)"/>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+        <!-- kompyuter: to'liq jadval -->
+        <div class="cl-panel d-none d-lg-block" t-if="materials.length">
+            <table class="table table-hover mb-0 cl-table">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th class="text-end">Boshlang'ich</th>
+                        <th class="text-end">Kirim</th>
+                        <th class="text-end" title="Plavkadan chiqqan: stalba, otxod, шлак">Plavkadan</th>
+                        <th class="text-end" title="Pressdan va boshqa ishlab chiqarishdan qaytgan">Boshqa kirdi</th>
+                        <th class="text-end">Plavkaga sarf</th>
+                        <th class="text-end" title="Press va boshqa bo'limlarga sarf">Boshqa sarf</th>
+                        <th class="text-end" title="Sanash va inventarizatsiya tuzatishlari">Tuzatish</th>
+                        <th class="text-end">Oxirgi</th>
+                        <th class="text-end">Min</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="materials" t-as="r" t-key="r.product_id" role="button" tabindex="0"
+                        t-att-class="{ 'cl-is-low': r.low and !r.negative, 'cl-is-neg': r.negative }"
+                        t-on-click="() => this.openMaterial(r)" t-on-keydown="(ev) => ev.key === 'Enter' and this.openMaterial(r)">
+                        <td>
+                            <div class="cl-tname"><t t-esc="r.excel_name"/> <span class="cl-muted">(<t t-esc="r.uom"/>)</span></div>
+                            <div class="cl-tcode"><t t-esc="r.code"/><t t-if="r.kind === 'aux'">, qo'shimcha</t></div>
+                        </td>
+                        <td class="text-end" t-esc="fmt(r.opening)"/>
+                        <td class="text-end cl-in" t-esc="fmt(r.kirim)"/>
+                        <td class="text-end cl-in" t-esc="fmt(r.chiqish_plavka)"/>
+                        <td class="text-end cl-in" t-esc="fmt(r.chiqish_boshqa)"/>
+                        <td class="text-end cl-out" t-esc="fmt(r.sarf_plavka)"/>
+                        <td class="text-end cl-out" t-esc="fmt(r.sarf_boshqa)"/>
+                        <td class="text-end cl-adj" t-esc="fmt(r.tuzatish + r.boshqa)"/>
+                        <td class="text-end fw-bold" t-esc="fmt(r.closing)"/>
+                        <td class="text-end cl-muted" t-esc="fmt(r.min_qty, 0)"/>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>Jami (kg)</td>
+                        <td class="text-end" t-esc="fmt(materialTotals.opening, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.kirim, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.chiqish_plavka, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.chiqish_boshqa, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.sarf_plavka, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.sarf_boshqa, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.tuzatish, 0)"/>
+                        <td class="text-end" t-esc="fmt(materialTotals.closing, 0)"/>
+                        <td/>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="cl-foot-links">
+            <button class="btn btn-link cl-link" t-if="d.is_manager" t-on-click="() => this.openMaterialForm()"><i class="fa fa-plus"/> Yangi material</button>
+            <button class="btn btn-link cl-link" t-on-click="openHidden">Ro'yxatdan chiqarilganlar</button>
+        </div>
+    </t>
+
+    <!-- Kunlik -->
+    <t t-name="craf_litey.TabKunlik">
+        <p class="cl-note">Har kun oxiridagi qoldiq — Excel jadvalingiz (Лист1) kabi. Ajratilgan qatorlar — shu kuni chiqqan miqdor (stalba, шлак).</p>
+        <!-- telefon: kun tanlanadi -->
+        <div class="d-md-none">
+            <div class="cl-days" role="tablist" aria-label="Kun">
+                <button t-foreach="d.days" t-as="day" t-key="day.date" role="tab"
+                        t-att-class="{ active: state.day === day.date, 'cl-sun': day.weekday === 6 }"
+                        t-on-click="() => state.day = day.date">
+                    <span class="cl-day-wd" t-esc="dayChipLabel(day)"/>
+                    <span class="cl-day-dm" t-esc="day.label"/>
+                </button>
+            </div>
+            <div class="cl-list">
+                <div t-foreach="dayRows" t-as="row" t-key="row.key" class="cl-drow" t-att-class="{ 'cl-produced': row.kind === 'produced' }">
+                    <span class="cl-drow-name"><t t-esc="row.label"/></span>
+                    <span class="cl-drow-val">
+                        <span class="cl-qty" t-att-class="{ 'cl-bad': row.value &lt; -0.0005 }"><t t-esc="fmt(row.value)"/><small> <t t-esc="row.uom.toLowerCase()"/></small></span>
+                        <span class="cl-flow" t-if="row.delta !== null and Math.abs(row.delta) &gt; 0.0005">
+                            <span t-att-class="row.delta &gt; 0 ? 'cl-in' : 'cl-out'" t-esc="signed(row.delta)"/>
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- planshet va kompyuter: jadval -->
+        <div class="cl-panel cl-scroll d-none d-md-block">
+            <table class="table table-sm mb-0 cl-table cl-matrix">
+                <thead>
+                    <tr>
+                        <th class="cl-sticky">Наименование</th>
+                        <th>Ед.</th>
+                        <th t-foreach="d.days" t-as="day" t-key="day.date" class="text-end" t-att-class="{ 'cl-sun': day.weekday === 6 }" t-att-title="day.full" t-esc="day.label"/>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="d.matrix" t-as="row" t-key="row.key" t-att-class="{ 'cl-produced': row.kind === 'produced' }">
+                        <td class="cl-sticky" t-esc="row.label"/>
+                        <td class="cl-muted" t-esc="row.uom"/>
+                        <td t-foreach="row.values" t-as="v" t-key="v_index" class="text-end text-nowrap" t-att-class="{ 'cl-bad': v &lt; -0.0005 }" t-esc="fmt(v)"/>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </t>
+
+    <!-- Hujjatlar -->
+    <t t-name="craf_litey.TabHujjat">
+        <div class="cl-toolbar">
+            <div class="cl-chips" role="group" aria-label="Hujjat turi">
+                <button t-att-class="{ active: state.docKind === 'all' }" t-on-click="() => this.setDocKind('all')">Hammasi <span t-if="state.docs" t-esc="state.docs.docs.length"/></button>
+                <t t-if="state.docs">
+                    <t t-foreach="state.docs.kinds" t-as="k" t-key="k.key">
+                        <button t-if="k.count" t-att-class="{ active: state.docKind === k.key }" t-on-click="() => this.setDocKind(k.key)">
+                            <t t-esc="k.label"/> <span t-esc="k.count"/>
+                        </button>
+                    </t>
                 </t>
             </div>
+            <div class="form-check form-switch cl-switch">
+                <input class="form-check-input" type="checkbox" id="cl_drafts" t-model="state.docDrafts"/>
+                <label class="form-check-label" for="cl_drafts">Faqat qoralamalar</label>
+            </div>
+            <div class="cl-seg" t-if="state.docKind === 'plavka' and d.melts.length" role="group" aria-label="Ko'rinish">
+                <button t-att-class="{ active: state.docView === 'list' }" t-on-click="() => state.docView = 'list'">Ro'yxat</button>
+                <button t-att-class="{ active: state.docView === 'daftar' }" t-on-click="() => state.docView = 'daftar'">Daftar jadvali</button>
+            </div>
+        </div>
+        <div class="cl-empty" t-if="!state.docs"><i class="fa fa-circle-o-notch fa-spin"/></div>
+        <t t-elif="state.docView === 'daftar' and state.docKind === 'plavka'" t-call="craf_litey.MeltTable"/>
+        <t t-else="">
+            <div class="cl-empty" t-if="!docList.length">
+                <i class="fa fa-file-text-o"/>
+                <div>Bu davrda hujjat yo'q.</div>
+                <button class="btn btn-link" t-on-click="openNew">Hujjat yozish</button>
+            </div>
+            <section t-foreach="docGroups" t-as="g" t-key="g.date" class="cl-dgroup">
+                <h2 class="cl-dgroup-head"><t t-esc="g.label"/> <span class="cl-muted" t-esc="g.weekday"/></h2>
+                <div class="cl-list">
+                    <button t-foreach="g.docs" t-as="doc" t-key="doc.key" class="cl-doc" t-on-click="() => this.openDoc(doc)"
+                            t-att-class="{ 'cl-is-draft': doc.state === 'draft', 'cl-is-cancel': doc.state === 'cancel', 'cl-is-neg': doc.stale }">
+                        <span class="cl-doc-icon" t-att-class="'cl-k-' + doc.kind"><i t-att-class="'fa ' + kindIcon(doc.kind)"/></span>
+                        <span class="cl-doc-main">
+                            <span class="cl-doc-name"><t t-esc="doc.kind_label"/> <span class="cl-muted" t-esc="doc.name"/></span>
+                            <span class="cl-doc-title" t-esc="doc.title"/>
+                            <span class="cl-doc-sub" t-esc="doc.sub"/>
+                            <span class="cl-doc-warn" t-if="doc.stale"><i class="fa fa-exclamation-triangle"/> Sanashga kirgan — bekor qiling</span>
+                        </span>
+                        <span class="cl-doc-right">
+                            <span class="cl-state" t-att-class="'cl-st-' + doc.state" t-esc="doc.state_label"/>
+                            <span class="cl-doc-total" t-if="doc.total" t-esc="doc.total"/>
+                            <span class="cl-muted cl-doc-time" t-if="doc.kind !== 'plavka'" t-esc="doc.time_label"/>
+                        </span>
+                    </button>
+                </div>
+            </section>
+        </t>
+    </t>
+
+    <t t-name="craf_litey.MeltTable">
+        <p class="cl-note">Har bir plavka — ishchi daftaridagi kabi. Raqam ustiga kelsangiz tortishlar ko'rinadi; qatorni bosing — plavka ochiladi.</p>
+        <div class="cl-panel cl-scroll">
+            <table class="table table-sm table-hover mb-0 cl-table cl-matrix cl-melts">
+                <thead>
+                    <tr>
+                        <th class="cl-sticky">Plavka</th>
+                        <th t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end cl-col" t-att-title="c.name" t-esc="c.short"/>
+                        <th class="text-end cl-sum">Kirdi</th>
+                        <th class="text-end cl-sum">Stalba</th>
+                        <th class="text-end">Uzunl., m</th>
+                        <th class="text-end">Ст-от</th>
+                        <th class="text-end">Лит-от</th>
+                        <th class="text-end">Шлак</th>
+                        <th class="text-end cl-sum">Угар</th>
+                        <th t-foreach="d.aux_cols" t-as="c" t-key="c.product_id" class="text-end cl-col cl-muted" t-att-title="c.name" t-esc="c.short"/>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="d.melts" t-as="m" t-key="m.id" role="button" t-on-click="() => this.openMeltRow(m)" t-att-class="{ 'cl-is-draft': m.state === 'draft' }">
+                        <td class="cl-sticky text-nowrap">
+                            <b t-esc="m.date_label"/> <span class="cl-muted"><t t-esc="m.pech"/><t t-if="m.day_no">, <t t-esc="m.day_no"/>-plavka</t></span>
+                            <div class="cl-muted small"><t t-esc="m.name"/><t t-if="m.state === 'draft'">, qoralama</t></div>
+                        </td>
+                        <td t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end" t-att-title="meltText(m, c)">
+                            <t t-esc="fmt(meltQty(m, c))"/><sup t-if="meltText(m, c)" class="cl-muted">+</sup>
+                        </td>
+                        <td class="text-end fw-bold cl-sum" t-esc="fmt(m.charge_metal, 0)"/>
+                        <td class="text-end fw-bold cl-sum" t-esc="fmt(m.billet_qty, 0)"/>
+                        <td class="text-end" t-esc="fmt(m.billet_length, 2)"/>
+                        <td class="text-end" t-esc="fmt(m.cut_waste_qty)"/>
+                        <td class="text-end" t-esc="fmt(m.foundry_waste_qty)"/>
+                        <td class="text-end" t-esc="fmt(m.slag_qty)"/>
+                        <td class="text-end text-nowrap cl-sum" t-att-class="lossClass(m.balance_state)" t-att-title="m.note">
+                            <t t-esc="fmt(m.loss_qty, 0)"/><span class="small"> / <t t-esc="num(m.loss_pct, 2)"/>%</span>
+                        </td>
+                        <td t-foreach="d.aux_cols" t-as="c" t-key="c.product_id" class="text-end cl-muted" t-esc="fmt(meltQty(m, c), 2)"/>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </t>
+
+    <!-- varaq (sheet) -->
+    <t t-name="craf_litey.Sheet">
+        <t t-set="s" t-value="state.sheet"/>
+        <div class="cl-backdrop" t-on-click.self="closeSheet">
+            <div class="cl-sheet" t-att-class="'cl-sheet-' + s.type" role="dialog" aria-modal="true">
+                <t t-if="s.type === 'period'" t-call="craf_litey.SheetPeriod"/>
+                <t t-elif="s.type === 'new'" t-call="craf_litey.SheetNew"/>
+                <t t-elif="s.type === 'menu'" t-call="craf_litey.SheetMenu"/>
+                <t t-elif="s.type === 'material'" t-call="craf_litey.SheetMaterial"/>
+                <t t-elif="s.type === 'matform'" t-call="craf_litey.SheetMatForm"/>
+                <t t-elif="s.type === 'hidden'" t-call="craf_litey.SheetHidden"/>
+                <t t-elif="s.type === 'kirim'" t-call="craf_litey.SheetKirim"/>
+                <t t-elif="s.type === 'transfer'" t-call="craf_litey.SheetTransfer"/>
+                <t t-elif="s.type === 'count'" t-call="craf_litey.SheetCount"/>
+                <t t-elif="s.type === 'doc'" t-call="craf_litey.SheetDoc"/>
+                <div class="cl-sheet-error" t-if="s.error" role="alert">
+                    <i class="fa fa-exclamation-circle"/>
+                    <div class="cl-sheet-error-text" t-esc="s.error"/>
+                    <button class="cl-icon-btn" t-on-click="() => s.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_litey.SheetHead">
+        <div class="cl-sheet-head">
+            <div class="cl-sheet-titles">
+                <div class="cl-sheet-title" t-esc="title"/>
+                <div class="cl-sheet-sub" t-if="sub" t-esc="sub"/>
+            </div>
+            <button class="cl-icon-btn" t-on-click="closeSheet" aria-label="Yopish"><i class="fa fa-times"/></button>
+        </div>
+    </t>
+
+    <!-- davr -->
+    <t t-name="craf_litey.SheetPeriod">
+        <t t-call="craf_litey.SheetHead"><t t-set="title" t-value="'Davr'"/><t t-set="sub" t-value="periodLabel"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-grid2">
+                <button class="cl-opt" t-on-click="() => this.preset('today')">Bugun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('yesterday')">Kecha</button>
+                <button class="cl-opt" t-on-click="() => this.preset('7')">Oxirgi 7 kun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('30')">Oxirgi 30 kun</button>
+                <button class="cl-opt" t-on-click="() => this.preset('month')">Shu oy</button>
+                <button class="cl-opt" t-on-click="() => this.preset('prev')">O'tgan oy</button>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Boshlanish</span><input type="date" class="form-control" t-model="s.from"/></label>
+                <label class="cl-field"><span>Tugash</span><input type="date" class="form-control" t-model="s.to"/></label>
+            </div>
+            <p class="cl-hint">Ko'pi bilan 93 kun.</p>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="applyPeriod">Ko'rsatish</button>
+        </div>
+    </t>
+
+    <!-- yangi -->
+    <t t-name="craf_litey.SheetNew">
+        <t t-call="craf_litey.SheetHead"><t t-set="title" t-value="'Yangi'"/><t t-set="sub" t-value="''"/></t>
+        <div class="cl-sheet-body">
+            <button class="cl-action" t-on-click="newMelt">
+                <span class="cl-doc-icon cl-k-plavka"><i class="fa fa-fire"/></span>
+                <span><b>Plavka</b><small>Daftar bo'yicha: shixta, stalba, otxod, шлак</small></span>
+            </button>
+            <button class="cl-action" t-on-click="() => this.openKirim()">
+                <span class="cl-doc-icon cl-k-kirim"><i class="fa fa-truck"/></span>
+                <span><b>Kirim</b><small>Mashinada kelgan material: tortishlar va narx</small></span>
+            </button>
+            <button class="cl-action" t-on-click="() => this.openTransfer()">
+                <span class="cl-doc-icon cl-k-kochirish"><i class="fa fa-exchange"/></span>
+                <span><b>Ko'chirish</b><small>Bir joydan boshqasiga: masalan Chiqindi → Литейка</small></span>
+            </button>
+            <button class="cl-action" t-on-click="() => this.openCount()">
+                <span class="cl-doc-icon cl-k-sanash"><i class="fa fa-check-square-o"/></span>
+                <span><b>Sanash</b><small>Qoldiqni sanab, tizimdagi bilan tenglashtirish</small></span>
+            </button>
+            <button class="cl-action" t-if="state.data.is_manager" t-on-click="() => this.openMaterialForm()">
+                <span class="cl-doc-icon"><i class="fa fa-cube"/></span>
+                <span><b>Material</b><small>Yangi xom-ashyo yoki sarf buyumi</small></span>
+            </button>
+        </div>
+    </t>
+
+    <!-- menyu -->
+    <t t-name="craf_litey.SheetMenu">
+        <t t-call="craf_litey.SheetHead"><t t-set="title" t-value="'Boshqa amallar'"/><t t-set="sub" t-value="''"/></t>
+        <div class="cl-sheet-body cl-menu">
+            <button t-on-click="downloadXlsx"><i class="fa fa-file-excel-o"/> Excel yuklab olish (<t t-esc="periodLabel"/>)</button>
+            <button t-on-click="print" class="d-none d-md-flex"><i class="fa fa-print"/> Chop etish</button>
+            <button t-if="state.data.is_manager" t-on-click="importExcel"><i class="fa fa-upload"/> Excel jadvalidan qoldiq yuklash</button>
+            <button t-on-click="openMelts"><i class="fa fa-list"/> Plavkalar ro'yxati</button>
+            <button t-on-click="openCounts"><i class="fa fa-check-square-o"/> Sanash hujjatlari</button>
+            <button t-on-click="openProducts"><i class="fa fa-cubes"/> Inventarizatsiya: Литейка materiallari</button>
+            <button t-on-click="menuRefresh"><i class="fa fa-refresh"/> Yangilash</button>
+        </div>
+    </t>
+
+    <!-- material -->
+    <t t-name="craf_litey.SheetMaterial">
+        <t t-set="m" t-value="s.m"/>
+        <t t-set="row" t-value="s.row"/>
+        <t t-call="craf_litey.SheetHead">
+            <t t-set="title" t-value="row.excel_name"/>
+            <t t-set="sub" t-value="row.code + (row.kind === 'aux' ? &quot;, qo'shimcha / sarf buyumi&quot; : ', metall (shixta)') + (row.excel_name !== row.name ? ' — ' + row.name : '')"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-big">
+                <span class="cl-big-num" t-att-class="{ 'cl-bad': row.on_hand &lt; -0.0005 }"><t t-esc="num(row.on_hand, 2)"/></span>
+                <span class="cl-big-unit"><t t-esc="row.uom"/> hozir zavodda</span>
+                <span class="cl-big-min" t-if="row.min_qty" t-att-class="{ 'cl-warn': row.low }">minimal <t t-esc="num(row.min_qty)"/></span>
+            </div>
+            <div class="cl-section">
+                <h3>Qayerda</h3>
+                <div class="cl-kv" t-foreach="row.locs" t-as="l" t-key="l.id">
+                    <span><t t-esc="l.name"/></span><b t-att-class="{ 'cl-bad': l.qty &lt; 0 }"><t t-esc="num(l.qty, 2)"/> <t t-esc="row.uom"/></b>
+                </div>
+                <div class="cl-muted" t-if="!row.locs.length">Qoldiq yo'q.</div>
+            </div>
+            <div class="cl-section">
+                <h3><t t-esc="periodLabel"/> davomida</h3>
+                <div class="cl-kv"><span>Boshlang'ich</span><b t-esc="num(row.opening, 2)"/></div>
+                <div class="cl-kv" t-if="row.kirim"><span>Kirim</span><b class="cl-in" t-esc="signed(row.kirim, 2)"/></div>
+                <div class="cl-kv" t-if="row.chiqish_plavka"><span>Plavkadan chiqdi</span><b class="cl-in" t-esc="signed(row.chiqish_plavka, 2)"/></div>
+                <div class="cl-kv" t-if="row.chiqish_boshqa"><span>Boshqa bo'limdan kirdi</span><b class="cl-in" t-esc="signed(row.chiqish_boshqa, 2)"/></div>
+                <div class="cl-kv" t-if="row.sarf_plavka"><span>Plavkaga sarf</span><b class="cl-out" t-esc="signed(-row.sarf_plavka, 2)"/></div>
+                <div class="cl-kv" t-if="row.sarf_boshqa"><span>Boshqa sarf</span><b class="cl-out" t-esc="signed(-row.sarf_boshqa, 2)"/></div>
+                <div class="cl-kv" t-if="row.tuzatish + row.boshqa"><span>Sanash / tuzatish</span><b class="cl-adj" t-esc="signed(row.tuzatish + row.boshqa, 2)"/></div>
+                <div class="cl-kv cl-kv-total"><span>Oxirgi</span><b t-esc="num(row.closing, 2)"/></div>
+            </div>
+            <div class="cl-empty" t-if="s.loading"><i class="fa fa-circle-o-notch fa-spin"/></div>
+            <t t-if="m">
+                <div class="cl-section" t-if="m.last_price or m.location or m.melt">
+                    <h3>Sozlama</h3>
+                    <div class="cl-kv" t-if="m.location"><span>Asosiy joy</span><b t-esc="m.location"/></div>
+                    <div class="cl-kv"><span>Plavka daftarida</span><b t-esc="m.melt ? 'bor' : &quot;yo'q&quot;"/></div>
+                    <div class="cl-kv" t-if="m.last_price"><span>Oxirgi kirim narxi</span><b><t t-esc="num(m.last_price, 2)"/> so'm</b></div>
+                    <div class="cl-kv" t-if="m.melt_count"><span>Plavkalarda ishlatilgan</span><b><t t-esc="m.melt_count"/> marta</b></div>
+                </div>
+                <div class="cl-section">
+                    <h3>Oxirgi harakatlar</h3>
+                    <div class="cl-muted" t-if="!m.moves.length">Harakat yo'q.</div>
+                    <div class="cl-move" t-foreach="m.moves" t-as="mv" t-key="mv.id">
+                        <span class="cl-move-main">
+                            <span><b t-esc="mv.label"/> <span class="cl-muted" t-esc="mv.reference"/><t t-if="mv.origin"> <span class="cl-muted">(<t t-esc="mv.origin"/>)</span></t></span>
+                            <span class="cl-muted small"><t t-esc="mv.date_label"/>, <t t-esc="mv.place"/></span>
+                        </span>
+                        <span class="cl-move-qty" t-att-class="mv.adj ? 'cl-adj' : (mv.sign &gt; 0 ? 'cl-in' : (mv.sign &lt; 0 ? 'cl-out' : 'cl-muted'))">
+                            <t t-if="mv.sign === 0">↔ </t><t t-elif="mv.sign &gt; 0">+</t><t t-else="">−</t><t t-esc="num(mv.qty, 2)"/>
+                        </span>
+                    </div>
+                    <button class="btn btn-link px-0 cl-link" t-on-click="() => this.openMoves(row.product_id)">Davrdagi barcha harakatlar</button>
+                </div>
+            </t>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-primary" t-on-click="() => this.openKirim(row.product_id)"><i class="fa fa-truck"/> Kirim</button>
+            <button class="btn btn-outline-secondary" t-on-click="() => this.openTransfer(row.product_id)"><i class="fa fa-exchange"/> Ko'chirish</button>
+            <t t-if="m and state.data.is_manager">
+                <button class="btn btn-outline-secondary" t-on-click="() => this.openMaterialForm(m)"><i class="fa fa-pencil"/> Tahrirlash</button>
+                <button class="btn btn-link cl-danger-link" t-on-click="() => this.removeMaterial(m)"><t t-esc="m.can_delete ? &quot;O'chirish&quot; : &quot;Ro'yxatdan chiqarish&quot;"/></button>
+            </t>
+        </div>
+    </t>
+
+    <!-- material formasi -->
+    <t t-name="craf_litey.SheetMatForm">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_litey.SheetHead">
+            <t t-set="title" t-value="f.product_id ? 'Materialni tahrirlash' : 'Yangi material'"/>
+            <t t-set="sub" t-value="f.product_id ? f.code : &quot;Литейка ro'yxatiga va Inventarizatsiya ga qo'shiladi&quot;"/>
+        </t>
+        <div class="cl-sheet-body">
+            <label class="cl-field">
+                <span>Nomi</span>
+                <input type="text" class="form-control" t-model="f.name" placeholder="Masalan: Алюминий А7" maxlength="120"/>
+            </label>
+            <div class="cl-field">
+                <span>Turi</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-foreach="s.o.kinds" t-as="k" t-key="k.key" t-att-class="{ active: f.kind === k.key }" t-on-click="() => f.kind = k.key" t-esc="k.label"/>
+                </div>
+                <small class="cl-hint" t-if="f.kind === 'metal'">Pechga solinadi va угар hisobiga kiradi: alyuminiy, чушка, otxod, Mg, Si, Ti.</small>
+                <small class="cl-hint" t-else="">Угар hisobiga kirmaydi: флюс, тальк, filtr, пробка, стекловата.</small>
+            </div>
+            <div class="cl-field">
+                <span>O'lchov birligi</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-foreach="s.o.uoms" t-as="u" t-key="u.id" t-att-class="{ active: f.uom_id === u.id }" t-on-click="() => f.uom_id = u.id" t-esc="u.label"/>
+                </div>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field">
+                    <span>Kod</span>
+                    <input type="text" class="form-control" t-model="f.code" t-att-placeholder="matCodePlaceholder()" maxlength="20"/>
+                </label>
+                <label class="cl-field">
+                    <span>Minimal qoldiq</span>
+                    <input type="text" inputmode="decimal" class="form-control" t-model="f.min_qty" placeholder="0"/>
+                </label>
+            </div>
+            <label class="cl-field">
+                <span>Asosiy joy</span>
+                <select class="form-select" t-model.number="f.location_id">
+                    <option t-foreach="s.o.locations" t-as="l" t-key="l.id" t-att-value="l.id" t-esc="l.name"/>
+                </select>
+            </label>
+            <div class="form-check form-switch cl-switch-row">
+                <input class="form-check-input" type="checkbox" id="cl_melt" t-model="f.melt"/>
+                <label class="form-check-label" for="cl_melt">Plavka daftarida bo'sh qator bo'lib tursin</label>
+            </div>
+            <button class="btn btn-link px-0 cl-link" t-if="!s.more" t-on-click="() => s.more = true"><i class="fa fa-angle-down"/> Excel va 1C dagi nomi</button>
+            <t t-if="s.more">
+                <label class="cl-field">
+                    <span>Excel dagi nomi</span>
+                    <input type="text" class="form-control" t-model="f.excel_name" placeholder="Bo'sh bo'lsa — nomi"/>
+                </label>
+                <label class="cl-field">
+                    <span>1C dagi nomi</span>
+                    <input type="text" class="form-control" t-model="f.name_1c"/>
+                </label>
+            </t>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="f.product_id" t-on-click="() => this.removeMaterial(f)"><t t-esc="f.can_delete ? &quot;O'chirish&quot; : &quot;Ro'yxatdan chiqarish&quot;"/></button>
+            <button class="btn btn-secondary" t-on-click="closeSheet">Bekor</button>
+            <button class="btn btn-primary" t-on-click="saveMaterial" t-att-disabled="state.busy"><t t-esc="f.product_id ? 'Saqlash' : &quot;Qo'shish&quot;"/></button>
+        </div>
+    </t>
+
+    <!-- chiqarilganlar -->
+    <t t-name="craf_litey.SheetHidden">
+        <t t-call="craf_litey.SheetHead"><t t-set="title" t-value="&quot;Ro'yxatdan chiqarilgan materiallar&quot;"/><t t-set="sub" t-value="&quot;Hujjatlarda ishlatilgani uchun o'chirilmagan&quot;"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-empty" t-if="!s.rows.length"><i class="fa fa-check"/><div>Hammasi Литейка ro'yxatida.</div></div>
+            <div class="cl-kv cl-kv-btn" t-foreach="s.rows" t-as="r" t-key="r.product_id">
+                <span><b t-esc="r.excel_name or r.name"/><br/><span class="cl-muted small"><t t-esc="r.code"/>, qoldiq <t t-esc="num(r.on_hand, 2)"/> <t t-esc="r.uom"/></span></span>
+                <button class="btn btn-outline-primary btn-sm" t-if="state.data.is_manager" t-on-click="() => this.restoreMaterial(r)">Qaytarish</button>
+            </div>
+        </div>
+    </t>
+
+    <!-- satr: material tanlash -->
+    <t t-name="craf_litey.MaterialOptions">
+        <option value="">Material tanlang</option>
+        <optgroup t-foreach="materialGroups" t-as="g" t-key="g.label" t-att-label="g.label">
+            <option t-foreach="g.items" t-as="m" t-key="m.id" t-att-value="m.id" t-att-selected="isSel(line, m)"><t t-esc="m.short"/> (<t t-esc="m.uom"/>)</option>
+        </optgroup>
+    </t>
+
+    <!-- kirim -->
+    <t t-name="craf_litey.SheetKirim">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_litey.SheetHead"><t t-set="title" t-value="'Kirim'"/><t t-set="sub" t-value="'Inventarizatsiya → Kvitansiyalar (WH/IN) ga yoziladi'"/></t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="opts.today"/></label>
+                <label class="cl-field"><span>Mashina raqami</span><input type="text" class="form-control" t-model="f.vehicle" placeholder="01 A 123 BC" autocapitalize="characters"/></label>
+            </div>
+            <label class="cl-field">
+                <span>Yetkazib beruvchi</span>
+                <input type="text" class="form-control" t-model="f.partner_name" list="cl_partners" placeholder="Ixtiyoriy"/>
+                <datalist id="cl_partners"><option t-foreach="opts.partners" t-as="p" t-key="p_index" t-att-value="p"/></datalist>
+            </label>
+            <label class="cl-field">
+                <span>Qayerga</span>
+                <select class="form-select" t-model.number="f.location_id">
+                    <option t-foreach="opts.locations" t-as="l" t-key="l.id" t-att-value="l.id" t-esc="l.name"/>
+                </select>
+            </label>
+            <h3 class="cl-lines-head">Materiallar</h3>
+            <div class="cl-line" t-foreach="s.lines" t-as="line" t-key="line.key">
+                <select class="form-select" t-on-change="(ev) => this.onKirimProduct(line, ev)" aria-label="Material">
+                    <t t-call="craf_litey.MaterialOptions"/>
+                </select>
+                <div class="cl-line-row">
+                    <label class="cl-field cl-grow">
+                        <span>Tortishlar</span>
+                        <input type="text" inputmode="tel" class="form-control" t-model="line.text" placeholder="1381+2527" t-att-class="{ 'is-invalid': lineBad(line) }"/>
+                    </label>
+                    <label class="cl-field cl-price">
+                        <span>Narx, so'm</span>
+                        <input type="text" inputmode="decimal" class="form-control" t-model="line.price" placeholder="0"/>
+                    </label>
+                    <button class="cl-icon-btn cl-line-del" t-on-click="() => this.removeLine(line)" aria-label="Qatorni o'chirish"><i class="fa fa-trash-o"/></button>
+                </div>
+                <div class="cl-line-sum" t-if="lineValue(line) and !lineBad(line)">
+                    = <b><t t-esc="num(lineValue(line), 3)"/></b> <t t-esc="materialById(line.product_id) ? materialById(line.product_id).uom : ''"/>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary w-100 cl-add-line" t-on-click="addLine"><i class="fa fa-plus"/> Yana material</button>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <div class="cl-foot-sum me-auto">
+                <b><t t-esc="num(kirimTotals.kg)"/> kg</b>
+                <span class="cl-muted" t-if="kirimTotals.sum"><t t-esc="num(kirimTotals.sum, 0)"/> so'm</span>
+            </div>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveKirim" t-att-disabled="state.busy">Kirimni yozish</button>
+        </div>
+    </t>
+
+    <!-- ko'chirish -->
+    <t t-name="craf_litey.SheetTransfer">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_litey.SheetHead"><t t-set="title" t-value="&quot;Ko'chirish&quot;"/><t t-set="sub" t-value="&quot;Inventarizatsiya → Ichki o'tkazmalar (WH/INT) ga yoziladi&quot;"/></t>
+        <div class="cl-sheet-body">
+            <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="opts.today"/></label>
+            <div class="cl-route">
+                <label class="cl-field cl-grow">
+                    <span>Qayerdan</span>
+                    <select class="form-select" t-model.number="f.location_id">
+                        <option t-foreach="opts.locations" t-as="l" t-key="l.id" t-att-value="l.id" t-esc="l.name"/>
+                    </select>
+                </label>
+                <button class="cl-icon-btn cl-swap" t-on-click="swapTransfer" aria-label="Joylarni almashtirish"><i class="fa fa-exchange fa-rotate-90"/></button>
+                <label class="cl-field cl-grow">
+                    <span>Qayerga</span>
+                    <select class="form-select" t-model.number="f.location_dest_id">
+                        <option t-foreach="opts.locations" t-as="l" t-key="l.id" t-att-value="l.id" t-esc="l.name"/>
+                    </select>
+                </label>
+            </div>
+            <h3 class="cl-lines-head">Materiallar</h3>
+            <div class="cl-line" t-foreach="s.lines" t-as="line" t-key="line.key">
+                <select class="form-select" t-on-change="(ev) => this.onLineProduct(line, ev)" aria-label="Material">
+                    <t t-call="craf_litey.MaterialOptions"/>
+                </select>
+                <div class="cl-line-row">
+                    <label class="cl-field cl-grow">
+                        <span>Miqdor<t t-if="line.product_id">, bor: <t t-esc="num(availableAt(line.product_id, f.location_id), 2)"/> <t t-esc="materialById(line.product_id).uom"/></t></span>
+                        <input type="text" inputmode="tel" class="form-control" t-model="line.text" placeholder="100+50"
+                               t-att-class="{ 'is-invalid': lineBad(line) or (line.product_id and lineValue(line) &gt; availableAt(line.product_id, f.location_id) + 0.0005) }"/>
+                    </label>
+                    <button class="cl-icon-btn cl-line-del" t-on-click="() => this.removeLine(line)" aria-label="Qatorni o'chirish"><i class="fa fa-trash-o"/></button>
+                </div>
+                <div class="cl-line-sum" t-if="lineValue(line) and !lineBad(line)">= <b><t t-esc="num(lineValue(line), 3)"/></b></div>
+            </div>
+            <button class="btn btn-outline-secondary w-100 cl-add-line" t-on-click="addLine"><i class="fa fa-plus"/> Yana material</button>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-secondary" t-on-click="closeSheet">Bekor</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveTransfer" t-att-disabled="state.busy">Ko'chirish</button>
+        </div>
+    </t>
+
+    <!-- sanash -->
+    <t t-name="craf_litey.SheetCount">
+        <t t-set="c" t-value="s.c"/>
+        <t t-call="craf_litey.SheetHead">
+            <t t-set="title" t-value="c.id ? 'Sanash ' + c.name : 'Sanash'"/>
+            <t t-set="sub" t-value="'Tizimdagi qoldiq: ' + c.moment_label"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-att-value="c.date" t-att-max="state.data.today" t-on-change="onCountDate"/></label>
+                <label class="cl-field">
+                    <span>Joy</span>
+                    <select class="form-select" t-on-change="onCountLocation">
+                        <option t-foreach="c.locations" t-as="l" t-key="l.id" t-att-value="l.id" t-att-selected="l.id === c.location_id" t-esc="l.name"/>
+                    </select>
+                </label>
+            </div>
+            <p class="cl-hint">Sanagan miqdorni yozing. Bo'sh qoldirilgan material qoldig'i o'zgarmaydi. «=» — tizimdagi raqam to'g'ri.</p>
+            <div class="cl-search cl-search-sheet">
+                <i class="fa fa-search"/>
+                <input type="search" class="form-control" placeholder="Material" t-model="s.q" aria-label="Materialni qidirish"/>
+            </div>
+            <div class="cl-crow" t-foreach="countRows" t-as="r" t-key="r.product_id" t-att-class="{ 'cl-crow-done': r.text }">
+                <div class="cl-crow-name">
+                    <b t-esc="r.short"/>
+                    <span class="cl-muted small">tizimda <t t-esc="num(r.system, 3)"/> <t t-esc="r.uom"/></span>
+                </div>
+                <div class="cl-crow-input">
+                    <button class="cl-eq" t-on-click="() => this.fillSystem(r)" t-att-aria-label="r.short + &quot;: tizimdagi raqam to'g'ri&quot;" title="Tizimdagi raqam to'g'ri">=</button>
+                    <input type="text" inputmode="decimal" class="form-control" t-model="r.text" t-att-placeholder="num(r.system, 3)"
+                           t-att-class="{ 'is-invalid': r.text and countDiff(r) === null }" t-att-aria-label="r.short + ' sanaldi'"/>
+                    <span class="cl-unit" t-esc="r.uom"/>
+                </div>
+                <div class="cl-crow-diff" t-if="countDiff(r) !== null and Math.abs(countDiff(r)) &gt; 0.0005" t-att-class="countDiff(r) &gt; 0 ? 'cl-in' : 'cl-out'">
+                    farq <t t-esc="signed(countDiff(r), 3)"/>
+                </div>
+            </div>
+            <button class="btn btn-link px-0 cl-link" t-if="!s.all and countHiddenCount" t-on-click="() => s.all = true">Boshqa materiallar (<t t-esc="countHiddenCount"/>) — bu joyda qoldig'i yo'q</button>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="c.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <div class="cl-foot-sum me-auto">
+                <b><t t-esc="countSummary.counted"/> ta sanaldi</b>
+                <span class="cl-muted"><t t-esc="countSummary.diff"/> tasida farq</span>
+            </div>
+            <button class="btn btn-outline-primary" t-on-click="() => this.saveCount(false)" t-att-disabled="state.busy">Qoralama saqlash</button>
+            <button class="btn btn-primary" t-if="c.is_manager" t-on-click="() => this.saveCount(true)" t-att-disabled="state.busy">Tasdiqlash</button>
+        </div>
+    </t>
+
+    <!-- hujjat -->
+    <t t-name="craf_litey.SheetDoc">
+        <t t-set="dd" t-value="s.d"/>
+        <t t-call="craf_litey.SheetHead">
+            <t t-set="title" t-value="dd.kind_label + ' ' + dd.name"/>
+            <t t-set="sub" t-value="dd.date_label"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-doc-state"><span class="cl-state" t-att-class="'cl-st-' + dd.state" t-esc="dd.state_label"/></div>
+            <div class="cl-banner cl-banner-bad" t-if="dd.warning"><i class="fa fa-exclamation-triangle"/><div t-esc="dd.warning"/></div>
+            <div class="cl-section" t-if="dd.meta.length">
+                <div class="cl-kv" t-foreach="dd.meta" t-as="mt" t-key="mt_index"><span t-esc="mt[0]"/><b t-esc="mt[1]"/></div>
+            </div>
+            <div class="cl-section" t-if="dd.lines.length">
+                <h3>Materiallar</h3>
+                <t t-foreach="dd.lines" t-as="l" t-key="l_index">
+                    <h4 class="cl-subhead" t-if="l.group and (l_first or dd.lines[l_index - 1].group !== l.group)" t-esc="l.group"/>
+                    <div class="cl-kv cl-kv-line">
+                        <span>
+                            <t t-esc="l.name"/>
+                            <span class="cl-muted small d-block" t-if="l.note" t-esc="l.note"/>
+                            <span class="cl-muted small d-block" t-if="dd.is_count and l.system !== null and l.system !== undefined">tizimda <t t-esc="num(l.system, 3)"/>, farq <t t-esc="signed(l.diff, 3)"/></span>
+                            <span class="cl-muted small d-block" t-if="l.price">× <t t-esc="num(l.price, 2)"/> = <t t-esc="num(l.amount, 0)"/> so'm</span>
+                        </span>
+                        <b t-att-class="dd.signed ? (l.qty &gt; 0 ? 'cl-in' : 'cl-out') : ''"><t t-esc="dd.signed ? signed(l.qty, 3) : num(l.qty, 3)"/> <t t-esc="l.uom"/></b>
+                    </div>
+                </t>
+                <div class="cl-kv cl-kv-total" t-if="dd.amount"><span>Summa</span><b><t t-esc="num(dd.amount, 0)"/> so'm</b></div>
+            </div>
+            <div class="cl-section" t-if="dd.outputs.length">
+                <h3>Chiqdi</h3>
+                <div class="cl-kv" t-foreach="dd.outputs" t-as="o" t-key="o_index"><span t-esc="o.name"/><b><t t-esc="num(o.qty, 1)"/> kg</b></div>
+            </div>
+            <div class="cl-section" t-if="dd.balance">
+                <h3>Balans</h3>
+                <div class="cl-kv"><span>Kirdi (metall)</span><b><t t-esc="num(dd.balance.metal, 1)"/> kg</b></div>
+                <div class="cl-kv"><span>Chiqdi jami</span><b><t t-esc="num(dd.balance.out, 1)"/> kg</b></div>
+                <div class="cl-kv cl-kv-total"><span>Угар</span><b t-att-class="lossClass(dd.balance.state)"><t t-esc="num(dd.balance.loss, 1)"/> kg, <t t-esc="num(dd.balance.pct, 2)"/>%</b></div>
+            </div>
+            <p class="cl-hint" t-if="dd.note" t-esc="dd.note"/>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="dd.actions.includes('delete')" t-on-click="() => this.docAction(dd, 'delete')">O'chirish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('cancel')" t-on-click="() => this.docAction(dd, 'cancel')">Bekor qilish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('draft')" t-on-click="() => this.docAction(dd, 'draft')">Qoralamaga qaytarish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('return')" t-on-click="() => this.docAction(dd, 'return')"><i class="fa fa-undo"/> Qaytarish</button>
+            <button class="btn btn-outline-secondary" t-if="dd.actions.includes('open')" t-on-click="() => this.docOpen(dd)">Odoo da ochish</button>
+            <button class="btn btn-primary" t-if="dd.actions.includes('edit')" t-on-click="() => this.openCount(dd.id)">Davom ettirish</button>
+            <button class="btn btn-primary" t-if="dd.actions.includes('done')" t-on-click="() => this.docAction(dd, 'done')">Tasdiqlash</button>
         </div>
     </t>
 </templates>
