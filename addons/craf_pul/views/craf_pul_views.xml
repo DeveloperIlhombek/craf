@@ -5,8 +5,8 @@
         <field name="tag">craf_pul</field>
         <field name="path">craf-pul</field>
     </record>
-    <menuitem id="menu_craf_pul" name="Pul" parent="craf_profile.menu_craf_root" action="action_craf_pul"
-              sequence="5" groups="craf_sex.group_craf_accountant,base.group_system"/>
+    <menuitem id="menu_craf_pul" name="Pul: qarz va to'lov" parent="account.menu_finance" action="action_craf_pul"
+              sequence="0" groups="craf_sex.group_craf_accountant,base.group_system"/>
 
     <record id="view_account_journal_form_craf_pul" model="ir.ui.view">
         <field name="name">account.journal.form.craf.pul</field>

@@ -59,7 +59,7 @@ class CrafDavomat(models.AbstractModel):
 
     def _need(self, role="accountant"):
         if not self._roles()[role]:
-            raise AccessError("Bu amal faqat %s uchun." % ("hisobchi va direktor" if role == "accountant" else "direktor"))
+            raise AccessError("Bu amal faqat %s uchun." % ("omborchi va direktor" if role == "accountant" else "direktor"))
 
     # ================================================================== vaqt
     def _tz(self):

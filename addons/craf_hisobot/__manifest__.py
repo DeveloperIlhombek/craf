@@ -1,6 +1,6 @@
 {
     "name": "Craf Kunlik hisobot (1C uchun)",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Kunlik obxod va hisobot: bo'limlar sarfi va chiqishi, xom-ashyo harakati, Excel, 1C ga kiritildi belgisi",
     "description": """
 Hisobchi / omborchi uchun bitta sahifa (Craf → Kunlik hisobot):

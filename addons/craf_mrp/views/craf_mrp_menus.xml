@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_mrp_orders" name="Ishlab chiqarish buyurtmalari (MRP)"
-              parent="craf_production.menu_craf_production" action="mrp.mrp_production_action" sequence="5"/>
-    <menuitem id="menu_craf_mrp_consumption" name="Xom-ashyo sarfi"
-              parent="craf_production.menu_craf_production" action="action_craf_mrp_consumption" sequence="50"/>
+    <!-- Buyurtmalar — Odoo ning o'z menyusi; sarf hisoboti — Ishlab chiqarish → Hisobot -->
     <menuitem id="menu_craf_mrp_norm" name="Ishlab chiqarish me'yorlari"
-              parent="craf_profile.menu_craf_config" action="action_craf_mrp_norm" sequence="26"/>
-    <menuitem id="menu_mrp_craf_consumption" name="Xom-ashyo sarfi (Craf)"
+              parent="mrp.menu_mrp_configuration" action="action_craf_mrp_norm" sequence="35"/>
+    <menuitem id="menu_mrp_craf_consumption" name="Xom-ashyo sarfi"
               parent="mrp.menu_mrp_reporting" action="action_craf_mrp_consumption" sequence="90"/>
 </odoo>

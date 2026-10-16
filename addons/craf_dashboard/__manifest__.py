@@ -1,6 +1,6 @@
 {
     "name": "Craf Panel",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Kunlik panel: ishlab chiqarish, qoldiq, chiqish koeffitsienti",
     "description": """
 Rahbar uchun bitta sahifa:

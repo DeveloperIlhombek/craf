@@ -1,6 +1,6 @@
 {
     "name": "Craf: davomat (Hikvision), tabel va KPI",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Hikvision yuz terminali yozuvlari → Odoo davomati, kunlik davomat, oylik tabel (Excel), KPI (sinov rejimi)",
     "description": """
 Davomat sahifasi (Craf → Davomat, /odoo/craf-davomat), telefon birinchi:
@@ -22,6 +22,7 @@ Davomat sahifasi (Craf → Davomat, /odoo/craf-davomat), telefon birinchi:
     "license": "LGPL-3",
     "depends": ["craf_sex", "hr_attendance"],
     "data": [
+        "security/craf_davomat_security.xml",
         "security/ir.model.access.csv",
         "data/craf_davomat_data.xml",
         "views/craf_davomat_views.xml",

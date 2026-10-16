@@ -5,8 +5,8 @@
         <field name="tag">craf_kunlik</field>
         <field name="path">craf-kunlik</field>
     </record>
-    <menuitem id="menu_craf_kunlik" name="Kunlik hisobot" parent="craf_profile.menu_craf_root"
-              action="action_craf_kunlik" sequence="2"/>
+    <menuitem id="menu_craf_kunlik" name="Kunlik hisobot" parent="stock.menu_warehouse_report"
+              action="action_craf_kunlik" sequence="1"/>
 
     <record id="craf_foundry_melt_view_list_c1" model="ir.ui.view">
         <field name="name">craf.foundry.melt.list.c1</field>

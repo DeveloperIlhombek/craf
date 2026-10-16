@@ -1,6 +1,6 @@
 {
     "name": "Craf Zavod xaritasi",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Zavodning 2D sxematik xaritasi: har bir nuqtadagi jonli qoldiq",
     "description": """
 Craf -> Zavod xaritasi sahifasi:

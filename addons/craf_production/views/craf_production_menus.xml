@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_production" name="Ishlab chiqarish" parent="craf_profile.menu_craf_root" sequence="15"/>
-    <menuitem id="menu_craf_equipment" name="Uskunalar" parent="craf_profile.menu_craf_config"
-              action="action_craf_equipment" sequence="30"/>
-    <menuitem id="menu_craf_employees" name="Xodimlar" parent="craf_profile.menu_craf_config"
-              action="hr.open_view_employee_list_my" sequence="40"/>
+    <menuitem id="menu_craf_production" name="Sexlar" parent="mrp.menu_mrp_root" sequence="12"/>
+    <!-- Uskunalar — Ishlab chiqarish → Sozlamalar; xodimlar — Odoo «Xodimlar» ilovasida -->
+    <menuitem id="menu_craf_equipment" name="Uskunalar" parent="mrp.menu_mrp_configuration"
+              action="action_craf_equipment" sequence="40"/>
 </odoo>

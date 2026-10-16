@@ -820,7 +820,7 @@ class CrafSex(models.AbstractModel):
             return {"result": "deleted", "name": name}
         elif action in ("c1", "c1_undo"):
             if not self._roles()["accountant"]:
-                raise UserError("1C belgisini hisobchi qo'yadi.")
+                raise UserError("1C belgisini omborchi qo'yadi.")
             rec.action_c1_done() if action == "c1" else rec.action_c1_reset()
         elif action == "to_stock":
             if stage != "boyash":

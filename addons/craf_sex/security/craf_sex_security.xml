@@ -4,7 +4,7 @@
         <field name="name">Zavod rollari</field>
         <field name="sequence">5</field>
         <field name="category_id" ref="craf_sotuv.module_category_craf"/>
-        <field name="description">Sex ishchisi — o'z sexi hujjatlari; Hisobchi — hamma hujjatni ko'radi, 1C belgisi; Direktor — hammasi.</field>
+        <field name="description">Sex ishchisi — o'z sexi hujjatlari; Omborchi — ombor, barcha hujjatlar, pul, davomat, 1C belgisi; Direktor — hammasi va foydalanuvchilarni boshqaradi. Har bir rolda bir nechta kishi bo'lishi mumkin.</field>
     </record>
 
     <record id="group_craf_worker" model="res.groups">
@@ -16,18 +16,18 @@
     </record>
 
     <record id="group_craf_accountant" model="res.groups">
-        <field name="name">Hisobchi</field>
+        <field name="name">Omborchi</field>
         <field name="sequence">20</field>
         <field name="privilege_id" ref="privilege_craf_zavod"/>
-        <field name="implied_ids" eval="[(4, ref('group_craf_worker')), (4, ref('sales_team.group_sale_salesman_all_leads')), (4, ref('account.group_account_invoice'))]"/>
-        <field name="comment">Barcha sex, ombor va sotuv hujjatlarini ko'radi, kunlik hisobotni 1C ga kiritadi («1C ga kiritildi» belgisi), hisob-fakturalar. Bosh sahifasi — Kunlik hisobot.</field>
+        <field name="implied_ids" eval="[(4, ref('group_craf_worker')), (4, ref('stock.group_stock_manager')), (4, ref('sales_team.group_sale_salesman_all_leads')), (4, ref('account.group_account_invoice'))]"/>
+        <field name="comment">Ombor (Inventarizatsiya administratori: qoldiq, ko'chirish, sanash, mahsulotlar), barcha sex va sotuv hujjatlari, Pul (to'lov, qarz, narx), Davomat, kunlik hisobot va 1C belgisi. Bosh sahifasi — Kunlik hisobot. (Avvalgi nomi: Hisobchi.)</field>
     </record>
 
     <record id="group_craf_director" model="res.groups">
         <field name="name">Direktor</field>
         <field name="sequence">30</field>
         <field name="privilege_id" ref="privilege_craf_zavod"/>
-        <field name="implied_ids" eval="[(4, ref('group_craf_accountant')), (4, ref('stock.group_stock_manager')), (4, ref('mrp.group_mrp_manager')), (4, ref('sales_team.group_sale_manager'))]"/>
-        <field name="comment">Hamma narsani ko'radi va boshqaradi (ombor, ishlab chiqarish, sotuv rahbari). Bosh sahifasi — Panel.</field>
+        <field name="implied_ids" eval="[(4, ref('group_craf_accountant')), (4, ref('stock.group_stock_manager')), (4, ref('mrp.group_mrp_manager')), (4, ref('sales_team.group_sale_manager')), (4, ref('base.group_erp_manager'))]"/>
+        <field name="comment">Hamma narsani ko'radi va boshqaradi (ombor, ishlab chiqarish, sotuv rahbari). Sozlamalar → Foydalanuvchilar: yangi foydalanuvchi yaratadi va rol beradi. Bosh sahifasi — Zavod paneli.</field>
     </record>
 </odoo>

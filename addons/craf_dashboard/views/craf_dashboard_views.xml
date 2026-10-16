@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="action_craf_dashboard" model="ir.actions.client">
-        <field name="name">Craf panel</field>
+        <field name="name">Zavod paneli</field>
         <field name="tag">craf_dashboard</field>
         <field name="path">craf-panel</field>
     </record>
-    <menuitem id="menu_craf_dashboard" name="Panel" parent="craf_profile.menu_craf_root"
-              action="action_craf_dashboard" sequence="1"/>
+    <!-- Zavod paneli — o'zi alohida ilova (bosh menyuda bitta ikonka) -->
+    <menuitem id="menu_craf_dashboard" name="Zavod paneli" action="action_craf_dashboard" sequence="5"
+              web_icon="craf_profile,static/description/icon.png"/>
 </odoo>
