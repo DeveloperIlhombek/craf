@@ -538,6 +538,7 @@ export class CrafSex extends Component {
             } else {
                 f = { id: false, date: o.today, shift: "1", color_id: false, employee_id: false,
                       equipment_id: (o.equipment[0] || {}).id || false, powder_text: "", powder_bags: "", note: "",
+                      film_text: "", tape_text: "",
                       pick: { ...this.state.pick }, lines: [] };
                 if (Object.keys(f.pick).length) {
                     f.lines = this.linesFromLoads(loads.filter((l) => f.pick[l.id]));
@@ -601,7 +602,13 @@ export class CrafSex extends Component {
         const color = s.o.colors.find((c) => c.id === Number(s.f.color_id));
         const powderNorm = (area * s.o.powder_g_m2) / 1000;
         const powder = parseSum(s.f.powder_text) || (color && color.pkg_kg ? toNum(s.f.powder_bags) * color.pkg_kg : 0);
-        return { area, ok, defect, kg, powderNorm, powder, color };
+        const packs = s.f.lines.reduce((sum, l) => sum + toInt(l.packs), 0);
+        const mats = {};
+        for (const m of s.o.pack_materials || []) {
+            const typed = s.f[`${m.key}_text`];
+            mats[m.key] = { norm: packs * m.per_pack, qty: typed ? parseSum(typed) : packs * m.per_pack, uom: m.uom, name: m.name };
+        }
+        return { area, ok, defect, kg, powderNorm, powder, color, packs, mats };
     }
     addPaintLine() {
         const s = this.state.sheet;
@@ -632,6 +639,12 @@ export class CrafSex extends Component {
         if (s.f.powder_text && Number.isNaN(parseSum(s.f.powder_text))) {
             s.error = "Kukun: raqam bilan yozing.";
             return;
+        }
+        for (const k of ["film_text", "tape_text"]) {
+            if (s.f[k] && Number.isNaN(parseSum(s.f[k]))) {
+                s.error = "Qadoqlash materiali: raqam bilan yozing.";
+                return;
+            }
         }
         const t = this.paintTotals(s);
         const doSave = () =>

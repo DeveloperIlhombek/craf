@@ -549,9 +549,22 @@ class CrafSex(models.AbstractModel):
         return {
             "today": fields.Date.to_string(fields.Date.context_today(self)),
             "colors": colors, "semis": semi_rows, "powder_g_m2": norm["powder_g_m2"],
+            "pack_materials": self._pack_materials_info(loc, norm),
             "employees": self._employees(), "equipment": self._equipment("boyash"),
             "shifts": [{"key": k, "label": v} for k, v in SHIFTS],
         }
+
+    def _pack_materials_info(self, loc, norm):
+        H = self.env["craf.production.mixin"]
+        res = []
+        for key, code, per_pack in (("film", "QM-01", norm.film_kg_per_pack), ("tape", "QM-02", norm.tape_m_per_pack)):
+            product = H._craf_product(code)
+            if not product:
+                continue
+            res.append({"key": key, "id": product.id, "name": product.name, "uom": self._uom_label(product),
+                        "per_pack": per_pack,
+                        "avail": round(product.with_context(location=loc.id).qty_available, 2) if loc else 0.0})
+        return res
 
     @api.model
     def paint_load(self, rec_id):
@@ -567,6 +580,8 @@ class CrafSex(models.AbstractModel):
                        "packs": l.out_packs or "", "extra": l.out_extra or ""} for l in rec.line_ids],
             "powder_text": _q(rec.powder_qty, 2) if rec.powder_qty else "",
             "powder_bags": rec.powder_bags or "", "note": rec.note or "",
+            "film_text": _q(rec.film_qty, 2) if rec.film_qty else "",
+            "tape_text": _q(rec.tape_qty, 1) if rec.tape_qty else "",
         }
 
     @api.model
@@ -620,6 +635,15 @@ class CrafSex(models.AbstractModel):
             # qadoqlangan berilsa va kirdi berilmasa — kirdi = qadoqlandi + brak
             commands.append(Command.create(line))
         rec.write({"line_ids": commands, "powder_qty": powder})
+        # qadoqlash materiallari: yozilmagan bo'lsa — me'yor × qadoqlangan pachka
+        norm = self.env["craf.mrp.norm"]._get_norm(self.env.company)
+        packs = sum(rec.line_ids.mapped("out_packs"))
+        film = self._num(vals.get("film_text"), "Plyonka")
+        tape = self._num(vals.get("tape_text"), "Lenta")
+        rec.write({
+            "film_qty": film if (vals.get("film_text") or "").strip() else round(packs * norm.film_kg_per_pack, 2),
+            "tape_qty": tape if (vals.get("tape_text") or "").strip() else round(packs * norm.tape_m_per_pack, 1),
+        })
         for line in rec.line_ids:
             if line.pcs_packed and not line.pcs_in:
                 line.write({"pcs_in": line.pcs_packed + (line.pcs_defect or 0), "pcs_in_auto": True})
@@ -634,7 +658,8 @@ class CrafSex(models.AbstractModel):
                 | rec.basket_load_ids.product_6_id | rec.basket_load_ids.product_5_id
         if rec._name == "craf.chem.treatment":
             return rec.chem_line_ids.product_id | rec.load_ids.product_6_id | rec.load_ids.product_5_id
-        return rec.line_ids.semi_product_id | rec.line_ids.product_id | rec.powder_product_id | rec.scrap_product_id
+        return rec.line_ids.semi_product_id | rec.line_ids.product_id | rec.powder_product_id | rec.scrap_product_id \
+            | rec.film_product_id | rec.tape_product_id
 
     def _raw_needs(self, rec):
         """Sexga kerak bo'ladigan xom-ashyo (profil emas): quyma, kimyo, kukun — {product: qty}."""
@@ -650,6 +675,8 @@ class CrafSex(models.AbstractModel):
                 needs[rec.powder_product_id] += rec.powder_qty
             for line in rec.chem_line_ids.filtered(lambda l: l.qty > EPS):
                 needs[line.product_id] += line.qty
+            for product, qty in rec._craf_pack_materials():
+                needs[product] += qty
         return {p: q for p, q in needs.items() if p and p.is_storable and not p.craf_section_id}
 
     def _auto_pull(self, rec):
@@ -765,6 +792,8 @@ class CrafSex(models.AbstractModel):
             outputs = [("Bo'yaldi", "%s dona · %s kg" % (_q(rec.pcs_ok), _q(rec.kg_ok, 1))),
                        ("Brak", "%s dona (%s%%)" % (_q(rec.pcs_defect), fmt(rec.defect_pct, 2))),
                        ("Kukun", "%s kg (me'yor %s)" % (fmt(rec.powder_qty, 2), fmt(rec.powder_norm_qty, 2))),
+                       ("Plyonka", "%s %s" % (fmt(rec.film_qty, 2), self._uom_label(rec.film_product_id) if rec.film_product_id else "")),
+                       ("Lenta", "%s %s" % (fmt(rec.tape_qty, 1), self._uom_label(rec.tape_product_id) if rec.tape_product_id else "")),
                        ("Maydon", "%s m²" % _q(rec.area_total, 1))]
             if rec.stock_picking_id:
                 meta.append(("Omborga topshirildi", rec.stock_picking_id.name))

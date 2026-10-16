@@ -4,6 +4,13 @@
         <record id="categ_semi_profile" model="product.category">
             <field name="name">Yarim tayyor profil</field>
         </record>
+        <record id="seq_craf_briket" model="ir.sequence">
+            <field name="name">Craf briketlash</field>
+            <field name="code">craf.briket</field>
+            <field name="prefix">BR-%(y)s-</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
         <record id="seq_craf_extrusion_shift" model="ir.sequence">
             <field name="name">Craf press smenasi</field>
             <field name="code">craf.extrusion.shift</field>

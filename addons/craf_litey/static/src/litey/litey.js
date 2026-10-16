@@ -508,7 +508,9 @@ export class CrafLitey extends Component {
         return (this.opts && this.opts.materials.find((x) => x.id === Number(id))) || null;
     }
     get materialGroups() {
-        const mats = (this.opts && this.opts.materials) || [];
+        const kirim = this.state.sheet && this.state.sheet.type === "kirim";
+        // press chiqindisi (питак, brak, briket) sotib olinmaydi — kirimda ko'rinmaydi
+        const mats = ((this.opts && this.opts.materials) || []).filter((m) => !(kirim && m.press_waste));
         return [
             { label: "Metall (shixta)", items: mats.filter((m) => m.kind === "metal") },
             { label: "Qo'shimcha va sarf buyumlari", items: mats.filter((m) => m.kind === "aux") },

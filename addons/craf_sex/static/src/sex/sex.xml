@@ -534,10 +534,20 @@
                 <label class="cl-field" t-if="pt.color and pt.color.pkg_kg"><span><t t-esc="pt.color.pkg_name"/> (<t t-esc="num(pt.color.pkg_kg, 1)"/> kg)</span><input type="text" inputmode="decimal" class="form-control" t-model="f.powder_bags" placeholder="0"/></label>
                 <label class="cl-field"><span>yoki kg</span><input type="text" inputmode="decimal" class="form-control" t-model="f.powder_text" t-att-placeholder="pt.powder ? num(pt.powder, 2) : num(pt.powderNorm, 2)"/></label>
             </div>
+            <t t-if="(s.o.pack_materials || []).length">
+                <h3 class="cl-lines-head">Qadoqlash materiallari <span class="cl-muted">— <t t-esc="num(pt.packs, 0)"/> pachka bo'yicha me'yor</span></h3>
+                <div class="cl-field-row">
+                    <label class="cl-field" t-foreach="s.o.pack_materials" t-as="m" t-key="m.key">
+                        <span><t t-esc="m.name"/>, <t t-esc="m.uom"/> <span class="cl-muted">(sexda <t t-esc="num(m.avail, 1)"/>)</span></span>
+                        <input type="text" inputmode="decimal" class="form-control" t-model="f[m.key + '_text']" t-att-placeholder="num(pt.mats[m.key].norm, 2)"/>
+                    </label>
+                </div>
+            </t>
             <div class="sx-preview">
                 <div class="cl-kv"><span>Bo'yaldi</span><b><t t-esc="num(pt.ok, 0)"/> dona · <t t-esc="num(pt.kg, 0)"/> kg</b></div>
                 <div class="cl-kv"><span>Brak</span><b><t t-esc="num(pt.defect, 0)"/> dona</b></div>
                 <div class="cl-kv cl-kv-total"><span>Kukun</span><b><t t-esc="num(pt.powder, 2)"/> kg</b></div>
+                <div class="cl-kv" t-foreach="s.o.pack_materials || []" t-as="m" t-key="m.key"><span t-esc="m.name"/><b><t t-esc="num(pt.mats[m.key].qty, 2)"/> <t t-esc="m.uom"/></b></div>
             </div>
             <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
         </div>

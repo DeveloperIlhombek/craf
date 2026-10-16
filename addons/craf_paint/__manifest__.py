@@ -1,6 +1,6 @@
 {
     "name": "Craf Bo'yash",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Bo'yash: rang, kukun va kimyo sarfi, brak; bo'yalmagan → bo'yalgan profil",
     "description": """
 Bo'yash smenasi:
@@ -18,6 +18,7 @@ Bo'yash smenasi:
     "data": [
         "security/ir.model.access.csv",
         "data/craf_paint_data.xml",
+        "data/craf_paint_qadoq.xml",
         "views/craf_paint_batch_views.xml",
         "views/craf_paint_menus.xml",
     ],

@@ -91,6 +91,7 @@ class CrafLiteyHisobot(models.AbstractModel):
         materials = [{
             "id": p.id, "name": p.name, "short": self._short(p), "code": p.default_code or "",
             "uom": self._uom(p), "kind": "aux" if p.craf_not_metal else "metal",
+            "press_waste": p.craf_press_waste,
             "stock": stock.get(p.id, {}), "last_price": self._last_price(p),
         } for p in products]
         used = self.env["stock.picking"].search([
@@ -118,6 +119,9 @@ class CrafLiteyHisobot(models.AbstractModel):
             if not row.get("product_id"):
                 continue
             product = Product.browse(int(row["product_id"]))
+            if product.craf_press_waste:
+                raise UserError("%s — press chiqindisi, kirim qilinmaydi (press smenasi yoki briketlashdan keladi)."
+                                % product.name)
             qty = self._num(row.get("text"), product.name) or 0.0
             if qty <= EPS:
                 continue

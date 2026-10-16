@@ -9,4 +9,6 @@
             <field name="company_id" eval="False"/>
         </record>
     </data>
+    <!-- press chiqindilari (питак, brak, briket) va quymaga питак mahsuloti -->
+    <function model="product.template" name="_craf_setup_press_waste"/>
 </odoo>

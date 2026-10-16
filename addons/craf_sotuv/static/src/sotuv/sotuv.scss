@@ -1702,3 +1702,21 @@ $cs-orange-bg: #fff1e0;
         border-radius: 50%;
     }
 }
+
+// Qaytarish
+.cs-return {
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.cs-return-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.cs-return-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.cs-return-prod { flex: 1 1 180px; min-width: 0; }
+.cs-return-qty { display: flex; gap: 8px; }
+.cs-return-qty label { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.cs-return-qty input { width: 72px; }
+.cs-returned { color: var(--bs-danger, #dc3545); }

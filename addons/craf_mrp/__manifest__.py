@@ -1,6 +1,6 @@
 {
     "name": "Craf Ishlab chiqarish me'yorlari",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.1.0",
     "summary": "Bosqichlar (Литейка → Press → Bo'yash → Qadoqlash), ish markazlari, har mahsulot uchun BoM va xom-ashyo sarfi",
     "description": """
 Odoo Manufacturing ni zavod jarayoniga moslaydi:

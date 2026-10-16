@@ -30,6 +30,9 @@ class CrafMrpNorm(models.Model):
     # Литейка va qadoqlash
     foundry_kg_h = fields.Float("Pech unumdorligi, kg/soat", default=800.0)
     pack_min = fields.Float("Qadoqlash, daqiqa/pachka", default=3.0)
+    film_kg_per_pack = fields.Float("Plyonka, kg/pachka", default=0.05, digits=(16, 3),
+                                    help="Bo'yash smenasida plyonka sarfi shu me'yor × pachka soni bilan taklif qilinadi")
+    tape_m_per_pack = fields.Float("Lenta, m/pachka", default=3.0, digits=(16, 2))
 
     # Bosqich operatsiya turlari va ish markazlari
     foundry_type_id = fields.Many2one("stock.picking.type", "Литейка bosqichi", domain=[("code", "=", "mrp_operation")])

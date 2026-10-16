@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Qadoqlash materiallari: bo'yash va qadoqlash smenasida sarflanadi -->
+    <data noupdate="1">
+        <record id="categ_pack_material" model="product.category">
+            <field name="name">Qadoqlash materiallari</field>
+            <field name="parent_id" ref="craf_nomenklatura.categ_raw_root"/>
+        </record>
+        <record id="qm_01" model="product.template">
+            <field name="name">Plyonka (salafan)</field>
+            <field name="default_code">QM-01</field>
+            <field name="categ_id" ref="categ_pack_material"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+        </record>
+        <record id="qm_02" model="product.template">
+            <field name="name">Lenta</field>
+            <field name="default_code">QM-02</field>
+            <field name="categ_id" ref="categ_pack_material"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_meter"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="True"/>
+        </record>
+    </data>
+</odoo>
