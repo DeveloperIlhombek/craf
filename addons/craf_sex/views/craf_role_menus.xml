@@ -7,4 +7,6 @@
               action="craf_sotuv.action_craf_yuklash" sequence="1"/>
     <menuitem id="menu_craf_loader_sanash" name="Tayyor mahsulot sanash" parent="menu_craf_loader_root"
               action="craf_sotuv.action_craf_tayyor_sanash" sequence="2"/>
+    <menuitem id="menu_craf_loader_waybill" name="Yuk xatlari" parent="menu_craf_loader_root"
+              action="craf_sotuv.action_craf_waybill" sequence="3"/>
 </odoo>

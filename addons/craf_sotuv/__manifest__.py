@@ -1,6 +1,6 @@
 {
     "name": "Craf Sotuv (Berildi)",
-    "version": "19.0.1.6.0",
+    "version": "19.0.1.7.0",
     "summary": "Sotuv bo'limi: sotuvchi buyurtma kiritadi, yuklovchi yuklaydi, «Berildi» da mahsulot ombordan ayriladi (telefon uchun)",
     "description": """
 Sotuv bo'limi (telefon birinchi):
@@ -18,6 +18,7 @@ Sotuv bo'limi (telefon birinchi):
 - Kunlik hisobotda «Sotuv» bo'limi va «Sotildi» ustuni, Excel da «Sotuv» varag'i, 1C belgisi
 - mijoz kartochkasida berilgan mahsulotlar tarixi
 - pachka QR skaneri (ixtiyoriy, sozlamada yoqiladi)
+- Yuk xati (PDF): kompaniya logosi va rekvizitlari, mijoz, sana, mashina, mahsulot — pachka, dona, kg; imzolar va QR
 """,
     "author": "Craf",
     "category": "Sales",
@@ -33,6 +34,8 @@ Sotuv bo'limi (telefon birinchi):
         "views/stock_location_views.xml",
         "views/craf_sotuv_menus.xml",
         "views/craf_sanash_views.xml",
+        "report/craf_waybill_report.xml",
+        "views/craf_waybill_views.xml",
     ],
     "assets": {
         "web.assets_backend": [

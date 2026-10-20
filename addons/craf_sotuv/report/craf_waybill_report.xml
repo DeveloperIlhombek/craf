@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Yuk xati: mijozga berilgan (yoki yuklanayotgan) mahsulot — pachka, dona, kg; kompaniya va mijoz rekvizitlari -->
+    <record id="paperformat_craf_waybill" model="report.paperformat">
+        <field name="name">Craf yuk xati (A4)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_craf_waybill" model="ir.actions.report">
+        <field name="name">Yuk xati</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">craf_sotuv.report_craf_waybill</field>
+        <field name="report_file">craf_sotuv.report_craf_waybill</field>
+        <field name="print_report_name">'Yuk xati - %s - %s' % (object.name.replace('/', '-'), object.partner_id.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_craf_waybill"/>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_craf_waybill_document">
+        <t t-set="w" t-value="o._craf_waybill()"/>
+        <t t-set="company" t-value="o.company_id"/>
+        <div class="page craf-waybill" style="font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #111;">
+            <!-- kompaniya -->
+            <div style="display: table; table-layout: fixed; width: 100%; border-collapse: collapse;">
+                    <div style="display: table-cell; width: 22%; vertical-align: middle; padding-bottom: 8px;">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"
+                             style="max-height: 70px; max-width: 160px;" alt="Logo"/>
+                    </div>
+                    <div style="display: table-cell; vertical-align: middle; padding: 0 10px 8px 10px;">
+                        <div style="font-size: 20px; font-weight: bold;" t-esc="company.name"/>
+                        <div t-if="company.street or company.city">
+                            <t t-esc="', '.join(x for x in [company.street, company.street2, company.city, company.country_id.name] if x)"/>
+                        </div>
+                        <div>
+                            <t t-if="company.phone">Tel: <t t-esc="company.phone"/></t>
+                            <t t-if="company.email"> · <t t-esc="company.email"/></t>
+                            <t t-if="company.website"> · <t t-esc="company.website"/></t>
+                        </div>
+                        <div t-if="company.vat">STIR (INN): <t t-esc="company.vat"/></div>
+                    </div>
+                    <div style="display: table-cell; width: 110px; text-align: right; vertical-align: middle; padding-bottom: 8px;">
+                        <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=100&amp;height=100' % (o.name)"
+                             style="width: 90px; height: 90px;" alt="QR"/>
+                    </div>
+            </div>
+            <div style="border-bottom: 3px solid #222;"/>
+
+            <!-- sarlavha -->
+            <div style="text-align: center; margin: 14px 0 4px 0;">
+                <span style="font-size: 22px; font-weight: bold; letter-spacing: 1px;">YUK XATI</span>
+                <span style="font-size: 16px; margin-left: 8px;">№ <t t-esc="o.name"/></span>
+            </div>
+            <div style="text-align: center; margin-bottom: 12px; font-size: 13px;">
+                <t t-if="w['date']" t-esc="w['date'].strftime('%d.%m.%Y %H:%M')"/>
+                <span t-if="not w['done']" style="margin-left: 8px; padding: 1px 6px; border: 1px solid #b00; color: #b00;">
+                    YUKLANMOQDA — hali berilmagan
+                </span>
+            </div>
+
+            <!-- tomonlar -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+                <tr>
+                    <td style="width: 50%; vertical-align: top; border: 1px solid #999; padding: 6px 8px;">
+                        <div style="font-size: 10px; text-transform: uppercase; color: #555;">Yuk beruvchi</div>
+                        <div style="font-weight: bold; font-size: 14px;" t-esc="company.name"/>
+                        <div>Ombor: <b t-esc="w['location']"/></div>
+                        <div t-if="w['seller']">Sotuvchi: <t t-esc="w['seller'].name"/></div>
+                        <div t-if="w['loader']">Yuklovchi: <t t-esc="w['loader'].name"/></div>
+                    </td>
+                    <td style="width: 50%; vertical-align: top; border: 1px solid #999; padding: 6px 8px;">
+                        <div style="font-size: 10px; text-transform: uppercase; color: #555;">Yuk oluvchi (mijoz)</div>
+                        <div style="font-weight: bold; font-size: 14px;" t-esc="w['partner'].name"/>
+                        <div t-if="w['partner'].phone">Tel: <t t-esc="w['partner'].phone"/></div>
+                        <div t-if="w['partner'].street or w['partner'].city"
+                             t-esc="', '.join(x for x in [w['partner'].street, w['partner'].city] if x)"/>
+                        <div t-if="w['order']">Buyurtma: <b t-esc="w['order'].name"/></div>
+                        <div t-if="w['order'].craf_truck">Mashina: <b t-esc="w['order'].craf_truck"/></div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- mahsulotlar -->
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #222; color: #fff;">
+                        <th style="padding: 5px; border: 1px solid #222; width: 4%;">№</th>
+                        <th style="padding: 5px; border: 1px solid #222; text-align: left;">Mahsulot</th>
+                        <th style="padding: 5px; border: 1px solid #222; width: 7%;">Uzunlik</th>
+                        <th style="padding: 5px; border: 1px solid #222; width: 8%;">Pachkada</th>
+                        <th style="padding: 5px; border: 1px solid #222; width: 8%;">Pachka</th>
+                        <th style="padding: 5px; border: 1px solid #222; width: 7%;">+ dona</th>
+                        <th style="padding: 5px; border: 1px solid #222; width: 10%;">Jami dona</th>
+                        <th style="padding: 5px; border: 1px solid #222; width: 11%;">Og'irlik, kg</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="w['lines']" t-as="l" t-att-style="'background: #f3f3f3;' if l_index % 2 else ''">
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: center;" t-esc="l_index + 1"/>
+                        <td style="padding: 4px 5px; border: 1px solid #999;">
+                            <div style="font-weight: bold;" t-esc="l['name']"/>
+                            <div style="font-size: 10px; color: #555;" t-esc="l['code']"/>
+                        </td>
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: center;">
+                            <t t-if="l['length']"><t t-esc="'%g' % l['length']"/> m</t>
+                        </td>
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: center;" t-esc="l['per_pack'] or '—'"/>
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: right; font-weight: bold;" t-esc="l['packs_s']"/>
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: right;" t-esc="l['rest'] or ''"/>
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: right; font-weight: bold;" t-esc="l['pcs_s']"/>
+                        <td style="padding: 4px 5px; border: 1px solid #999; text-align: right;" t-esc="l['kg_s']"/>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight: bold; background: #e4e4e4;">
+                        <td colspan="4" style="padding: 5px; border: 1px solid #999; text-align: right;">
+                            JAMI: <t t-esc="len(w['lines'])"/> xil mahsulot
+                        </td>
+                        <td style="padding: 5px; border: 1px solid #999; text-align: right;" t-esc="w['total_packs_s']"/>
+                        <td style="padding: 5px; border: 1px solid #999;"/>
+                        <td style="padding: 5px; border: 1px solid #999; text-align: right;" t-esc="w['total_pcs_s']"/>
+                        <td style="padding: 5px; border: 1px solid #999; text-align: right;" t-esc="w['total_kg_s']"/>
+                    </tr>
+                </tfoot>
+            </table>
+            <div style="margin-top: 6px; font-size: 11px; color: #444;">
+                Mahsulot soni va sifati bo'yicha e'tiroz yuk qabul qilinayotganda bildiriladi.
+                Og'irlik nazariy (kg/m × uzunlik × dona) hisoblangan.
+            </div>
+
+            <!-- imzolar -->
+            <div style="display: table; table-layout: fixed; width: 100%; border-collapse: collapse; margin-top: 36px; font-size: 12px;">
+                    <div style="display: table-cell; width: 33%; padding-right: 14px; vertical-align: bottom;">
+                        <div>Berdi (yuklovchi):</div>
+                        <div style="border-bottom: 1px solid #000; height: 28px;"/>
+                        <div style="font-size: 10px; color: #555;" t-esc="w['loader'].name if w['loader'] else '(F.I.Sh., imzo)'"/>
+                    </div>
+                    <div style="display: table-cell; width: 33%; padding: 0 7px; vertical-align: bottom;">
+                        <div>Omborchi:</div>
+                        <div style="border-bottom: 1px solid #000; height: 28px;"/>
+                        <div style="font-size: 10px; color: #555;">(F.I.Sh., imzo)</div>
+                    </div>
+                    <div style="display: table-cell; width: 33%; padding-left: 14px; vertical-align: bottom;">
+                        <div>Qabul qildi (mijoz / haydovchi):</div>
+                        <div style="border-bottom: 1px solid #000; height: 28px;"/>
+                        <div style="font-size: 10px; color: #555;" t-esc="w['partner'].name"/>
+                    </div>
+            </div>
+            <div style="margin-top: 22px; font-size: 9px; color: #777; text-align: right;">
+                Chop etildi: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d.%m.%Y %H:%M')"/>
+                · <t t-esc="user.name"/>
+            </div>
+        </div>
+    </template>
+
+    <template id="report_craf_waybill">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-call="craf_sotuv.report_craf_waybill_document"/>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

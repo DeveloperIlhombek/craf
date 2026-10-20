@@ -36,6 +36,9 @@
     <record id="craf_sotuv.menu_craf_sale_orders" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('craf_sotuv.group_craf_seller'), ref('craf_sex.group_craf_accountant')])]"/>
     </record>
+    <record id="craf_sotuv.menu_craf_waybill" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sotuv.group_craf_seller'), ref('craf_sex.group_craf_accountant')])]"/>
+    </record>
     <record id="craf_sotuv.menu_craf_sale_lines" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('craf_sotuv.group_craf_seller'), ref('craf_sex.group_craf_accountant')])]"/>
     </record>

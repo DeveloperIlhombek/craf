@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Yuk xatlari: mijozlarga yetkazib berishlar ro'yxati, har biridan PDF hujjat -->
+    <record id="view_craf_waybill_list" model="ir.ui.view">
+        <field name="name">stock.picking.craf.waybill.list</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Yuk xatlari" create="false" delete="false" default_order="date_done desc, id desc">
+                <field name="date_done" string="Berilgan vaqt"/>
+                <field name="name" string="Yuk xati №"/>
+                <field name="craf_sale_partner_id" string="Mijoz"/>
+                <field name="craf_sale_name"/>
+                <field name="craf_truck"/>
+                <field name="location_id" string="Qayerdan"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-warning="state not in ('done', 'cancel')"/>
+                <button name="action_craf_print_waybill" type="object" string="Chop etish" icon="fa-print"
+                        class="btn-primary"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_craf_waybill_search" model="ir.ui.view">
+        <field name="name">stock.picking.craf.waybill.search</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search string="Yuk xatlari">
+                <field name="name" string="Yuk xati №"/>
+                <field name="craf_sale_partner_id" string="Mijoz"/>
+                <field name="craf_truck"/>
+                <filter name="today" string="Bugun"
+                        domain="[('date_done', '&gt;=', (context_today()).strftime('%Y-%m-%d'))]"/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date_done', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="done" string="Berildi" domain="[('state', '=', 'done')]"/>
+                <filter name="loading" string="Yuklanmoqda" domain="[('state', 'not in', ('done', 'cancel'))]"/>
+                <group>
+                    <filter name="by_partner" string="Mijoz" context="{'group_by': 'partner_id'}"/>
+                    <filter name="by_day" string="Kun" context="{'group_by': 'date_done:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_waybill" model="ir.actions.act_window">
+        <field name="name">Yuk xatlari</field>
+        <field name="res_model">stock.picking</field>
+        <field name="path">craf-yuk-xati</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_craf_waybill_list"/>
+        <field name="search_view_id" ref="view_craf_waybill_search"/>
+        <field name="domain">[('picking_type_code', '=', 'outgoing'), ('sale_id', '!=', False), ('state', '!=', 'cancel')]</field>
+        <field name="context">{'search_default_done': 1, 'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Hali yuk xati yo'q</p>
+            <p>Mahsulot «Berildi» qilinganda yuk xati shu yerda chiqadi — «Chop etish» bilan PDF olinadi.</p>
+        </field>
+    </record>
+
+    <!-- Sotish → Buyurtmalar: sotuvchi va omborchi ham ko'radi -->
+    <menuitem id="menu_craf_waybill" name="Yuk xatlari" parent="sale.sale_order_menu"
+              action="action_craf_waybill" sequence="27" groups="craf_sotuv.group_craf_seller"/>
+</odoo>
