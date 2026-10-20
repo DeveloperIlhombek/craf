@@ -1,6 +1,6 @@
 {
     "name": "Craf: sexlar (Press, Kimyo, Bo'yash) va rollar",
-    "version": "19.0.1.7.0",
+    "version": "19.0.1.8.0",
     "summary": "Press, kimyoviy ishlov, bo'yash va qadoqlash — telefon uchun sahifa; direktor, omborchi, sex ishchisi rollari",
     "description": """
 Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
@@ -23,7 +23,8 @@ Sahifalar rol bo'yicha:
 - Administrator: hamma ilovalar, bosh sahifa har doim «Boshqaruv panellari»
 - Yuklovchi (boshqa roli bo'lmasa): faqat «Yuklash» ilovasi — Sotuv (yuklash navbati, bosh sahifa) va
   Tayyor mahsulot sanash; telefonda pastki panel (Yuklash, Bugun, Qoldiq, Sanash, Yuk xati)
-- Sotuvchi: Xodimlar va Davomat ilovalari ko'rinmaydi (Xodimlar — kadrlar xodimi, direktor, administrator)
+- Sotuvchi: Inventarizatsiyaga to'liq ruxsat (ombor administratori, Craf ombor sahifalari, Kunlik hisobot);
+  Xodimlar va Davomat ilovalari ko'rinmaydi (Xodimlar — kadrlar xodimi, direktor, administrator)
 - Inventarizatsiya soddalashtirilgan: umumiy ko'rinishda faqat ombor operatsiyalari; Fizik inventarizatsiya,
   Chiqindi, To'ldirish, umumiy Mahsulotlar, baholash va tahlil hisobotlari, saqlash/joylash qoidalari —
   faqat texnik (debug) rejimda

@@ -9,27 +9,27 @@
         <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
     </record>
 
-    <!-- Inventarizatsiya -->
+    <!-- Inventarizatsiya: omborchi, sotuvchi (to'liq ombor ruxsati) va administrator -->
     <record id="craf_hisobot.menu_craf_kunlik" model="ir.ui.menu">
-        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
     <record id="craf_zavod.menu_craf_zavod_xarita" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
     <record id="craf_label.menu_craf_pack" model="ir.ui.menu">
-        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
     <record id="craf_profile.menu_craf_profiles" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
     <record id="craf_profile.menu_craf_materials" model="ir.ui.menu">
-        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
     <record id="craf_extrusion.menu_craf_semi_profiles" model="ir.ui.menu">
-        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
     <record id="craf_litey.menu_craf_litey_count" model="ir.ui.menu">
-        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
 
     <!-- Sotish: sotuv hujjatlari va berilgan mahsulotlarni omborchi ham ko'radi -->

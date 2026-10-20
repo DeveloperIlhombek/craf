@@ -6,6 +6,10 @@ from .craf_pul import LIVE_PAYMENT, METHOD_LABEL, _money
 class CrafKunlikHisobot(models.AbstractModel):
     _inherit = "craf.kunlik.hisobot"
 
+    def _craf_money_allowed(self):
+        """Pul bo'limi faqat hisob-fakturaga ruxsati borlarga (omborchi, direktor); sotuvchida yashiriladi."""
+        return self.env["account.payment"].has_access("read") and self.env["account.move"].has_access("read")
+
     def _payments_of_day(self, day):
         return self.env["account.payment"].search([
             ("company_id", "=", self.env.company.id), ("date", "=", day), ("state", "in", LIVE_PAYMENT)],
@@ -46,6 +50,8 @@ class CrafKunlikHisobot(models.AbstractModel):
     @api.model
     def get_data(self, day=None):
         data = super().get_data(day)
+        if not self._craf_money_allowed():
+            return data
         day = self._parse_day(data["date"])
         dep = self._money_department(day)
         deps = data["departments"]
@@ -68,6 +74,8 @@ class CrafKunlikHisobot(models.AbstractModel):
     @api.model
     def action_mark_c1(self, day=None):
         count = super().action_mark_c1(day)
+        if not self._craf_money_allowed():
+            return count
         pays = self._payments_of_day(self._parse_day(day)).filtered(lambda p: p.c1_state == "new")
         pays.action_c1_done()
         return count + len(pays)

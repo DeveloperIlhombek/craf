@@ -30,4 +30,9 @@
         <field name="implied_ids" eval="[(4, ref('group_craf_accountant')), (4, ref('stock.group_stock_manager')), (4, ref('mrp.group_mrp_manager')), (4, ref('sales_team.group_sale_manager')), (4, ref('base.group_erp_manager'))]"/>
         <field name="comment">Hamma narsani ko'radi va boshqaradi (ombor, ishlab chiqarish, sotuv rahbari). Sozlamalar → Foydalanuvchilar: yangi foydalanuvchi yaratadi va rol beradi. Bosh sahifasi — Zavod paneli.</field>
     </record>
+
+    <!-- Sotuvchi: Inventarizatsiya ilovasiga to'liq ruxsat (ombor administratori) -->
+    <record id="craf_sotuv.group_craf_seller" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('stock.group_stock_manager'))]"/>
+    </record>
 </odoo>

@@ -15,7 +15,7 @@ ADMIN = "base.group_system"
 PAGES = {
     "craf.dashboard": ("Zavod paneli", (OMBORCHI, ADMIN), ["get_data"]),
     "craf.zavod.xarita": ("Zavod xaritasi", (OMBORCHI, SELLER, ADMIN), ["get_map_data"]),
-    "craf.kunlik.hisobot": ("Kunlik hisobot", (OMBORCHI, ADMIN), [
+    "craf.kunlik.hisobot": ("Kunlik hisobot", (OMBORCHI, SELLER, ADMIN), [
         "get_data", "action_mark_c1", "get_sales_rows", "get_calc_products",
         "calc_set_unit", "calc_to_melt", "calc_to_paint"]),
     "craf.litey.hisobot": ("Литейка", (WORKER, ADMIN), [
