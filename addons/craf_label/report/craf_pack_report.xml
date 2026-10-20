@@ -33,7 +33,9 @@
             <table style="width: 100%; border-collapse: collapse; border: 2px solid #000;">
                 <tr>
                     <td colspan="2" style="padding: 3px 6px; border-bottom: 2px solid #000;">
-                        <span style="font-size: 15px; font-weight: bold; letter-spacing: 2px;">CRAF</span>
+                        <img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)"
+                             style="height: 17px; max-width: 120px; vertical-align: middle;" alt="Logo"/>
+                        <span t-else="" style="font-size: 15px; font-weight: bold; letter-spacing: 2px;">CRAF</span>
                         <span style="float: right; font-size: 15px; font-weight: bold;" t-esc="o.name"/>
                     </td>
                 </tr>

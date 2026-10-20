@@ -1,6 +1,6 @@
 {
     "name": "Craf Pachka yorlig'i",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.0.2",
     "summary": "Pachka yorlig'i (PDF, QR): tur, rang, dona, nazariy va haqiqiy kg",
     "description": """
 Pachkalar ro'yxati va yorliq:

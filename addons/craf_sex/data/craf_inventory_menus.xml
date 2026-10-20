@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inventarizatsiya ilovasini soddalashtirish: zavodda ishlatilmaydigan sahifalar yashiriladi
+         (o'chirilmaydi — texnik / debug rejimda ko'rinadi). -->
+
+    <!-- Umumiy ko'rinish: faqat ombor operatsiyalari; Литейка, Press, Bo'yash — Ishlab chiqarish ilovasida -->
+    <record id="stock.stock_picking_type_action" model="ir.actions.act_window">
+        <field name="domain">[('code', '!=', 'mrp_operation')]</field>
+    </record>
+
+    <record id="mrp.mrp_operation_picking" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_action_inventory_tree" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_stock_scrap" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_stock_procurement" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_product_variant_config_stock" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_valuation" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.stock_move_menu" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_storage_categoty_config" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+    <record id="stock.menu_putaway" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
+</odoo>
