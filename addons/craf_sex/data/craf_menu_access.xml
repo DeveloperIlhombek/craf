@@ -44,6 +44,10 @@
     <record id="maintenance.menu_maintenance_title" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_worker'), ref('base.group_system')])]"/>
     </record>
+    <!-- Xodimlar ilovasi: faqat kadrlar xodimi, direktor va administrator (sotuvchi, yuklovchi, sex ishchisi ko'rmaydi) -->
+    <record id="hr.menu_hr_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('hr.group_hr_user'), ref('craf_sex.group_craf_director'), ref('base.group_system')])]"/>
+    </record>
     <record id="base.menu_management" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('base.group_system')])]"/>
     </record>

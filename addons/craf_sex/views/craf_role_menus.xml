@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Yuklovchi ilovasi: yuklovchi faqat shuni ko'radi (models/ir_ui_menu.py), bosh sahifasi — Sotuv (yuklash) -->
+    <menuitem id="menu_craf_loader_root" name="Yuklash" sequence="1"
+              web_icon="craf_sotuv,static/description/icon.png" groups="craf_sotuv.group_craf_loader"/>
+    <menuitem id="menu_craf_loader_sotuv" name="Sotuv" parent="menu_craf_loader_root"
+              action="craf_sotuv.action_craf_yuklash" sequence="1"/>
+    <menuitem id="menu_craf_loader_sanash" name="Tayyor mahsulot sanash" parent="menu_craf_loader_root"
+              action="craf_sotuv.action_craf_tayyor_sanash" sequence="2"/>
+</odoo>
