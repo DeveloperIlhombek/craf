@@ -1,0 +1,90 @@
+// Yuklovchi: telefondagi pastki panel
+.o_craf_loader_nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1040;
+    display: flex;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: $o-view-background-color;
+    border-top: 1px solid $border-color;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+
+    .o_craf_loader_nav_item {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 4px 2px;
+        border: 0;
+        background: transparent;
+        color: $o-main-text-color;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.1;
+
+        &:focus-visible {
+            outline: 2px solid $o-action;
+            outline-offset: -2px;
+        }
+    }
+
+    .o_craf_loader_nav_icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 28px;
+        border-radius: 14px;
+        font-size: 17px;
+        transition: background-color 0.15s;
+    }
+
+    .o_craf_loader_nav_item.active {
+        color: $o-action;
+
+        .o_craf_loader_nav_icon {
+            background: rgba($o-action, 0.14);
+        }
+    }
+
+    .o_craf_loader_nav_label {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .o_craf_loader_nav_badge {
+        position: absolute;
+        top: -4px;
+        right: 2px;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        border-radius: 9px;
+        background: $danger;
+        color: #fff;
+        font-size: 10px;
+        line-height: 17px;
+        text-align: center;
+    }
+}
+
+// panel kontentni yopmasin; Sotuv sahifasining yuqori varaqlari pastki panelda takrorlanadi
+@include media-breakpoint-down(md) {
+    body.o_craf_bottom_nav {
+        .o_action_manager {
+            padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+        }
+        .o_craf_sotuv .cs-tabs {
+            display: none;
+        }
+    }
+}

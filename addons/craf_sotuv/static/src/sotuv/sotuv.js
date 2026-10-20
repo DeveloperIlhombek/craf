@@ -84,6 +84,10 @@ export class CrafSotuv extends Component {
             }
             if (this.state.tab === "load") {
                 await this.loadQueue();
+            } else if (this.state.tab === "sales") {
+                await this.loadSales();
+            } else if (this.state.tab === "stock") {
+                await this.loadStock();
             }
         });
         this._onBus = (payload) => this.onBusUpdate(payload);

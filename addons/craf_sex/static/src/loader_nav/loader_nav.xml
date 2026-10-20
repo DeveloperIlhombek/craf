@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_sex.LoaderNav">
+        <nav t-if="visible" class="o_craf_loader_nav" aria-label="Yuklovchi menyusi">
+            <t t-foreach="items" t-as="item" t-key="item.key">
+                <button type="button" class="o_craf_loader_nav_item"
+                        t-att-class="{ active: state.active === item.key }"
+                        t-att-aria-current="state.active === item.key ? 'page' : undefined"
+                        t-on-click="() => this.open(item)">
+                    <span class="o_craf_loader_nav_icon">
+                        <i t-att-class="'fa ' + item.icon"/>
+                        <span t-if="state.counts[item.key]" class="o_craf_loader_nav_badge" t-esc="state.counts[item.key]"/>
+                    </span>
+                    <span class="o_craf_loader_nav_label" t-esc="item.label"/>
+                </button>
+            </t>
+        </nav>
+    </t>
+</templates>
