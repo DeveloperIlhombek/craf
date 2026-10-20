@@ -1,6 +1,6 @@
 {
     "name": "Craf: sexlar (Press, Kimyo, Bo'yash) va rollar",
-    "version": "19.0.1.6.0",
+    "version": "19.0.1.7.0",
     "summary": "Press, kimyoviy ishlov, bo'yash va qadoqlash — telefon uchun sahifa; direktor, omborchi, sex ishchisi rollari",
     "description": """
 Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
@@ -27,6 +27,7 @@ Sahifalar rol bo'yicha:
 - Inventarizatsiya soddalashtirilgan: umumiy ko'rinishda faqat ombor operatsiyalari; Fizik inventarizatsiya,
   Chiqindi, To'ldirish, umumiy Mahsulotlar, baholash va tahlil hisobotlari, saqlash/joylash qoidalari —
   faqat texnik (debug) rejimda
+- Muhokama (Discuss) ilovasi va tepadagi chat belgisi yashirilgan (texnik rejimda ilova ochiladi)
 """,
     "author": "Craf",
     "category": "Manufacturing",
@@ -50,6 +51,7 @@ Sahifalar rol bo'yicha:
             "craf_sex/static/src/loader_nav/loader_nav.scss",
             "craf_sex/static/src/loader_nav/loader_nav.js",
             "craf_sex/static/src/loader_nav/loader_nav.xml",
+            "craf_sex/static/src/no_discuss.js",
         ],
     },
     "installable": True,

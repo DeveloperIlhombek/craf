@@ -51,6 +51,11 @@
     <record id="hr.menu_hr_root" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('hr.group_hr_user'), ref('craf_sex.group_craf_director'), ref('base.group_system')])]"/>
     </record>
+    <!-- Muhokama (Discuss) ilovasi ishlatilmaydi: faqat texnik (debug) rejimda; tepadagi chat belgisi ham yashirilgan
+         (static/src/no_discuss.js). Sotuv xabarlari bus orqali keladi — Muhokamaga bog'liq emas. -->
+    <record id="mail.menu_root_discuss" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('base.group_no_one')])]"/>
+    </record>
     <record id="base.menu_management" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('base.group_system')])]"/>
     </record>
