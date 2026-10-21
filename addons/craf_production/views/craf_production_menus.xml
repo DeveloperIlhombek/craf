@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_production" name="Sexlar" parent="mrp.menu_mrp_root" sequence="12"/>
+    <!-- Ishlab chiqarish ilovasida har sex — alohida bo'lim (umumiy «Sexlar» o'rniga).
+         Bo'lim sahifalari shu menyularga o'z modulida qo'shiladi. -->
+    <menuitem id="menu_craf_bolim_litey" name="Liteyka" parent="mrp.menu_mrp_root" sequence="11"/>
+    <menuitem id="menu_craf_bolim_press" name="Press" parent="mrp.menu_mrp_root" sequence="12"/>
+    <menuitem id="menu_craf_bolim_boyash" name="Bo'yash va qadoqlash" parent="mrp.menu_mrp_root" sequence="13"/>
+
+    <menuitem id="menu_craf_bolim_litey_settings" name="Sozlamalar" parent="menu_craf_bolim_litey"
+              action="action_craf_bolim_litey" sequence="90" groups="mrp.group_mrp_manager"/>
+    <menuitem id="menu_craf_bolim_press_settings" name="Sozlamalar" parent="menu_craf_bolim_press"
+              action="action_craf_bolim_press" sequence="90" groups="mrp.group_mrp_manager"/>
+    <menuitem id="menu_craf_bolim_boyash_settings" name="Sozlamalar" parent="menu_craf_bolim_boyash"
+              action="action_craf_bolim_boyash" sequence="90" groups="mrp.group_mrp_manager"/>
+
     <!-- Uskunalar — Ishlab chiqarish → Sozlamalar; xodimlar — Odoo «Xodimlar» ilovasida -->
     <menuitem id="menu_craf_equipment" name="Uskunalar" parent="mrp.menu_mrp_configuration"
               action="action_craf_equipment" sequence="40"/>
+    <menuitem id="menu_craf_bolim_all" name="Bo'limlar (mas'ullar, Telegram)" parent="mrp.menu_mrp_configuration"
+              action="action_craf_bolim" sequence="41" groups="mrp.group_mrp_manager"/>
 </odoo>

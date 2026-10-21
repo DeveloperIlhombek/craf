@@ -1,6 +1,6 @@
 {
     "name": "Craf Литейка: daftar va hisobot",
-    "version": "19.0.1.2.0",
+    "version": "19.0.1.3.0",
     "summary": "Plavka daftar ko'rinishida, Литейка qoldig'i → sarf → stalba → otxod sikli, Excel eksport va import",
     "description": """
 Литейка (pech) ishini ishchilar daftari va Excel jadvaliga moslash:
@@ -18,6 +18,9 @@
 - Telefon birinchi (mobile first) sahifa: Qoldiq / Kunlik / Hujjatlar varaqlari
 - Materiallar: yaratish, tahrirlash, o'chirish yoki ro'yxatdan chiqarish, qaytarish
 - Hujjatlar: kirim, ko'chirish, sanash (SN-…, inventarizatsiya), qaytarish; barcha hujjatlar jurnali
+- Xom-ashyo varag'i (Liteyka → Xom-ashyo qoldig'i va prognoz; Inventarizatsiyada ham): qoldiq, minimal qoldiq,
+  oxirgi 30 kun o'rtacha sarfi bo'yicha necha kunga yetishi; minimaldan kamaysa mas'ullarga Odoo eslatmasi
+- Kirim-chiqim, plavka, sanash va materiallarni faqat ombor mudiri (Omborchi) va Direktor yozadi
 - O'tgan kungi plavka va kirim ombor harakatlari hujjat sanasiga yoziladi; sanashdan oldingi sanaga
   yozish to'xtatiladi (ikki marta hisoblanmasin)
 """,
@@ -29,6 +32,7 @@
         "security/ir.model.access.csv",
         "data/craf_litey_data.xml",
         "data/craf_litey_count_data.xml",
+        "data/craf_litey_prognoz_data.xml",
         "views/craf_foundry_melt_views.xml",
         "views/product_views.xml",
         "views/stock_picking_views.xml",

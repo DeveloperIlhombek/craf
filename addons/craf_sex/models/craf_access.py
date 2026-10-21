@@ -18,8 +18,9 @@ PAGES = {
     "craf.kunlik.hisobot": ("Kunlik hisobot", (OMBORCHI, SELLER, ADMIN), [
         "get_data", "action_mark_c1", "get_sales_rows", "get_calc_products",
         "calc_set_unit", "calc_to_melt", "calc_to_paint"]),
-    "craf.litey.hisobot": ("Литейка", (WORKER, ADMIN), [
-        "get_data", "documents", "document_detail", "document_action", "form_options",
+    # Liteyka: ombor mudiri yozadi (sex ishchilari dasturdan foydalanmaydi); sotuvchi xom-ashyo qoldig'ini ko'radi
+    "craf.litey.hisobot": ("Литейка", (OMBORCHI, SELLER, ADMIN), [
+        "get_data", "get_forecast", "set_min_qty", "documents", "document_detail", "document_action", "form_options",
         "create_receipt", "create_transfer", "count_load", "count_save",
         "material_detail", "material_get", "material_hidden", "material_options",
         "material_remove", "material_restore", "material_save",
@@ -29,6 +30,16 @@ PAGES = {
         "press_load", "press_options", "press_save", "chem_load", "chem_options", "chem_save",
         "paint_load", "paint_options", "paint_save"]),
 }
+
+
+class CrafLiteyEditor(models.AbstractModel):
+    _inherit = "craf.litey.hisobot"
+
+    @api.model
+    def _is_editor(self):
+        """Liteyka kirim-chiqimini faqat Omborchi (ombor mudiri) va Direktor yozadi."""
+        user = self.env.user
+        return user.has_group(OMBORCHI) or user.has_group(ADMIN)
 
 
 def craf_check_page(env, model_name):

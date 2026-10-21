@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="bolim_litey" model="craf.bolim">
+            <field name="name">Liteyka</field>
+            <field name="code">litey</field>
+            <field name="sequence">1</field>
+        </record>
+        <record id="bolim_press" model="craf.bolim">
+            <field name="name">Press</field>
+            <field name="code">press</field>
+            <field name="sequence">2</field>
+        </record>
+        <record id="bolim_boyash" model="craf.bolim">
+            <field name="name">Bo'yash va qadoqlash</field>
+            <field name="code">boyash</field>
+            <field name="sequence">3</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_bolim_user,craf.bolim user,model_craf_bolim,base.group_user,1,0,0,0
+access_craf_bolim_manager,craf.bolim manager,model_craf_bolim,mrp.group_mrp_manager,1,1,0,0
+access_craf_bolim_contact_user,craf.bolim.contact user,model_craf_bolim_contact,base.group_user,1,0,0,0
+access_craf_bolim_contact_manager,craf.bolim.contact manager,model_craf_bolim_contact,mrp.group_mrp_manager,1,1,1,1

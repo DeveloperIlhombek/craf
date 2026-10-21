@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_foundry_melt" name="Plavkalar" parent="craf_production.menu_craf_production"
-              action="action_craf_foundry_melt" sequence="10"/>
+    <menuitem id="menu_craf_foundry_melt" name="Plavkalar" parent="craf_production.menu_craf_bolim_litey"
+              action="action_craf_foundry_melt" sequence="20"/>
     <!-- Shixta retseptlari — Odoo ning o'z «Materiallar ro'yxati» (BoM) menyusida -->
 </odoo>

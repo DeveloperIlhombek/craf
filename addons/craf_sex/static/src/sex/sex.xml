@@ -6,7 +6,7 @@
         <div class="o_action o_craf_litey o_craf_sex" t-att-class="{ 'cl-busy': state.busy or state.loading }">
             <header class="cl-top">
                 <div class="cl-top-row">
-                    <h1 class="cl-title">Sexlar</h1>
+                    <h1 class="cl-title" t-esc="pageTitle"/>
                     <div class="cl-top-actions" t-if="state.data">
                         <div class="cl-period-group">
                             <button class="cl-icon-btn d-none d-sm-inline-flex" t-on-click="() => this.shift(-1)" aria-label="Oldingi davr"><i class="fa fa-chevron-left"/></button>
@@ -17,8 +17,8 @@
                         <button class="cl-icon-btn" t-on-click="openMenu" aria-label="Boshqa amallar"><i class="fa fa-ellipsis-v"/></button>
                     </div>
                 </div>
-                <div class="sx-stages" role="tablist" aria-label="Sex" t-if="state.data">
-                    <button t-foreach="state.data.stages" t-as="st" t-key="st.key" role="tab"
+                <div class="sx-stages" role="tablist" aria-label="Sex" t-if="state.data and visibleStages.length &gt; 1">
+                    <button t-foreach="visibleStages" t-as="st" t-key="st.key" role="tab"
                             t-att-aria-selected="state.stage === st.key ? 'true' : 'false'"
                             t-att-class="{ active: state.stage === st.key }" t-on-click="() => this.setStage(st.key)">
                         <t t-esc="st.label"/><span class="sx-stage-count" t-if="st.drafts" t-esc="st.drafts" t-att-title="st.drafts + ' ta qoralama'"/>

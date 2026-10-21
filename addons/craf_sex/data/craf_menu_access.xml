@@ -60,9 +60,20 @@
         <field name="group_ids" eval="[Command.set([ref('base.group_system')])]"/>
     </record>
 
-    <!-- Ishlab chiqarish → Sexlar: sex ishchisi (omborchi va direktor ham) -->
-    <record id="craf_production.menu_craf_production" model="ir.ui.menu">
+    <!-- Ishlab chiqarish → Liteyka: faqat ombor mudiri (omborchi) va direktor — plavka va kirim-chiqimni ular yozadi -->
+    <record id="craf_production.menu_craf_bolim_litey" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('base.group_system')])]"/>
+    </record>
+    <!-- Ishlab chiqarish → Press, Bo'yash va qadoqlash: sex ishchisi (omborchi va direktor ham) -->
+    <record id="craf_production.menu_craf_bolim_press" model="ir.ui.menu">
         <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_worker'), ref('base.group_system')])]"/>
+    </record>
+    <record id="craf_production.menu_craf_bolim_boyash" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_worker'), ref('base.group_system')])]"/>
+    </record>
+    <!-- Inventarizatsiya → Liteyka xom-ashyosi: omborchi, sotuvchi va administrator -->
+    <record id="craf_litey.menu_craf_litey_prognoz_stock" model="ir.ui.menu">
+        <field name="group_ids" eval="[Command.set([ref('craf_sex.group_craf_accountant'), ref('craf_sotuv.group_craf_seller'), ref('base.group_system')])]"/>
     </record>
 
     <!-- mavjud foydalanuvchilarga rol bo'yicha bosh sahifa -->

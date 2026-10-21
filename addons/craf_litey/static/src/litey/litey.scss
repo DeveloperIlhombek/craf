@@ -121,9 +121,15 @@ $cl-molten: #c2540a;
         gap: 6px;
     }
     .cl-tabs {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: none;
+        &::-webkit-scrollbar {
+            display: none;
+        }
         > button {
+            flex: 1 0 auto;
+            padding: 0 8px;
             min-height: $cl-tap;
             border: 0;
             background: none;
@@ -455,6 +461,81 @@ $cl-molten: #c2540a;
         gap: 8px;
         font-size: 0.8rem;
         white-space: nowrap;
+    }
+    // ---------------------------------------------------------------- xom-ashyo (prognoz)
+    .cl-count-bad {
+        background-color: $cl-bad;
+    }
+    .cl-kpi-btn {
+        border-top: 0;
+        border-right: 0;
+        border-bottom: 0;
+        background: none;
+        text-align: left;
+        &.active {
+            background-color: rgba(127, 127, 127, 0.08);
+            box-shadow: inset 0 -3px 0 $primary;
+        }
+        &:focus-visible {
+            outline: 2px solid $primary;
+            outline-offset: -2px;
+        }
+    }
+    .cl-st {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        &.cl-st-bad {
+            color: #fff;
+            background-color: $cl-bad;
+        }
+        &.cl-st-warn {
+            color: #fff;
+            background-color: $cl-warn;
+        }
+        &.cl-st-ok {
+            color: $cl-ok;
+            background-color: rgba(18, 117, 58, 0.12);
+        }
+        &.cl-st-idle {
+            color: $cl-muted;
+            background-color: rgba(127, 127, 127, 0.14);
+        }
+    }
+    .cl-mat-right .cl-st {
+        margin-top: 2px;
+    }
+    .cl-st-bad-text {
+        color: $cl-bad;
+    }
+    .cl-st-warn-text {
+        color: $cl-warn;
+    }
+    .cl-fc-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1px;
+        margin-bottom: 16px;
+        border: 1px solid $cl-line;
+        border-radius: $cl-radius;
+        overflow: hidden;
+        background-color: $cl-line;
+        > div {
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px;
+            background-color: $o-view-background-color;
+        }
+        span {
+            font-size: 0.78rem;
+            color: $cl-muted;
+        }
+        b {
+            font-size: 1.05rem;
+        }
     }
     .cl-foot-links {
         display: flex;

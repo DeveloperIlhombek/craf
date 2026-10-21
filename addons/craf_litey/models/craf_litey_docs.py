@@ -106,13 +106,14 @@ class CrafLiteyHisobot(models.AbstractModel):
             "transfer_src_id": (self.env["craf.production.mixin"]._craf_loc("Xom-ashyo ombori")
                                 or self.env["craf.production.mixin"]._craf_loc("Chiqindi")).id or False,
             "partners": sorted({p.name for p in partners if p.name}),
-            "is_manager": self.env.user.has_group("stock.group_stock_manager"),
+            "is_manager": self._is_editor(),
         }
 
     # ------------------------------------------------------------------ kirim
     @api.model
     def create_receipt(self, vals):
         """vals: date, vehicle, partner_name, location_id, note, lines: [{product_id, text, price}]"""
+        self._check_editor()
         lines = []
         Product = self.env["product.product"]
         for row in vals.get("lines") or []:
@@ -154,6 +155,7 @@ class CrafLiteyHisobot(models.AbstractModel):
     @api.model
     def create_transfer(self, vals):
         """vals: date, location_id (qayerdan), location_dest_id (qayerga), note, lines: [{product_id, text}]"""
+        self._check_editor()
         Location = self.env["stock.location"]
         src = Location.browse(int(vals.get("location_id") or 0)).exists()
         dst = Location.browse(int(vals.get("location_dest_id") or 0)).exists()
@@ -261,12 +263,13 @@ class CrafLiteyHisobot(models.AbstractModel):
             "note": count.note or "", "rows": rows,
             "moment_label": self._local(moment) if moment else "hozirgi holat",
             "locations": [{"id": l.id, "name": l.name} for l in self._int_locations()],
-            "is_manager": self.env.user.has_group("stock.group_stock_manager"),
+            "is_manager": self._is_editor(),
         }
 
     @api.model
     def count_save(self, vals, confirm=False):
         """vals: id?, date, location_id, note, lines: [{product_id, text}] (bo'sh text — sanalmagan)."""
+        self._check_editor()
         Count = self.env["craf.litey.count"]
         count = Count.browse(int(vals["id"])).exists() if vals.get("id") else Count
         if vals.get("id") and not count:
@@ -310,7 +313,7 @@ class CrafLiteyHisobot(models.AbstractModel):
             count.write({"line_ids": commands})
         message = ""
         if confirm:
-            if self.env.user.has_group("stock.group_stock_manager"):
+            if self._is_editor():
                 count.action_done()
             else:
                 message = "Qoralama saqlandi. Qoldiqni tuzatishni rahbar tasdiqlaydi."
@@ -537,7 +540,7 @@ class CrafLiteyHisobot(models.AbstractModel):
             lines.append({"name": self._short(line.product_id), "qty": line.counted_qty, "uom": line.uom_name,
                           "system": line.system_qty if count.state == "done" else None,
                           "diff": line.diff_qty if count.state == "done" else None, "note": line.counted_text or ""})
-        manager = self.env.user.has_group("stock.group_stock_manager")
+        manager = self._is_editor()
         return {
             "kind": "sanash", "kind_label": "Sanash", "model": "craf.litey.count", "id": count.id, "name": count.name,
             "state": count.state, "state_label": COUNT_STATES.get(count.state, ""),
@@ -573,6 +576,7 @@ class CrafLiteyHisobot(models.AbstractModel):
     @api.model
     def document_action(self, model, res_id, action):
         """Hujjat ustida amal: cancel, draft, delete, done (sanash), return (kirim / ko'chirish)."""
+        self._check_editor()
         rec = self.env[model].browse(int(res_id)).exists()
         self._not_found(rec)
         name = rec.display_name

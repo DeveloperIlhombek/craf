@@ -148,7 +148,7 @@ class CrafLiteyImport(models.TransientModel):
     # ---------------------------------------------------------------- yozish
     def action_apply(self):
         self.ensure_one()
-        if not self.env.user.has_group("stock.group_stock_manager"):
+        if not self.env["craf.litey.hisobot"]._is_editor():
             raise UserError("Qoldiqni tuzatish uchun ombor menejeri huquqi kerak.")
         todo = self.line_ids.filtered(lambda l: l.apply and l.product_id and not l.skip)
         if not todo:

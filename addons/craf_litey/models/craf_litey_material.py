@@ -80,8 +80,7 @@ class CrafLiteyHisobot(models.AbstractModel):
         }
 
     def _check_manager(self):
-        if not self.env.user.has_group("stock.group_stock_manager"):
-            raise UserError("Materiallarni o'zgartirish uchun Inventarizatsiya menejeri (Administrator) huquqi kerak.")
+        self._check_editor()
 
     # ------------------------------------------------------------------ o'qish
     @api.model
@@ -198,7 +197,9 @@ class CrafLiteyHisobot(models.AbstractModel):
             "craf_min_qty": max(float(vals.get("min_qty") or 0.0), 0.0),
             "craf_litey_location_id": location.id or self._litey_location().id or False,
         }
-        Tmpl = self.env["product.template"].with_context(active_test=False)
+        # huquq _check_manager da tekshirildi (ombor mudiri); mahsulot kartochkasini yozish Inventarizatsiya
+        # mahsulot menejeri huquqini talab qiladi — shuning uchun sudo
+        Tmpl = self.env["product.template"].sudo().with_context(active_test=False)
         all_litey = Tmpl.search([("craf_litey_seq", ">", 0)])
         melt = bool(vals.get("melt"))
         if not product:
@@ -220,7 +221,7 @@ class CrafLiteyHisobot(models.AbstractModel):
             product = tmpl.product_variant_id
             tmpl.message_post(body="Литейка hisobotidan yaratildi (%s)." % KINDS[kind])
         else:
-            tmpl = product.product_tmpl_id
+            tmpl = product.product_tmpl_id.sudo()
             if uom != product.uom_id:
                 if self.env["stock.move"].search_count([("product_id", "=", product.id)], limit=1):
                     raise UserError("O'lchov birligini o'zgartirib bo'lmaydi: «%s» bo'yicha ombor harakatlari bor. "
@@ -250,14 +251,14 @@ class CrafLiteyHisobot(models.AbstractModel):
             raise UserError("Material topilmadi.")
         name = product.display_name
         if not self._has_history(product):
-            tmpl = product.product_tmpl_id
+            tmpl = product.product_tmpl_id.sudo()
             try:
                 with self.env.cr.savepoint():
                     tmpl.unlink()
                 return {"result": "deleted", "name": name}
             except Exception:  # noqa: BLE001 — boshqa modul bog'lagan bo'lsa, ro'yxatdan chiqaramiz
                 product = self.env["product.product"].with_context(active_test=False).browse(int(product_id))
-        product.product_tmpl_id.craf_litey_hidden = True
+        product.product_tmpl_id.sudo().craf_litey_hidden = True
         # qoralama plavkalardagi bo'sh qatorlari olib tashlanadi
         self.env["craf.foundry.melt.line"].search([
             ("product_id", "=", product.id), ("melt_id.state", "=", "draft"), ("qty", "<=", 0)]).unlink()
@@ -270,5 +271,5 @@ class CrafLiteyHisobot(models.AbstractModel):
         product = self.env["product.product"].with_context(active_test=False).browse(int(product_id)).exists()
         if not product:
             raise UserError("Material topilmadi.")
-        product.product_tmpl_id.write({"craf_litey_hidden": False, "active": True})
+        product.product_tmpl_id.sudo().write({"craf_litey_hidden": False, "active": True})
         return self.material_get(product.id)

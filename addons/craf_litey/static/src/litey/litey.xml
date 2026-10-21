@@ -21,6 +21,9 @@
                 </div>
                 <nav class="cl-tabs" role="tablist">
                     <button role="tab" t-att-aria-selected="state.tab === 'qoldiq' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'qoldiq' }" t-on-click="() => this.setTab('qoldiq')">Qoldiq</button>
+                    <button role="tab" t-att-aria-selected="state.tab === 'prognoz' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'prognoz' }" t-on-click="() => this.setTab('prognoz')">
+                        Xom-ashyo<span class="cl-count cl-count-bad" t-if="fcAlertCount" t-esc="fcAlertCount" title="Minimal qoldiqdan kam"/>
+                    </button>
                     <button role="tab" t-att-aria-selected="state.tab === 'kunlik' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'kunlik' }" t-on-click="() => this.setTab('kunlik')">Kunlik</button>
                     <button role="tab" t-att-aria-selected="state.tab === 'hujjat' ? 'true' : 'false'" t-att-class="{ active: state.tab === 'hujjat' }" t-on-click="() => this.setTab('hujjat')">
                         Hujjatlar<span class="cl-count" t-if="state.data and state.data.drafts_total" t-esc="state.data.drafts_total" title="Qoralama plavkalar"/>
@@ -40,6 +43,7 @@
                         <button class="btn btn-sm cl-banner-btn" t-if="state.tab !== 'hujjat' or !state.docDrafts" t-on-click="goStale">Ko'rish</button>
                     </div>
                     <t t-if="state.tab === 'qoldiq'" t-call="craf_litey.TabQoldiq"/>
+                    <t t-if="state.tab === 'prognoz'" t-call="craf_litey.TabPrognoz"/>
                     <t t-if="state.tab === 'kunlik'" t-call="craf_litey.TabKunlik"/>
                     <t t-if="state.tab === 'hujjat'" t-call="craf_litey.TabHujjat"/>
                 </t>
@@ -189,6 +193,131 @@
             <button class="btn btn-link cl-link" t-if="d.is_manager" t-on-click="() => this.openMaterialForm()"><i class="fa fa-plus"/> Yangi material</button>
             <button class="btn btn-link cl-link" t-on-click="openHidden">Ro'yxatdan chiqarilganlar</button>
         </div>
+    </t>
+
+    <!-- Xom-ashyo: minimal qoldiq va necha kunga yetishi -->
+    <t t-name="craf_litey.TabPrognoz">
+        <div class="cl-empty" t-if="!state.fc"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+        <t t-else="">
+            <t t-set="fc" t-value="state.fc"/>
+            <div class="cl-banner cl-banner-bad" t-if="fcAlertCount" role="alert">
+                <i class="fa fa-exclamation-triangle"/>
+                <div class="cl-banner-text">
+                    <b><t t-esc="fcAlertCount"/> ta material minimal qoldiqdan kam.</b>
+                    <t t-if="fc.contacts.length"> Eslatma: <t t-esc="fc.contacts.map((c) => c.name).join(', ')"/>.</t>
+                    <t t-else=""> Eslatma oladigan mas'ul shaxs belgilanmagan.</t>
+                </div>
+                <button class="btn btn-sm cl-banner-btn" t-if="state.fcFilter !== 'low'" t-on-click="() => state.fcFilter = 'low'">Ko'rish</button>
+            </div>
+            <div class="cl-kpis" aria-label="Xom-ashyo holati">
+                <button class="cl-kpi cl-kpi-btn" t-att-class="{ active: state.fcFilter === 'low' }" t-on-click="() => state.fcFilter = 'low'">
+                    <span class="cl-kpi-label">Minimaldan kam</span>
+                    <span class="cl-kpi-value" t-att-class="{ 'cl-bad': fcAlertCount }" t-esc="fcAlertCount"/>
+                </button>
+                <button class="cl-kpi cl-kpi-btn" t-att-class="{ active: state.fcFilter === 'soon' }" t-on-click="() => state.fcFilter = 'soon'">
+                    <span class="cl-kpi-label">Tez tugaydi</span>
+                    <span class="cl-kpi-value" t-att-class="{ 'cl-warn': fc.counts.soon }" t-esc="fc.counts.soon"/>
+                    <span class="cl-kpi-sub"><t t-esc="fc.warn_days"/> kun ichida</span>
+                </button>
+                <button class="cl-kpi cl-kpi-btn" t-att-class="{ active: state.fcFilter === 'ok' }" t-on-click="() => state.fcFilter = 'ok'">
+                    <span class="cl-kpi-label">Yetarli</span>
+                    <span class="cl-kpi-value cl-ok" t-esc="fc.counts.ok"/>
+                </button>
+                <button class="cl-kpi cl-kpi-btn" t-att-class="{ active: state.fcFilter === 'nomin' }" t-on-click="() => state.fcFilter = 'nomin'">
+                    <span class="cl-kpi-label">Minimal yozilmagan</span>
+                    <span class="cl-kpi-value cl-muted" t-esc="fc.rows.filter((r) => !r.min_qty).length"/>
+                </button>
+            </div>
+            <div class="cl-toolbar">
+                <div class="cl-search">
+                    <i class="fa fa-search"/>
+                    <input type="search" class="form-control" placeholder="Material yoki kod" t-model="state.q" aria-label="Materialni qidirish"/>
+                </div>
+                <div class="cl-chips" role="group" aria-label="Filtr">
+                    <button t-att-class="{ active: state.fcFilter === 'all' }" t-on-click="() => state.fcFilter = 'all'">Hammasi <span t-esc="fc.rows.length"/></button>
+                    <button class="cl-chip-warn" t-if="fcAlertCount" t-att-class="{ active: state.fcFilter === 'low' }" t-on-click="() => state.fcFilter = 'low'">Kam qolgan <span t-esc="fcAlertCount"/></button>
+                    <button t-if="fc.counts.soon" t-att-class="{ active: state.fcFilter === 'soon' }" t-on-click="() => state.fcFilter = 'soon'">Tez tugaydi <span t-esc="fc.counts.soon"/></button>
+                    <button t-att-class="{ active: state.fcFilter === 'metal' }" t-on-click="() => state.fcFilter = 'metal'">Metall</button>
+                    <button t-att-class="{ active: state.fcFilter === 'aux' }" t-on-click="() => state.fcFilter = 'aux'">Qo'shimcha</button>
+                </div>
+                <button class="btn btn-outline-secondary d-none d-lg-inline-flex" t-if="fc.can_settings" t-on-click="openBolimSettings"><i class="fa fa-cog"/> Mas'ullar</button>
+            </div>
+            <p class="cl-note">
+                Qoldiq — hozir, zavod bo'yicha (barcha joylar). O'rtacha sarf — oxirgi <t t-esc="fc.period"/> kun
+                (<t t-esc="dmy(fc.date_from)"/> – <t t-esc="dmy(fc.today)"/>) dagi plavka va boshqa sarf ÷ <t t-esc="fc.period"/>.
+                <t t-if="fc.is_manager">Minimal qoldiqni yozish uchun materialni bosing.</t>
+            </p>
+
+            <div class="cl-empty" t-if="!fcRows.length">
+                <i class="fa fa-cube"/>
+                <div>Material topilmadi.</div>
+                <button class="btn btn-link" t-if="state.q or state.fcFilter !== 'all'" t-on-click="() => { state.q = ''; state.fcFilter = 'all'; }">Filtrni tozalash</button>
+            </div>
+
+            <!-- telefon va planshet -->
+            <div class="cl-list d-lg-none" t-if="fcRows.length">
+                <button t-foreach="fcRows" t-as="r" t-key="r.product_id" class="cl-mat"
+                        t-att-class="{ 'cl-is-low': r.status === 'soon', 'cl-is-neg': r.status === 'neg' or r.status === 'low' }"
+                        t-on-click="() => this.openForecast(r)">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name" t-esc="r.name"/>
+                        <span class="cl-mat-meta">
+                            <t t-if="r.avg">~<t t-esc="num(r.avg)"/> <t t-esc="r.uom"/>/kun</t><t t-else="">sarf yo'q</t>
+                            · min <t t-if="r.min_qty" t-esc="num(r.min_qty, 0)"/><t t-else="">—</t>
+                        </span>
+                        <span class="cl-gauge" t-if="fcLevel(r) !== null"><span t-att-style="'width:' + fcLevel(r) + '%'"/></span>
+                    </span>
+                    <span class="cl-mat-right">
+                        <span class="cl-qty" t-att-class="{ 'cl-zero': Math.abs(r.qty) &lt; 0.0005 }"><t t-esc="num(r.qty)"/><small> <t t-esc="r.uom"/></small></span>
+                        <span class="cl-st" t-att-class="fcStatus(r).cls"
+                              t-esc="r.days_left !== null and r.status !== 'idle' ? fcDays(r.days_left) : fcStatus(r).label"/>
+                    </span>
+                </button>
+            </div>
+
+            <!-- kompyuter -->
+            <div class="cl-panel d-none d-lg-block" t-if="fcRows.length">
+                <table class="table table-hover mb-0 cl-table">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th class="text-end">Qoldiq</th>
+                            <th class="text-end">Minimal</th>
+                            <th class="text-end"><t t-esc="fc.period"/> kun sarfi</th>
+                            <th class="text-end">O'rtacha / kun</th>
+                            <th class="text-end" title="Qoldiq tugaguncha">Yetadi</th>
+                            <th class="text-end" title="Minimal qoldiqqa tushguncha">Minimalgacha</th>
+                            <th class="text-end">Tugash sanasi</th>
+                            <th>Holat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="fcRows" t-as="r" t-key="r.product_id" role="button" tabindex="0"
+                            t-att-class="{ 'cl-is-low': r.status === 'soon', 'cl-is-neg': r.status === 'neg' or r.status === 'low' }"
+                            t-on-click="() => this.openForecast(r)" t-on-keydown="(ev) => ev.key === 'Enter' and this.openForecast(r)">
+                            <td>
+                                <div class="cl-tname"><t t-esc="r.name"/> <span class="cl-muted">(<t t-esc="r.uom"/>)</span></div>
+                                <div class="cl-tcode"><t t-esc="r.code"/><t t-if="r.kind === 'aux'">, qo'shimcha</t></div>
+                            </td>
+                            <td class="text-end fw-bold" t-esc="fmt(r.qty)"/>
+                            <td class="text-end">
+                                <t t-if="r.min_qty" t-esc="fmt(r.min_qty, 0)"/>
+                                <span t-else="" class="cl-muted">—</span>
+                            </td>
+                            <td class="text-end cl-out" t-esc="fmt(r.used)"/>
+                            <td class="text-end" t-esc="fmt(r.avg)"/>
+                            <td class="text-end" t-esc="fcDays(r.days_left)"/>
+                            <td class="text-end" t-esc="r.min_qty ? fcDays(r.days_to_min) : '—'"/>
+                            <td class="text-end" t-esc="r.end_date ? dmy(r.end_date) : '—'"/>
+                            <td><span class="cl-st" t-att-class="fcStatus(r).cls" t-esc="fcStatus(r).label"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cl-foot-links">
+                <button class="btn btn-link cl-link" t-if="fc.can_settings" t-on-click="openBolimSettings"><i class="fa fa-cog"/> Mas'ul shaxslar va Telegram ID</button>
+            </div>
+        </t>
     </t>
 
     <!-- Kunlik -->
@@ -348,6 +477,7 @@
                 <t t-elif="s.type === 'transfer'" t-call="craf_litey.SheetTransfer"/>
                 <t t-elif="s.type === 'count'" t-call="craf_litey.SheetCount"/>
                 <t t-elif="s.type === 'doc'" t-call="craf_litey.SheetDoc"/>
+                <t t-elif="s.type === 'minqty'" t-call="craf_litey.SheetMinQty"/>
                 <div class="cl-sheet-error" t-if="s.error" role="alert">
                     <i class="fa fa-exclamation-circle"/>
                     <div class="cl-sheet-error-text" t-esc="s.error"/>
@@ -427,7 +557,40 @@
             <button t-on-click="openMelts"><i class="fa fa-list"/> Plavkalar ro'yxati</button>
             <button t-on-click="openCounts"><i class="fa fa-check-square-o"/> Sanash hujjatlari</button>
             <button t-on-click="openProducts"><i class="fa fa-cubes"/> Inventarizatsiya: Литейка materiallari</button>
+            <button t-if="state.fc and state.fc.can_settings" t-on-click="openBolimSettings"><i class="fa fa-cog"/> Liteyka sozlamalari (mas'ullar, Telegram)</button>
             <button t-on-click="menuRefresh"><i class="fa fa-refresh"/> Yangilash</button>
+        </div>
+    </t>
+
+    <!-- xom-ashyo: prognoz va minimal qoldiq -->
+    <t t-name="craf_litey.SheetMinQty">
+        <t t-set="r" t-value="s.r"/>
+        <t t-call="craf_litey.SheetHead">
+            <t t-set="title" t-value="r.name"/>
+            <t t-set="sub" t-value="r.code + ' — ' + fcStatus(r).label"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-fc-grid">
+                <div><span>Qoldiq</span><b><t t-esc="num(r.qty)"/> <t t-esc="r.uom"/></b></div>
+                <div><span><t t-esc="state.fc.period"/> kun sarfi</span><b><t t-esc="num(r.used)"/> <t t-esc="r.uom"/></b></div>
+                <div><span>O'rtacha / kun</span><b><t t-esc="num(r.avg)"/> <t t-esc="r.uom"/></b></div>
+                <div><span>Sarf bo'lgan kunlar</span><b><t t-esc="r.active_days"/></b></div>
+                <div><span>Yetadi</span><b t-att-class="fcStatus(r).cls + '-text'"><t t-esc="fcDays(r.days_left)"/></b></div>
+                <div><span>Tugash sanasi</span><b><t t-esc="r.end_date ? dmy(r.end_date) : '—'"/></b></div>
+                <div t-if="r.min_qty"><span>Minimalgacha</span><b><t t-esc="fcDays(r.days_to_min)"/></b></div>
+                <div t-if="r.min_date"><span>Minimalga tushadi</span><b><t t-esc="dmy(r.min_date)"/></b></div>
+            </div>
+            <label class="cl-field" t-if="state.fc.is_manager">
+                <span>Minimal qoldiq (<t t-esc="r.uom"/>)</span>
+                <input type="text" inputmode="decimal" class="form-control" t-model="s.value" placeholder="masalan 5000"
+                       t-on-keydown="(ev) => ev.key === 'Enter' and this.saveMinQty()"/>
+                <small class="cl-muted">Qoldiq shundan kamaysa, bo'lim mas'ullariga eslatma boradi. 0 — kuzatilmaydi.</small>
+            </label>
+            <p class="cl-muted mb-0" t-else="">Minimal qoldiq: <t t-esc="r.min_qty ? num(r.min_qty, 0) + ' ' + r.uom : 'yozilmagan'"/>. O'zgartirishni ombor mudiri qiladi.</p>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-outline-secondary" t-on-click="() => this.forecastMaterial(r)">Batafsil</button>
+            <button class="btn btn-primary cl-btn-lg" t-if="state.fc.is_manager" t-on-click="saveMinQty" t-att-disabled="state.busy">Saqlash</button>
         </div>
     </t>
 

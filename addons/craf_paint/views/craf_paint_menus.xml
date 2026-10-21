@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_paint_batch" name="Bo'yash smenalari" parent="craf_production.menu_craf_production"
+    <menuitem id="menu_craf_paint_batch" name="Bo'yash smenalari" parent="craf_production.menu_craf_bolim_boyash"
               action="action_craf_paint_batch" sequence="30"/>
 </odoo>

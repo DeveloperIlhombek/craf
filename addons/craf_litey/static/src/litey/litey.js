@@ -1,5 +1,5 @@
 // Craf → Литейка: telefon birinchi (mobile first) sahifa.
-// Varaqlar: Qoldiq (materiallar, CRUD) · Kunlik (Excel Лист1) · Hujjatlar (plavka, kirim, ko'chirish, sanash, tuzatish).
+// Varaqlar: Qoldiq (materiallar, CRUD) · Xom-ashyo (minimal qoldiq, necha kunga yetadi) · Kunlik (Excel Лист1) · Hujjatlar (plavka, kirim, ko'chirish, sanash, tuzatish).
 // Hamma yangi hujjat va material pastdan chiquvchi varaqda (sheet) yoziladi; kompyuterda varaq markazda ochiladi.
 import { Component, onWillStart, onWillUnmount, useState } from "@odoo/owl";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
@@ -19,6 +19,14 @@ const KIND_ICON = {
 };
 const MOVE_KINDS = ["kirim", "chiqish_plavka", "chiqish_boshqa", "sarf_plavka", "sarf_boshqa", "tuzatish", "boshqa"];
 const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
+const TABS = ["qoldiq", "prognoz", "kunlik", "hujjat"];
+const FC_STATUS = {
+    neg: { label: "Manfiy", cls: "cl-st-bad" },
+    low: { label: "Minimaldan kam", cls: "cl-st-bad" },
+    soon: { label: "Tez tugaydi", cls: "cl-st-warn" },
+    ok: { label: "Yetarli", cls: "cl-st-ok" },
+    idle: { label: "Sarf yo'q", cls: "cl-st-idle" },
+};
 
 function addDays(iso, n) {
     const d = new Date(iso + "T00:00:00Z");
@@ -70,6 +78,8 @@ export class CrafLitey extends Component {
             docView: "list",
             sheet: null,
             busy: false,
+            fc: null, // xom-ashyo prognozi (get_forecast)
+            fcFilter: "all",
         });
         this.onKey = (ev) => {
             if (ev.key === "Escape" && this.state.sheet && !this.state.busy) {
@@ -80,7 +90,7 @@ export class CrafLitey extends Component {
         onWillUnmount(() => window.removeEventListener("keydown", this.onKey));
         onWillStart(async () => {
             const ctx = (this.props.action && this.props.action.context) || {};
-            if (["qoldiq", "kunlik", "hujjat"].includes(ctx.craf_tab)) {
+            if (TABS.includes(ctx.craf_tab)) {
                 this.state.tab = ctx.craf_tab;
             }
             await this.load();
@@ -101,12 +111,13 @@ export class CrafLitey extends Component {
                 this.state.day = data.date_to;
             }
             this.state.docs = null;
-            if (this.state.tab === "hujjat") {
-                await this.loadDocs();
-            }
+            await Promise.all([this.state.tab === "hujjat" ? this.loadDocs() : null, this.loadForecast()]);
         } finally {
             this.state.loading = false;
         }
+    }
+    async loadForecast() {
+        this.state.fc = await this.orm.call(API, "get_forecast", []);
     }
     async loadDocs() {
         this.state.docs = await this.orm.call(API, "documents", [this.state.from, this.state.to]);
@@ -267,6 +278,82 @@ export class CrafLitey extends Component {
         this.state.docDrafts = true;
         this.state.docKind = "plavka";
         this.setTab("hujjat");
+    }
+
+    // ================================================================ Xom-ashyo (prognoz)
+    get fcRows() {
+        const fc = this.state.fc;
+        if (!fc) {
+            return [];
+        }
+        const filter = this.state.fcFilter;
+        const words = this.state.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        return fc.rows.filter((r) => {
+            if (filter === "low" && !["low", "neg"].includes(r.status)) {
+                return false;
+            }
+            if ((filter === "soon" || filter === "ok") && r.status !== filter) {
+                return false;
+            }
+            if ((filter === "metal" || filter === "aux") && r.kind !== filter) {
+                return false;
+            }
+            if (filter === "nomin" && r.min_qty) {
+                return false;
+            }
+            const hay = `${r.name} ${r.full_name} ${r.code}`.toLowerCase();
+            return words.every((w) => hay.includes(w));
+        });
+    }
+    get fcAlertCount() {
+        const c = this.state.fc && this.state.fc.counts;
+        return c ? c.low + c.neg : 0;
+    }
+    fcStatus(r) {
+        return FC_STATUS[r.status] || FC_STATUS.idle;
+    }
+    fcDays(value) {
+        if (value === null || value === undefined) {
+            return "—";
+        }
+        if (value >= 365) {
+            return "1 yildan ko'p";
+        }
+        return `${this.num(value, value < 10 ? 1 : 0)} kun`;
+    }
+    fcLevel(r) {
+        // minimal qoldiqning 3 barobari = to'la; minimal yo'q bo'lsa — 60 kunlik sarf = to'la
+        const full = r.min_qty ? r.min_qty * 3 : r.avg * 60;
+        if (!full) {
+            return null;
+        }
+        return Math.max(0, Math.min(100, (r.qty / full) * 100));
+    }
+    openForecast(r) {
+        this.openSheet({ type: "minqty", r, value: r.min_qty ? String(r.min_qty) : "" });
+    }
+    async saveMinQty() {
+        const s = this.state.sheet;
+        await this.run(async () => {
+            this.state.fc = await this.orm.call(API, "set_min_qty", [s.r.product_id, s.value || 0]);
+            const row = this.state.data.movement.find((m) => m.product_id === s.r.product_id);
+            if (row) {
+                row.min_qty = parseFloat(String(s.value || 0).replace(",", ".")) || 0;
+                row.low = Boolean(row.min_qty) && row.closing < row.min_qty;
+            }
+            this.closeSheet();
+            this.notification.add(`${s.r.name}: minimal qoldiq saqlandi.`, { type: "success" });
+        });
+    }
+    forecastMaterial(r) {
+        const row = this.state.data.movement.find((m) => m.product_id === r.product_id);
+        if (row) {
+            this.openMaterial(row);
+        }
+    }
+    openBolimSettings() {
+        this.closeSheet();
+        this.actionService.doAction("craf_production.action_craf_bolim_litey", { onClose: () => this.refresh() });
     }
 
     // ================================================================ Kunlik varag'i

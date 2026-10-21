@@ -39,6 +39,18 @@ class CrafLiteyHisobot(models.AbstractModel):
         return products.sorted(lambda p: (p.craf_litey_seq, p.default_code or ""))
 
     @api.model
+    def _is_editor(self):
+        """Liteyka kirim-chiqimi, plavka, sanash va materiallarni yozuvchi (ombor mudiri).
+
+        craf_sex da: faqat Omborchi va Direktor (sotuvchida ombor huquqi bo'lsa ham — faqat ko'radi)."""
+        return self._is_editor()
+
+    @api.model
+    def _check_editor(self):
+        if not self._is_editor():
+            raise UserError("Liteyka kirim-chiqimini faqat ombor mudiri (Omborchi) yoki Direktor yozadi.")
+
+    @api.model
     def _litey_location(self):
         return self.env["craf.production.mixin"]._craf_loc("Литейка")
 
@@ -363,7 +375,7 @@ class CrafLiteyHisobot(models.AbstractModel):
             "receipt_total": round(sum(r["amount"] for r in receipts), 2),
             "drafts_total": Melt.search_count([("state", "=", "draft")]),
             "count_drafts": self.env["craf.litey.count"].search_count([("state", "=", "draft")]),
-            "is_manager": self.env.user.has_group("stock.group_stock_manager"),
+            "is_manager": self._is_editor(),
             **self._count_info(),
         }
 

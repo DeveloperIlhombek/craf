@@ -10,6 +10,9 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_servic
 const API = "craf.sex";
 const STAGE_KEY = "craf_sex_stage";
 const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
+// Ishlab chiqarish bo'limi (menyudan ochilganda): qaysi sexlar ko'rinadi
+const BOLIM_STAGES = { press: ["press"], boyash: ["kimyo", "boyash"] };
+const BOLIM_TITLE = { press: "Press", boyash: "Bo'yash va qadoqlash" };
 const STAGE_MODEL = { press: "craf.extrusion.shift", kimyo: "craf.chem.treatment", boyash: "craf.paint.batch" };
 
 function addDays(iso, n) {
@@ -44,6 +47,8 @@ export class CrafSex extends Component {
         this.dialog = useService("dialog");
         this.notification = useService("notification");
         this.opts = {};
+        const actx = (this.props.action && this.props.action.context) || {};
+        this.bolim = BOLIM_STAGES[actx.craf_bolim] ? actx.craf_bolim : null;
         this.state = useState({
             data: null,
             loading: true,
@@ -154,6 +159,13 @@ export class CrafSex extends Component {
             return from === data.today ? "Bugun" : dmy(from);
         }
         return `${dm(from)} – ${dm(to)}`;
+    }
+    get pageTitle() {
+        return this.bolim ? BOLIM_TITLE[this.bolim] : "Sexlar";
+    }
+    get visibleStages() {
+        const stages = (this.state.data && this.state.data.stages) || [];
+        return this.bolim ? stages.filter((st) => BOLIM_STAGES[this.bolim].includes(st.key)) : stages;
     }
     get stageTitle() {
         return { press: "Press", kimyo: "Kimyoviy ishlov", boyash: "Bo'yash va qadoqlash" }[this.state.stage] || "Sexlar";

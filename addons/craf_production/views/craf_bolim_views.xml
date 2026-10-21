@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_craf_bolim_form" model="ir.ui.view">
+        <field name="name">craf.bolim.form</field>
+        <field name="model">craf.bolim</field>
+        <field name="arch" type="xml">
+            <form string="Bo'lim sozlamalari" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Xom-ashyo prognozi">
+                            <field name="forecast_days"/>
+                            <field name="warn_days"/>
+                        </group>
+                        <group string="Eslatmalar">
+                            <field name="notify_app"/>
+                            <field name="code" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Mas'ul shaxslar" name="contacts">
+                            <field name="contact_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="role"/>
+                                    <field name="user_id" options="{'no_create': True}"/>
+                                    <field name="telegram_id"/>
+                                    <field name="phone" optional="hide"/>
+                                    <field name="notify_min_qty"/>
+                                    <field name="notify_daily"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                            <div class="text-muted small mt-2">
+                                «Odoo foydalanuvchisi» tanlangan shaxs dasturda eslatma oladi (tepadagi soat belgisi).
+                                Telegram ID — umumiy botga /start bosgandan keyin bot ko'rsatadigan raqam; Telegram xabarlari keyingi bosqichda ulanadi.
+                            </div>
+                        </page>
+                        <page string="Izoh" name="note">
+                            <field name="note" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_craf_bolim_list" model="ir.ui.view">
+        <field name="name">craf.bolim.list</field>
+        <field name="model">craf.bolim</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="forecast_days"/>
+                <field name="warn_days"/>
+                <field name="contact_ids" widget="many2many_tags" string="Mas'ullar"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_craf_bolim" model="ir.actions.act_window">
+        <field name="name">Bo'limlar sozlamalari</field>
+        <field name="res_model">craf.bolim</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- har bo'lim menyusidagi «Sozlamalar» — o'sha bo'limning yozuvi -->
+    <record id="action_craf_bolim_litey" model="ir.actions.act_window">
+        <field name="name">Liteyka sozlamalari</field>
+        <field name="res_model">craf.bolim</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="bolim_litey"/>
+    </record>
+    <record id="action_craf_bolim_press" model="ir.actions.act_window">
+        <field name="name">Press sozlamalari</field>
+        <field name="res_model">craf.bolim</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="bolim_press"/>
+    </record>
+    <record id="action_craf_bolim_boyash" model="ir.actions.act_window">
+        <field name="name">Bo'yash va qadoqlash sozlamalari</field>
+        <field name="res_model">craf.bolim</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="bolim_boyash"/>
+    </record>
+</odoo>

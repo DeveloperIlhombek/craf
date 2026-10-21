@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_chem_treatment" name="Kimyoviy ishlov" parent="craf_production.menu_craf_production"
-              action="action_craf_chem_treatment" sequence="25"/>
-    <menuitem id="menu_craf_basket" name="Korzinkalar" parent="craf_production.menu_craf_production"
-              action="action_craf_basket" sequence="22"/>
-    <menuitem id="menu_craf_basket_load" name="Korzinka yuklari" parent="craf_production.menu_craf_production"
-              action="action_craf_basket_load" sequence="23"/>
+    <menuitem id="menu_craf_chem_treatment" name="Kimyoviy ishlov" parent="craf_production.menu_craf_bolim_boyash"
+              action="action_craf_chem_treatment" sequence="10"/>
+    <menuitem id="menu_craf_basket" name="Korzinkalar" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_basket" sequence="40"/>
+    <menuitem id="menu_craf_basket_load" name="Korzinka yuklari" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_basket_load" sequence="41"/>
 </odoo>

@@ -80,7 +80,7 @@ class CrafLiteyCount(models.Model):
         self.ensure_one()
         if self.state != "draft":
             raise UserError("%s allaqachon %s." % (self.name, dict(COUNT_STATES)[self.state].lower()))
-        if not self.env.user.has_group("stock.group_stock_manager"):
+        if not self.env["craf.litey.hisobot"]._is_editor():
             raise UserError("Sanash qoralama sifatida saqlandi. Qoldiqni tuzatish (tasdiqlash) uchun Inventarizatsiya "
                             "menejeri huquqi kerak — rahbar tasdiqlaydi.")
         lines = self.line_ids.filtered("counted")
