@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_craf_telegram_log_list" model="ir.ui.view">
+        <field name="name">craf.telegram.log.list</field>
+        <field name="model">craf.telegram.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" decoration-danger="state == 'error'">
+                <field name="date"/>
+                <field name="kind"/>
+                <field name="bolim_id"/>
+                <field name="contact_id"/>
+                <field name="chat_id" optional="hide"/>
+                <field name="text" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'sent'" decoration-danger="state == 'error'"/>
+                <field name="error" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_craf_telegram_log_form" model="ir.ui.view">
+        <field name="name">craf.telegram.log.form</field>
+        <field name="model">craf.telegram.log</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="kind"/>
+                            <field name="state"/>
+                        </group>
+                        <group>
+                            <field name="bolim_id"/>
+                            <field name="contact_id"/>
+                            <field name="chat_id"/>
+                        </group>
+                    </group>
+                    <field name="error" invisible="not error" class="text-danger"/>
+                    <field name="text"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_craf_telegram_log_search" model="ir.ui.view">
+        <field name="name">craf.telegram.log.search</field>
+        <field name="model">craf.telegram.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="contact_id"/>
+                <field name="text"/>
+                <filter name="error" string="Xatolar" domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter name="report" string="Kunlik hisobot" domain="[('kind', '=', 'report')]"/>
+                <filter name="alert" string="Minimal qoldiq" domain="[('kind', '=', 'alert')]"/>
+                <group>
+                    <filter name="by_bolim" string="Bo'lim" context="{'group_by': 'bolim_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_telegram_log" model="ir.actions.act_window">
+        <field name="name">Telegram xabarlari</field>
+        <field name="res_model">craf.telegram.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Hali xabar yuborilmagan</p>
+            <p>Sozlamalarda bot tokenini yozing, mas'ullarga Telegram ID qo'shing.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_craf_telegram_log" name="Telegram xabarlari" parent="mrp.menu_mrp_configuration"
+              action="action_craf_telegram_log" sequence="42" groups="mrp.group_mrp_manager"/>
+
+    <!-- bo'lim sozlamasi: sinov xabari va hisobotni hozir yuborish -->
+    <record id="view_craf_bolim_form_telegram" model="ir.ui.view">
+        <field name="name">craf.bolim.form.telegram</field>
+        <field name="model">craf.bolim</field>
+        <field name="inherit_id" ref="craf_production.view_craf_bolim_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_tg_send_report" type="object" string="Hisobotni Telegramga yuborish" icon="fa-paper-plane"/>
+                </header>
+            </xpath>
+            <xpath expr="//field[@name='contact_ids']/list/field[@name='active']" position="after">
+                <button name="action_tg_test" type="object" icon="fa-paper-plane" title="Sinov xabari" invisible="not telegram_id"/>
+            </xpath>
+            <xpath expr="//page[@name='contacts']/div[hasclass('text-muted')]" position="replace">
+                <div class="text-muted small mt-2">
+                    Telegram ID: kishi botga /start bosadi — bot unga raqamni yozib beradi. «Odoo foydalanuvchisi» tanlansa,
+                    dasturda ham eslatma oladi. Bot tokeni — Ishlab chiqarish → Konfiguratsiya → Sozlamalar → Craf Telegram bot.
+                    <br/>Bot buyruqlari: /qoldiq — Liteyka xom-ashyosi, /hisobot — kechagi hisobot, /id — Telegram ID.
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

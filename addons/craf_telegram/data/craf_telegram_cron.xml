@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- botga kelgan xabarlar (/start, /qoldiq, /hisobot) — har daqiqa -->
+    <record id="ir_cron_craf_telegram_poll" model="ir.cron">
+        <field name="name">Craf Telegram: botga kelgan xabarlar</field>
+        <field name="model_id" ref="model_craf_telegram"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_poll()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+    <!-- kunlik hisobot: sozlamadagi soat bo'lgach, kuniga bir marta -->
+    <record id="ir_cron_craf_telegram_daily" model="ir.cron">
+        <field name="name">Craf Telegram: kunlik hisobot</field>
+        <field name="model_id" ref="model_craf_telegram"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_daily()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+    <record id="ir_cron_craf_telegram_log_gc" model="ir.cron">
+        <field name="name">Craf Telegram: eski jurnalni tozalash</field>
+        <field name="model_id" ref="model_craf_telegram_log"/>
+        <field name="state">code</field>
+        <field name="code">model._gc_old()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active">True</field>
+    </record>
+</odoo>
