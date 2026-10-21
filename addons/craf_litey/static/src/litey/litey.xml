@@ -203,7 +203,7 @@
             <div class="cl-banner cl-banner-bad" t-if="fcAlertCount" role="alert">
                 <i class="fa fa-exclamation-triangle"/>
                 <div class="cl-banner-text">
-                    <b><t t-esc="fcAlertCount"/> ta material minimal qoldiqdan kam.</b>
+                    <b><t t-esc="fcAlertCount"/> ta material tugagan yoki minimal qoldiqdan kam.</b>
                     <t t-if="fc.contacts.length"> Eslatma: <t t-esc="fc.contacts.map((c) => c.name).join(', ')"/>.</t>
                     <t t-else=""> Eslatma oladigan mas'ul shaxs belgilanmagan.</t>
                 </div>
@@ -211,7 +211,7 @@
             </div>
             <div class="cl-kpis" aria-label="Xom-ashyo holati">
                 <button class="cl-kpi cl-kpi-btn" t-att-class="{ active: state.fcFilter === 'low' }" t-on-click="() => state.fcFilter = 'low'">
-                    <span class="cl-kpi-label">Minimaldan kam</span>
+                    <span class="cl-kpi-label">Tugagan / kam</span>
                     <span class="cl-kpi-value" t-att-class="{ 'cl-bad': fcAlertCount }" t-esc="fcAlertCount"/>
                 </button>
                 <button class="cl-kpi cl-kpi-btn" t-att-class="{ active: state.fcFilter === 'soon' }" t-on-click="() => state.fcFilter = 'soon'">
@@ -245,6 +245,7 @@
             <p class="cl-note">
                 Qoldiq — hozir, zavod bo'yicha (barcha joylar). O'rtacha sarf — oxirgi <t t-esc="fc.period"/> kun
                 (<t t-esc="dmy(fc.date_from)"/> – <t t-esc="dmy(fc.today)"/>) dagi plavka va boshqa sarf ÷ <t t-esc="fc.period"/>.
+                <t t-if="fc.short_history">Ombor tarixi <t t-esc="fc.configured_period"/> kundan qisqa — o'rtacha birinchi harakat kunidan olindi.</t>
                 <t t-if="fc.is_manager">Minimal qoldiqni yozish uchun materialni bosing.</t>
             </p>
 
@@ -257,7 +258,7 @@
             <!-- telefon va planshet -->
             <div class="cl-list d-lg-none" t-if="fcRows.length">
                 <button t-foreach="fcRows" t-as="r" t-key="r.product_id" class="cl-mat"
-                        t-att-class="{ 'cl-is-low': r.status === 'soon', 'cl-is-neg': r.status === 'neg' or r.status === 'low' }"
+                        t-att-class="{ 'cl-is-low': r.status === 'soon', 'cl-is-neg': ['neg', 'low', 'out'].includes(r.status) }"
                         t-on-click="() => this.openForecast(r)">
                     <span class="cl-mat-main">
                         <span class="cl-mat-name" t-esc="r.name"/>
@@ -293,7 +294,7 @@
                     </thead>
                     <tbody>
                         <tr t-foreach="fcRows" t-as="r" t-key="r.product_id" role="button" tabindex="0"
-                            t-att-class="{ 'cl-is-low': r.status === 'soon', 'cl-is-neg': r.status === 'neg' or r.status === 'low' }"
+                            t-att-class="{ 'cl-is-low': r.status === 'soon', 'cl-is-neg': ['neg', 'low', 'out'].includes(r.status) }"
                             t-on-click="() => this.openForecast(r)" t-on-keydown="(ev) => ev.key === 'Enter' and this.openForecast(r)">
                             <td>
                                 <div class="cl-tname"><t t-esc="r.name"/> <span class="cl-muted">(<t t-esc="r.uom"/>)</span></div>

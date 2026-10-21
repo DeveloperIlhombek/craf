@@ -22,6 +22,7 @@ const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 const TABS = ["qoldiq", "prognoz", "kunlik", "hujjat"];
 const FC_STATUS = {
     neg: { label: "Manfiy", cls: "cl-st-bad" },
+    out: { label: "Tugagan", cls: "cl-st-bad" },
     low: { label: "Minimaldan kam", cls: "cl-st-bad" },
     soon: { label: "Tez tugaydi", cls: "cl-st-warn" },
     ok: { label: "Yetarli", cls: "cl-st-ok" },
@@ -289,7 +290,7 @@ export class CrafLitey extends Component {
         const filter = this.state.fcFilter;
         const words = this.state.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
         return fc.rows.filter((r) => {
-            if (filter === "low" && !["low", "neg"].includes(r.status)) {
+            if (filter === "low" && !["low", "neg", "out"].includes(r.status)) {
                 return false;
             }
             if ((filter === "soon" || filter === "ok") && r.status !== filter) {
@@ -307,7 +308,7 @@ export class CrafLitey extends Component {
     }
     get fcAlertCount() {
         const c = this.state.fc && this.state.fc.counts;
-        return c ? c.low + c.neg : 0;
+        return c ? c.low + c.neg + c.out : 0;
     }
     fcStatus(r) {
         return FC_STATUS[r.status] || FC_STATUS.idle;

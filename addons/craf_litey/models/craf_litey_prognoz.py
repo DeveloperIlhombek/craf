@@ -1,7 +1,8 @@
 """Liteyka xom-ashyosi: qoldiq, minimal qoldiq va necha kunga yetishi (prognoz).
 
 O'rtacha kunlik sarf — oxirgi N kun (bo'lim sozlamasi, standart 30) ichida ichki joylardan ishlab chiqarishga
-ketgan miqdor (plavkaga va boshqa sarf) / N. Qoldiq — zavod bo'yicha (barcha ichki joylar), Qoldiq varag'i bilan bir xil.
+ketgan miqdor (plavkaga va boshqa sarf) / N. Ombor tarixi N kundan qisqa bo'lsa (yangi boshlangan), N — birinchi
+harakat kunidan bugungacha. Qoldiq — zavod bo'yicha (barcha ichki joylar), Qoldiq varag'i bilan bir xil.
 
 Minimal qoldiqdan kamaygan material uchun bo'lim mas'ullariga Odoo eslatmasi (mail.activity) qo'yiladi;
 qoldiq tiklanganda eslatma o'zi yopiladi. Telegram xabari keyingi bosqichda shu ro'yxatdan oladi.
@@ -23,8 +24,14 @@ class CrafLiteyHisobot(models.AbstractModel):
         period = max(bolim.forecast_days or 30, 1)
         warn = max(bolim.warn_days or 0, 0)
         today = fields.Date.context_today(self)
-        start_day = today - timedelta(days=period - 1)
         products = self._products()
+        first = self.env["stock.move"].search(
+            [("product_id", "in", products.ids), ("state", "=", "done")], order="date", limit=1)
+        if first:
+            first_day = self._local(first.date, "%Y-%m-%d")
+            history_days = (today - fields.Date.to_date(first_day)).days + 1
+            period = max(min(period, history_days), 1)
+        start_day = today - timedelta(days=period - 1)
         on_hand = self._on_hand(products)
         flows = self._flows(products, self._utc(start_day))
 
@@ -47,6 +54,8 @@ class CrafLiteyHisobot(models.AbstractModel):
             days_to_min = (qty - min_qty) / avg if avg > 1e-9 and min_qty and qty > min_qty else None
             if qty < -1e-6:
                 status = "neg"
+            elif qty < 1e-6 and avg > 1e-9:
+                status = "out"  # tugagan, lekin sarflanadi
             elif min_qty and qty < min_qty:
                 status = "low"
             elif (days_to_min is not None and days_to_min <= warn) or (
@@ -78,13 +87,15 @@ class CrafLiteyHisobot(models.AbstractModel):
     def get_forecast(self):
         bolim, period, warn, rows = self._forecast_rows()
         self.sudo()._craf_min_qty_sync(rows)
-        order = {"neg": 0, "low": 1, "soon": 2, "ok": 3, "idle": 4}
+        order = {"neg": 0, "out": 1, "low": 2, "soon": 3, "ok": 4, "idle": 5}
+        configured = max(bolim.forecast_days or 30, 1)
         rows.sort(key=lambda r: (order[r["status"]], r["days_to_min"] if r["days_to_min"] is not None
                                  else (r["days_left"] if r["days_left"] is not None else 1e9)))
         counts = {k: sum(1 for r in rows if r["status"] == k) for k in order}
         today = fields.Date.context_today(self)
         return {
             "rows": rows, "counts": counts, "period": period, "warn_days": warn,
+            "short_history": period < configured, "configured_period": configured,
             "date_from": fields.Date.to_string(today - timedelta(days=period - 1)),
             "today": fields.Date.to_string(today),
             "bolim_id": bolim.id or False,
@@ -123,7 +134,7 @@ class CrafLiteyHisobot(models.AbstractModel):
         users = self.env["res.users"]
         if bolim and bolim.notify_app:
             users = bolim.contact_ids.filtered(lambda c: c.active and c.notify_min_qty and c.user_id).user_id
-        low = {r["tmpl_id"]: r for r in rows if r["status"] in ("low", "neg") and r["min_qty"]}
+        low = {r["tmpl_id"]: r for r in rows if r["status"] in ("low", "neg", "out") and r["min_qty"]}
 
         Activity = self.env["mail.activity"].sudo()
         existing = Activity.search([("activity_type_id", "=", act_type.id), ("res_model", "=", "product.template")])
