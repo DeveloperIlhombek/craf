@@ -58,7 +58,7 @@ class CrafLiteyHisobot(models.AbstractModel):
                 status = "ok"
             rows.append({
                 "product_id": pid, "tmpl_id": product.product_tmpl_id.id,
-                "code": product.default_code or "", "name": product.craf_litey_name or product.name,
+                "code": product.default_code or "", "name": product.name,
                 "full_name": product.name, "uom": self._uom(product),
                 "kind": "aux" if product.craf_not_metal else "metal",
                 "qty": round(qty, 3), "min_qty": min_qty,

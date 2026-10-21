@@ -329,7 +329,7 @@ class CrafSex(models.AbstractModel):
             "sections": sections,
             "employees": self._employees(),
             "shifts": [{"key": k, "label": v} for k, v in SHIFTS],
-            "billets": [{"id": b.id, "name": b.product_tmpl_id.craf_litey_name or b.name, "code": b.default_code,
+            "billets": [{"id": b.id, "name": b.name, "code": b.default_code,
                          "avail": round(b.with_context(location=press_loc.id).qty_available, 1) if press_loc else 0.0}
                         for b in billets],
             "baskets": [{"id": b.id, "name": b.name, "tare": b.tare_kg, "capacity": b.capacity}

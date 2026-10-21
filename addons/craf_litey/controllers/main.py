@@ -82,10 +82,10 @@ class CrafLiteyController(http.Controller):
         ws.freeze_panes(3, 4)
         ws.write(0, 0, "Plavkalar (ishchi daftari) — %s" % data["label"], title)
         cols = ["Sana", "Pech", "№", "Hujjat"]
-        cols += [c["short"] for c in data["metal_cols"]]
+        cols += [c["excel"] for c in data["metal_cols"]]
         cols += ["Kirdi (metall), kg", "Stalba, kg", "Uzunlik, m", "Сталба отход", "Литейка отход", "Шлак",
                  "Chiqdi jami", "Угар, kg", "Угар, %", "Balans"]
-        cols += [c["short"] + (" (%s)" % c["uom"]) for c in data["aux_cols"]]
+        cols += [c["excel"] + (" (%s)" % c["uom"]) for c in data["aux_cols"]]
         cols += ["Holat", "Izoh"]
         ws.write_row(2, 0, cols, head)
         ws.set_row(2, 45)

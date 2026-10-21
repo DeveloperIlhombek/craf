@@ -11,6 +11,7 @@ from odoo.addons.craf_production.models.craf_production_mixin import fmt
 
 MAX_DAYS = 93
 PRODUCED_ROW = ("Ишлаб чикарилган литейка", 75)   # Excel dagi qator: kunlik chiqqan stalba
+PRODUCED_NAME = "Ishlab chiqarilgan liteyka"
 DAILY_PRODUCED_CODES = ("PF-14",)                  # Шлак — Excel da kunlik chiqish sifatida
 
 # Harakat turlari (davr jadvali ustunlari)
@@ -290,13 +291,14 @@ class CrafLiteyHisobot(models.AbstractModel):
                       else round(closing[(d, product.id)], 2) for d in days]
             seqs.append((product.craf_litey_seq, {
                 "key": "p%s" % product.id, "product_id": product.id,
-                "label": product.craf_litey_name or product.name, "uom": self._excel_uom(product),
+                "label": product.craf_litey_name or product.name, "name": product.name, "uom": self._excel_uom(product),
                 "kind": "produced" if produced else "balance", "values": values,
             }))
         if billet:
             label, seq = PRODUCED_ROW
             seqs.append((seq, {
-                "key": "produced", "product_id": billet.id, "label": label, "uom": "КГ", "kind": "produced",
+                "key": "produced", "product_id": billet.id, "label": label, "name": PRODUCED_NAME, "uom": "КГ",
+                "kind": "produced",
                 "values": [round(flows.get(d, {}).get(billet.id, {}).get("chiqish_plavka", 0.0), 2) for d in days],
             }))
         matrix = [row for _seq, row in sorted(seqs, key=lambda s: s[0])]
@@ -306,9 +308,9 @@ class CrafLiteyHisobot(models.AbstractModel):
                             order="date, equipment_id, day_no, id")
         used = melts.line_ids.filtered(lambda l: l.qty > 1e-6).product_id
         used = used.sorted(lambda p: (p.craf_melt_seq or 999, p.default_code or ""))
-        metal_cols = [{"product_id": p.id, "name": p.name, "short": p.craf_litey_name or p.name,
+        metal_cols = [{"product_id": p.id, "name": p.name, "short": p.name, "excel": p.craf_litey_name or p.name,
                        "uom": self._uom(p)} for p in used if not p.craf_not_metal]
-        aux_cols = [{"product_id": p.id, "name": p.name, "short": p.craf_litey_name or p.name,
+        aux_cols = [{"product_id": p.id, "name": p.name, "short": p.name, "excel": p.craf_litey_name or p.name,
                      "uom": self._uom(p)} for p in used if p.craf_not_metal]
         melt_rows = []
         for m in melts:

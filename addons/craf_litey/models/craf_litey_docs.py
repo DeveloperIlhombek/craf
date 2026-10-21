@@ -74,7 +74,7 @@ class CrafLiteyHisobot(models.AbstractModel):
         return ", ".join(parts)
 
     def _short(self, product):
-        return product.product_tmpl_id.craf_litey_name or product.name
+        return product.name
 
     # ------------------------------------------------------------------ forma uchun ma'lumot
     @api.model

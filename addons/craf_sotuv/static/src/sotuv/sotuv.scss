@@ -1720,3 +1720,15 @@ $cs-orange-bg: #fff1e0;
 .cs-return-qty label { display: flex; align-items: center; gap: 4px; font-size: 12px; }
 .cs-return-qty input { width: 72px; }
 .cs-returned { color: var(--bs-danger, #dc3545); }
+
+// Odoo kompyuterda (lg+) `.o_web_client > .o_action_manager > .o_action` ga overflow: hidden va yashirin
+// scrollbar beradi — u bizning qoidadan kuchli, sahifa aylanmay qolardi. Sahifa o'zi aylanadi.
+.o_web_client > .o_action_manager > .o_action.o_craf_sotuv {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+    &::-webkit-scrollbar {
+        display: block;
+    }
+}

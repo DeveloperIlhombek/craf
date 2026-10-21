@@ -1337,3 +1337,15 @@ $cl-molten: #c2540a;
         }
     }
 }
+
+// Odoo kompyuterda (lg+) `.o_web_client > .o_action_manager > .o_action` ga overflow: hidden va yashirin
+// scrollbar beradi — u bizning qoidadan kuchli, sahifa aylanmay qolardi. Sahifa o'zi aylanadi.
+.o_web_client > .o_action_manager > .o_action.o_craf_litey {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+    &::-webkit-scrollbar {
+        display: block;
+    }
+}

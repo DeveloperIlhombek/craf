@@ -118,7 +118,7 @@
             <button t-foreach="materials" t-as="r" t-key="r.product_id" class="cl-mat"
                     t-att-class="{ 'cl-is-low': r.low and !r.negative, 'cl-is-neg': r.negative }" t-on-click="() => this.openMaterial(r)">
                 <span class="cl-mat-main">
-                    <span class="cl-mat-name" t-esc="r.excel_name"/>
+                    <span class="cl-mat-name" t-esc="r.name"/>
                     <span class="cl-mat-meta">
                         <t t-esc="r.code"/><t t-if="r.kind === 'aux'">, qo'shimcha</t><t t-if="r.locs.length &gt; 1">, <t t-esc="r.locs.length"/> joyda</t>
                     </span>
@@ -159,7 +159,7 @@
                         t-att-class="{ 'cl-is-low': r.low and !r.negative, 'cl-is-neg': r.negative }"
                         t-on-click="() => this.openMaterial(r)" t-on-keydown="(ev) => ev.key === 'Enter' and this.openMaterial(r)">
                         <td>
-                            <div class="cl-tname"><t t-esc="r.excel_name"/> <span class="cl-muted">(<t t-esc="r.uom"/>)</span></div>
+                            <div class="cl-tname"><t t-esc="r.name"/> <span class="cl-muted">(<t t-esc="r.uom"/>)</span></div>
                             <div class="cl-tcode"><t t-esc="r.code"/><t t-if="r.kind === 'aux'">, qo'shimcha</t></div>
                         </td>
                         <td class="text-end" t-esc="fmt(r.opening)"/>
@@ -335,7 +335,7 @@
             </div>
             <div class="cl-list">
                 <div t-foreach="dayRows" t-as="row" t-key="row.key" class="cl-drow" t-att-class="{ 'cl-produced': row.kind === 'produced' }">
-                    <span class="cl-drow-name"><t t-esc="row.label"/></span>
+                    <span class="cl-drow-name"><t t-esc="row.name or row.label"/></span>
                     <span class="cl-drow-val">
                         <span class="cl-qty" t-att-class="{ 'cl-bad': row.value &lt; -0.0005 }"><t t-esc="fmt(row.value)"/><small> <t t-esc="row.uom.toLowerCase()"/></small></span>
                         <span class="cl-flow" t-if="row.delta !== null and Math.abs(row.delta) &gt; 0.0005">
@@ -350,14 +350,14 @@
             <table class="table table-sm mb-0 cl-table cl-matrix">
                 <thead>
                     <tr>
-                        <th class="cl-sticky">Наименование</th>
+                        <th class="cl-sticky">Material</th>
                         <th>Ед.</th>
                         <th t-foreach="d.days" t-as="day" t-key="day.date" class="text-end" t-att-class="{ 'cl-sun': day.weekday === 6 }" t-att-title="day.full" t-esc="day.label"/>
                     </tr>
                 </thead>
                 <tbody>
                     <tr t-foreach="d.matrix" t-as="row" t-key="row.key" t-att-class="{ 'cl-produced': row.kind === 'produced' }">
-                        <td class="cl-sticky" t-esc="row.label"/>
+                        <td class="cl-sticky" t-esc="row.name or row.label" t-att-title="row.label"/>
                         <td class="cl-muted" t-esc="row.uom"/>
                         <td t-foreach="row.values" t-as="v" t-key="v_index" class="text-end text-nowrap" t-att-class="{ 'cl-bad': v &lt; -0.0005 }" t-esc="fmt(v)"/>
                     </tr>
@@ -599,8 +599,8 @@
         <t t-set="m" t-value="s.m"/>
         <t t-set="row" t-value="s.row"/>
         <t t-call="craf_litey.SheetHead">
-            <t t-set="title" t-value="row.excel_name"/>
-            <t t-set="sub" t-value="row.code + (row.kind === 'aux' ? &quot;, qo'shimcha / sarf buyumi&quot; : ', metall (shixta)') + (row.excel_name !== row.name ? ' — ' + row.name : '')"/>
+            <t t-set="title" t-value="row.name"/>
+            <t t-set="sub" t-value="row.code + (row.kind === 'aux' ? &quot;, qo'shimcha / sarf buyumi&quot; : ', metall (shixta)')"/>
         </t>
         <div class="cl-sheet-body">
             <div class="cl-big">
@@ -732,7 +732,7 @@
         <div class="cl-sheet-body">
             <div class="cl-empty" t-if="!s.rows.length"><i class="fa fa-check"/><div>Hammasi Литейка ro'yxatida.</div></div>
             <div class="cl-kv cl-kv-btn" t-foreach="s.rows" t-as="r" t-key="r.product_id">
-                <span><b t-esc="r.excel_name or r.name"/><br/><span class="cl-muted small"><t t-esc="r.code"/>, qoldiq <t t-esc="num(r.on_hand, 2)"/> <t t-esc="r.uom"/></span></span>
+                <span><b t-esc="r.name"/><br/><span class="cl-muted small"><t t-esc="r.code"/>, qoldiq <t t-esc="num(r.on_hand, 2)"/> <t t-esc="r.uom"/></span></span>
                 <button class="btn btn-outline-primary btn-sm" t-if="state.data.is_manager" t-on-click="() => this.restoreMaterial(r)">Qaytarish</button>
             </div>
         </div>
