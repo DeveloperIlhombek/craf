@@ -7,6 +7,7 @@
             <list string="Kesimlar">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
+                <field name="alias" optional="show"/>
                 <field name="profile_type" optional="show"/>
                 <field name="series" optional="show"/>
                 <field name="kg_per_m"/>
@@ -39,6 +40,7 @@
                             <field name="profile_type"/>
                             <field name="series"/>
                             <field name="die_code"/>
+                            <field name="alias" placeholder="masalan: ЖП 80"/>
                         </group>
                         <group string="Og'irlik">
                             <field name="kg_per_m"/>
@@ -57,7 +59,7 @@
         <field name="model">craf.profile.section</field>
         <field name="arch" type="xml">
             <search>
-                <field name="name"/>
+                <field name="name" filter_domain="['|', '|', ('name', 'ilike', self), ('alias', 'ilike', self), ('die_code', 'ilike', self)]"/>
                 <field name="profile_type"/>
                 <field name="series"/>
                 <filter name="no_weight" string="kg/m kiritilmagan" domain="[('kg_per_m', '=', 0)]"/>

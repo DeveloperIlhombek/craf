@@ -5,8 +5,11 @@ class CrafProfileSection(models.Model):
     _name = "craf.profile.section"
     _description = "Profil kesimi"
     _order = "sequence, name"
+    _rec_names_search = ["name", "alias", "die_code"]
 
     name = fields.Char("Kesim", required=True, help="Tur + seriya, masalan: T Бал, Z Эко, Коса 80мм")
+    alias = fields.Char("Sexdagi nomi", help="Press varag'ida yoziladigan boshqa nom, masalan: Коса 80мм = ЖП 80. "
+                                             "Qidiruvda shu nom bilan ham topiladi.")
     sequence = fields.Integer(default=10)
     profile_type = fields.Char("Tur", help="T, Z, L, Коса, Штапик ...")
     series = fields.Char("Seriya", help="Бал, Эко, Эконом, Термо, ALUSAM, CRAF ...")
@@ -22,6 +25,11 @@ class CrafProfileSection(models.Model):
     product_count = fields.Integer("Mahsulotlar soni", compute="_compute_product_count")
 
     _name_uniq = models.Constraint("UNIQUE(name)", "Kesim nomi takrorlanmasligi kerak.")
+
+    @api.depends("name", "alias")
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = "%s (%s)" % (rec.name, rec.alias) if rec.alias else rec.name
 
     @api.depends("product_tmpl_ids")
     def _compute_product_count(self):

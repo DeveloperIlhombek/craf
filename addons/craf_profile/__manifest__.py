@@ -1,6 +1,6 @@
 {
     "name": "Craf Profil",
-    "version": "19.0.1.3.1",
+    "version": "19.0.1.3.2",
     "summary": "Alyuminiy profil kesimlari, ranglar va pachka / dona / metr / kg kalkulyatori",
     "description": """
 Craf zavodi uchun asosiy modul:
