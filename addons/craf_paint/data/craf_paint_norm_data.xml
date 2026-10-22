@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_activity_boyash_norm" model="mail.activity.type">
+        <field name="name">Bo'yash normasi</field>
+        <field name="summary">Bo'yash smenasi normadan tashqari</field>
+        <field name="icon">fa-tachometer</field>
+        <field name="decoration_type">warning</field>
+        <field name="res_model">craf.paint.batch</field>
+        <field name="delay_count">0</field>
+    </record>
+
+    <record id="mail_activity_boyash_material" model="mail.activity.type">
+        <field name="name">Bo'yash materiali kam</field>
+        <field name="summary">Bo'yash materiali minimal qoldiqdan kam</field>
+        <field name="icon">fa-exclamation-triangle</field>
+        <field name="decoration_type">warning</field>
+        <field name="res_model">product.template</field>
+        <field name="delay_count">0</field>
+    </record>
+
+    <!-- Bo'yash: material minimal qoldiq eslatmalarini har soatda yangilash -->
+    <record id="ir_cron_craf_boyash_material_min_qty" model="ir.cron">
+        <field name="name">Craf Bo'yash: material minimal qoldiq eslatmasi</field>
+        <field name="model_id" ref="model_craf_paint_batch"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_material_min_qty()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

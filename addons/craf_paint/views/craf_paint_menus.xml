@@ -2,4 +2,8 @@
 <odoo>
     <menuitem id="menu_craf_paint_batch" name="Bo'yash smenalari" parent="craf_production.menu_craf_bolim_boyash"
               action="action_craf_paint_batch" sequence="30"/>
+    <menuitem id="menu_craf_boyash_material" name="Materiallar qoldig'i va prognoz"
+              parent="craf_production.menu_craf_bolim_boyash" action="action_craf_boyash_material" sequence="40"/>
+    <menuitem id="menu_craf_boyash_norm" name="Rang normalari" parent="craf_production.menu_craf_bolim_boyash"
+              action="action_craf_boyash_norm" sequence="80"/>
 </odoo>

@@ -1,15 +1,23 @@
+from datetime import timedelta
+
 from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
+from odoo.addons.craf_production.models.craf_production_mixin import EPS, NORM_STATUS, fmt
+
+BILLET_CODES = ("XA-09", "XA-02")
 
 
 class CrafExtrusionShift(models.Model):
     _name = "craf.extrusion.shift"
     _description = "Press smenasi"
-    _inherit = ["craf.production.mixin"]
+    _inherit = ["craf.production.mixin", "mail.activity.mixin"]
+    _craf_weighted_avg = {
+        "yield_pct": ("output_kg", "billet_qty", 100.0),
+        "productivity": ("output_kg", "duration", 1.0),
+    }
     _order = "date desc, id desc"
 
     _craf_sequence_code = "craf.extrusion.shift"
@@ -21,12 +29,14 @@ class CrafExtrusionShift(models.Model):
     kg_per_m = fields.Float(related="section_id.kg_per_m", string="kg/m")
     billet_product_id = fields.Many2one(
         "product.product", string="Quyma", required=True,
-        domain=[("default_code", "in", ("XA-09", "XA-02"))],
+        domain=[("default_code", "in", BILLET_CODES)],
         default=lambda self: self._craf_product("XA-09"))
     melt_ids = fields.Many2many(
         "craf.foundry.melt", string="Quyma partiyasi (plavka)", domain=[("state", "=", "done")])
     billet_qty = fields.Float("Quyma sarfi, kg", digits=(16, 1), tracking=True, aggregator="sum")
     billet_available = fields.Float("Pressda bor", compute="_compute_billet_available", digits=(16, 1))
+    billet_days_left = fields.Float(related="billet_product_id.product_tmpl_id.craf_press_days_left",
+                                    string="Quyma necha kunga yetadi")
     line_ids = fields.One2many("craf.extrusion.shift.line", "shift_id", string="Chiqish", copy=True)
 
     rest_product_id = fields.Many2one(
@@ -45,6 +55,49 @@ class CrafExtrusionShift(models.Model):
                             aggregator="sum")
     productivity = fields.Float("Unumdorlik, kg/soat", compute="_compute_kpi", store=True, digits=(16, 1),
                                 aggregator="avg")
+
+    norm_yield_pct = fields.Float("Chiqish normasi, %", compute="_compute_norm", store=True, digits=(16, 1),
+                                  aggregator=None, help="Matritsa normasi; smena tasdiqlanganda shu qiymat qotadi.")
+    norm_productivity = fields.Float("Unumdorlik normasi, kg/soat", compute="_compute_norm", store=True,
+                                     digits=(16, 1), aggregator=None)
+    yield_diff = fields.Float("Normadan farq, %", compute="_compute_norm_status", store=True, digits=(16, 1),
+                              aggregator=None, help="Chiqish % − norma (foiz punktlarida)")
+    norm_status = fields.Selection(NORM_STATUS, string="Norma", compute="_compute_norm_status", store=True,
+                                   index=True)
+    norm_warning = fields.Char("Normadan chetlanish", compute="_compute_norm_status", store=True)
+
+    @api.depends("section_id")
+    def _compute_norm(self):
+        # faqat matritsa tanlanganda olinadi (matritsa normasi keyin o'zgarsa, eski smenalar o'zgarmaydi)
+        for shift in self:
+            shift.norm_yield_pct = shift.section_id.craf_norm_yield_pct
+            shift.norm_productivity = shift.section_id.craf_norm_productivity
+
+    @api.depends("yield_pct", "productivity", "norm_yield_pct", "norm_productivity", "output_kg", "billet_qty",
+                 "duration")
+    def _compute_norm_status(self):
+        tol = self.env["craf.bolim"]._get("press").norm_tolerance or 0.0
+        for shift in self:
+            has_data = shift.billet_qty > EPS and shift.output_kg > EPS
+            shift.yield_diff = shift.yield_pct - shift.norm_yield_pct if shift.norm_yield_pct and has_data else 0.0
+            issues = shift._craf_norm_issues(tol)
+            has_norm = shift.norm_yield_pct or shift.norm_productivity
+            shift.norm_status = ("low" if issues else "ok") if has_norm and has_data else False
+            shift.norm_warning = "Normadan past: " + "; ".join(issues) if issues else False
+
+    def _craf_norm_issues(self, tol):
+        """Yo'l qo'yiladigan chetlanish: chiqish uchun — foiz punkti, unumdorlik uchun — normaning foizi."""
+        self.ensure_one()
+        issues = []
+        if self.output_kg <= EPS:
+            return issues
+        if self.norm_yield_pct and self.billet_qty > EPS and self.yield_pct < self.norm_yield_pct - tol:
+            issues.append("chiqish %s%% (norma %s%%)" % (fmt(self.yield_pct, 1), fmt(self.norm_yield_pct, 1)))
+        if (self.norm_productivity and self.duration > EPS
+                and self.productivity < self.norm_productivity * (1 - tol / 100.0)):
+            issues.append("unumdorlik %s kg/soat (norma %s)" % (
+                fmt(self.productivity, 1), fmt(self.norm_productivity, 1)))
+        return issues
 
     @api.depends("billet_product_id")
     def _compute_rest_product_id(self):
@@ -84,6 +137,9 @@ class CrafExtrusionShift(models.Model):
 
     def _craf_action_done(self):
         self.ensure_one()
+        # norma tasdiqlash paytidagi qiymatda qotadi (keyin matritsa normasi o'zgarsa ham)
+        self.write({"norm_yield_pct": self.section_id.craf_norm_yield_pct,
+                    "norm_productivity": self.section_id.craf_norm_productivity})
         lines = self.line_ids.filtered(lambda l: l.pcs > 0)
         if not lines:
             raise UserError("Chiqqan profil donasini kiriting.")
@@ -121,6 +177,51 @@ class CrafExtrusionShift(models.Model):
             "Qoldiq %s kg, brak %s kg, farq %s kg" % (fmt(self.rest_qty, 1), fmt(self.scrap_qty, 1),
                                                      fmt(self.loss_qty, 1)),
         ])
+        self._craf_norm_notify("press", "craf_extrusion.mail_activity_press_norm",
+                               "Press: %s — normadan past" % self.section_id.name)
+
+    # ------------------------------------------------------------------ quyma prognozi
+    @api.model
+    def _craf_billet_products(self):
+        return self.env["product.product"].search([("default_code", "in", BILLET_CODES)])
+
+    @api.model
+    def _craf_billet_forecast(self, products=None):
+        """Quyma: qoldiq va oxirgi N kun (Press sozlamasi) sarfi bo'yicha necha kunga yetishi.
+
+        Sarf — ichki joydan ishlab chiqarishga ketgan quyma (tasdiqlangan press smenalari va Excel'dan
+        kiritilgan kunlik sarf). Qoldiq — zavod bo'yicha (barcha ichki joylar), alohida Press sexida ham."""
+        if products is None:
+            products = self._craf_billet_products()
+        today = fields.Date.context_today(self)
+        period, warn, used = self._craf_consumption(products, "press", self._craf_billet_products())
+        press_loc = self._craf_loc(self._craf_default_src)
+        on_hand, in_press = {}, {}
+        for product, location, qty in self.env["stock.quant"].sudo()._read_group(
+                [("product_id", "in", products.ids), ("location_id.usage", "=", "internal")],
+                ["product_id", "location_id"], ["quantity:sum"]):
+            on_hand[product.id] = on_hand.get(product.id, 0.0) + qty
+            if location == press_loc:
+                in_press[product.id] = qty
+        rows = {}
+        for product in products:
+            qty = on_hand.get(product.id, 0.0)
+            spent = used.get(product.id, 0.0)
+            avg = spent / period
+            min_qty = product.craf_min_qty or 0.0
+            status, days_left = self._craf_forecast_status(qty, avg, min_qty, warn)
+            rows[product.id] = {
+                "product": product, "qty": qty, "in_press": in_press.get(product.id, 0.0), "min_qty": min_qty,
+                "used": spent, "avg": avg, "period": period, "days_left": days_left,
+                "end_date": today + timedelta(days=int(days_left)) if days_left is not None else False,
+                "status": status, "uom": "kg",
+            }
+        return rows
+
+    @api.model
+    def _cron_billet_min_qty(self):
+        self._craf_min_qty_sync(list(self._craf_billet_forecast().values()), "press",
+                                "craf_extrusion.mail_activity_press_billet", "Press")
 
     def _craf_pack_items(self):
         return [(l.product_id, l.pcs, l.location_dest_id) for l in self.line_ids

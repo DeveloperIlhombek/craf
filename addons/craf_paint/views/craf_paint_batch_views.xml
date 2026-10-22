@@ -13,11 +13,19 @@
                 <field name="pcs_in" sum="Jami"/>
                 <field name="pcs_ok" sum="Jami"/>
                 <field name="pcs_defect" sum="Jami"/>
-                <field name="defect_pct" avg="O'rtacha"/>
+                <field name="defect_pct" avg="O'rtacha (og'irlik bo'yicha)"
+                       options="{'weighted': ['pcs_defect', 'pcs_in', 100]}"
+                       decoration-danger="norm_status == 'low'" decoration-success="norm_status == 'ok'"/>
                 <field name="kg_ok" sum="Jami" optional="show"/>
                 <field name="area_total" sum="Jami" optional="hide"/>
                 <field name="powder_qty" sum="Jami" optional="show"/>
-                <field name="powder_diff_pct" avg="O'rtacha" optional="hide"/>
+                <field name="powder_norm_qty" sum="Jami" optional="hide"/>
+                <field name="powder_g_m2" avg="O'rtacha (og'irlik bo'yicha)" optional="hide"
+                       options="{'weighted': ['powder_qty', 'area_total', 1000]}"/>
+                <field name="powder_diff_pct" avg="O'rtacha (og'irlik bo'yicha)" optional="hide"
+                       options="{'weighted': ['powder_qty', 'powder_norm_qty', 100, -100]}"/>
+                <field name="norm_status" widget="badge" optional="show"
+                       decoration-danger="norm_status == 'low'" decoration-success="norm_status == 'ok'"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
                        decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
             </list>
@@ -30,6 +38,7 @@
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile" sample="1">
                 <field name="state"/>
+                <field name="norm_status"/>
                 <templates>
                     <t t-name="card">
                         <div class="d-flex align-items-center mb-1">
@@ -43,6 +52,9 @@
                         <div class="d-flex mt-1 align-items-baseline">
                             <div><field name="pcs_ok" class="fw-bold"/> dona · <field name="kg_ok"/> kg</div>
                             <div class="ms-auto"><span class="text-muted small">brak </span><field name="defect_pct" class="fw-bold"/> %</div>
+                        </div>
+                        <div t-if="record.norm_status.raw_value === 'low'" class="text-danger small mt-1">
+                            <field name="norm_warning"/>
                         </div>
                         <footer class="pt-1">
                             <field name="employee_id" widget="many2one_avatar_employee"/>
@@ -82,6 +94,16 @@
                                 invisible="not pack_count">
                             <field name="pack_count" widget="statinfo" string="Pachka"/>
                         </button>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="norm_status != 'low'">
+                        <i class="fa fa-exclamation-triangle me-1" title="Ogohlantirish"/><field name="norm_warning" class="oe_inline"/>
+                        <span invisible="state != 'draft'"> — tasdiqlansa, Bo'yash mas'ullariga eslatma boradi.
+                            Sababini «Izoh»ga yozing.</span>
+                    </div>
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'draft' or not powder_days_left or powder_days_left &gt; 7">
+                        <i class="fa fa-tint me-1" title="Kukun"/>Bu rang kukuni zavodda ~<field name="powder_days_left" class="oe_inline"/>
+                        kunga yetadi (Bo'yash va qadoqlash → Materiallar qoldig'i va prognoz).
                     </div>
                     <div class="oe_title">
                         <span class="text-muted">Bo'yash smenasi</span>
@@ -184,7 +206,9 @@
                             <field name="powder_norm" readonly="state != 'draft'"/>
                             <field name="powder_norm_qty"/>
                             <field name="powder_qty" readonly="state != 'draft'" class="fw-bold"/>
-                            <field name="powder_diff_pct" decoration-danger="powder_diff_pct &gt; 10"
+                            <field name="powder_g_m2" invisible="not powder_qty"/>
+                            <field name="powder_diff_pct" invisible="not powder_qty"
+                                   decoration-danger="norm_status == 'low' and powder_diff_pct &gt; 0"
                                    decoration-success="powder_diff_pct &lt;= 0 and powder_qty"/>
                         </group>
                         <group string="Qadoqlash materiallari">
@@ -198,8 +222,9 @@
                             <field name="pcs_ok"/>
                             <field name="kg_ok"/>
                             <field name="area_total"/>
-                            <field name="defect_pct" decoration-danger="defect_pct &gt; 2"
-                                   decoration-success="defect_pct &lt;= 2 and pcs_in"/>
+                            <field name="defect_pct" decoration-danger="norm_status == 'low'"
+                                   decoration-success="norm_status == 'ok'"/>
+                            <field name="norm_status" invisible="1"/>
                         </group>
                     </group>
                 </sheet>
@@ -222,7 +247,7 @@
                 <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
                 <filter name="week" string="Oxirgi 7 kun"
                         domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
-                <filter name="high_defect" string="Brak &gt; 2%" domain="[('defect_pct', '&gt;', 2)]"/>
+                <filter name="high_defect" string="Normadan tashqari" domain="[('norm_status', '=', 'low'), ('state', '=', 'done')]"/>
                 <group>
                     <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
                     <filter name="group_color" string="Rang" context="{'group_by': 'color_id'}"/>
@@ -254,6 +279,8 @@
                 <field name="pcs_defect" type="measure"/>
                 <field name="powder_qty" type="measure"/>
                 <field name="area_total" type="measure"/>
+                <field name="defect_pct" type="measure"/>
+                <field name="powder_g_m2" type="measure"/>
             </pivot>
         </field>
     </record>

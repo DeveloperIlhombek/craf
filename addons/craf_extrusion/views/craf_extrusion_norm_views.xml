@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Matritsa normalari -->
+    <record id="craf_profile_section_view_list_press_norm" model="ir.ui.view">
+        <field name="name">craf.profile.section.list.press.norm</field>
+        <field name="model">craf.profile.section</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Matritsa normalari" editable="bottom" create="false" delete="false">
+                <header>
+                    <button name="action_craf_norm_from_fact" type="object" string="Normani faktdan olish"
+                            icon="fa-magic"
+                            confirm="Tanlangan matritsalarning normasi oxirgi davrdagi fakt qiymatga almashtiriladi. Davom etasizmi?"/>
+                </header>
+                <field name="name" readonly="1"/>
+                <field name="die_code" readonly="1" optional="show"/>
+                <field name="kg_per_m" readonly="1" optional="hide"/>
+                <field name="craf_norm_yield_pct" string="Chiqish normasi, %"/>
+                <field name="craf_fact_yield_pct" string="Fakt, %" invisible="not craf_fact_shift_count"
+                       decoration-danger="craf_norm_yield_pct and craf_fact_shift_count and craf_fact_yield_pct &lt; craf_norm_yield_pct"
+                       decoration-success="craf_norm_yield_pct and craf_fact_shift_count and craf_fact_yield_pct &gt;= craf_norm_yield_pct"/>
+                <field name="craf_norm_productivity" string="Normasi, kg/soat"/>
+                <field name="craf_fact_productivity" string="Fakt, kg/soat" invisible="not craf_fact_shift_count"
+                       decoration-danger="craf_norm_productivity and craf_fact_shift_count and craf_fact_productivity &lt; craf_norm_productivity"
+                       decoration-success="craf_norm_productivity and craf_fact_shift_count and craf_fact_productivity &gt;= craf_norm_productivity"/>
+                <field name="craf_fact_output_kg" string="Chiqdi, kg" optional="show" invisible="not craf_fact_shift_count"/>
+                <field name="craf_fact_shift_count" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_profile_section_view_kanban_press_norm" model="ir.ui.view">
+        <field name="name">craf.profile.section.kanban.press.norm</field>
+        <field name="model">craf.profile.section</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" create="false">
+                <field name="craf_norm_yield_pct"/>
+                <field name="craf_fact_yield_pct"/>
+                <field name="craf_norm_productivity"/>
+                <field name="craf_fact_shift_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-baseline">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <field name="die_code" class="ms-2 text-muted small"/>
+                        </div>
+                        <div class="d-flex mt-2">
+                            <div class="me-4">
+                                <div class="text-muted small">Chiqish: norma / fakt</div>
+                                <div class="fw-bold">
+                                    <t t-if="record.craf_norm_yield_pct.raw_value"><field name="craf_norm_yield_pct"/></t><t t-else="">—</t> /
+                                    <span t-if="!record.craf_fact_shift_count.raw_value">—</span><span t-else="" t-att-class="record.craf_norm_yield_pct.raw_value and record.craf_fact_shift_count.raw_value and record.craf_fact_yield_pct.raw_value &lt; record.craf_norm_yield_pct.raw_value ? 'text-danger' : ''"><field name="craf_fact_yield_pct"/></span> %
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">kg/soat: norma / fakt</div>
+                                <div class="fw-bold"><t t-if="record.craf_norm_productivity.raw_value"><field name="craf_norm_productivity"/></t><t t-else="">—</t> /
+                                    <t t-if="record.craf_fact_shift_count.raw_value"><field name="craf_fact_productivity"/></t><t t-else="">—</t></div>
+                            </div>
+                        </div>
+                        <footer class="pt-1 text-muted small">
+                            <span><field name="craf_fact_shift_count"/> smena · <field name="craf_fact_output_kg"/> kg</span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_profile_section_view_form_press_norm_simple" model="ir.ui.view">
+        <field name="name">craf.profile.section.form.press.norm.simple</field>
+        <field name="model">craf.profile.section</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form string="Matritsa normasi" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <field name="die_code" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="Norma">
+                            <field name="craf_norm_yield_pct"/>
+                            <field name="craf_norm_productivity"/>
+                        </group>
+                        <group string="Fakt (oxirgi davr)">
+                            <field name="craf_fact_yield_pct"/>
+                            <field name="craf_fact_productivity"/>
+                            <field name="craf_fact_output_kg"/>
+                            <field name="craf_fact_shift_count"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_press_norm" model="ir.actions.act_window">
+        <field name="name">Matritsa normalari</field>
+        <field name="res_model">craf.profile.section</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('craf_profile_section_view_list_press_norm')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('craf_profile_section_view_kanban_press_norm')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('craf_profile_section_view_form_press_norm_simple')})]"/>
+        <field name="help" type="html">
+            <p>Har matritsaga chiqish % va unumdorlik normasini yozing. «Fakt» ustunlari — oxirgi N kun
+                (Press sozlamalari → Prognoz davri) tasdiqlangan smenalar, og'irlik bo'yicha o'rtacha.</p>
+        </field>
+    </record>
+
+    <record id="craf_profile_section_view_form_press_norm" model="ir.ui.view">
+        <field name="name">craf.profile.section.form.press.norm</field>
+        <field name="model">craf.profile.section</field>
+        <field name="inherit_id" ref="craf_profile.craf_profile_section_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='note']" position="before">
+                <group>
+                    <group string="Press normasi">
+                        <field name="craf_norm_yield_pct"/>
+                        <field name="craf_norm_productivity"/>
+                    </group>
+                    <group string="Fakt (oxirgi davr)">
+                        <field name="craf_fact_yield_pct"/>
+                        <field name="craf_fact_productivity"/>
+                        <field name="craf_fact_shift_count"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Press sozlamasi: normadan chetlanish -->
+    <record id="view_craf_bolim_form_press_norm" model="ir.ui.view">
+        <field name="name">craf.bolim.form.press.norm</field>
+        <field name="model">craf.bolim</field>
+        <field name="inherit_id" ref="craf_production.view_craf_bolim_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='notify_app']" position="before">
+                <field name="norm_tolerance" invisible="code != 'press'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Quyma qoldig'i va prognoz -->
+    <record id="product_template_view_list_press_billet" model="ir.ui.view">
+        <field name="name">product.template.list.press.billet</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Quyma prognozi" editable="bottom" create="false" delete="false"
+                  decoration-danger="craf_press_status in ('neg', 'out', 'low')"
+                  decoration-warning="craf_press_status == 'soon'">
+                <field name="default_code" readonly="1" string="Kod"/>
+                <field name="name" readonly="1"/>
+                <field name="craf_press_qty"/>
+                <field name="craf_press_in_press" optional="show"/>
+                <field name="craf_min_qty" string="Minimal"/>
+                <field name="craf_press_used" string="Sarf (davr), kg" optional="show"/>
+                <field name="craf_press_period" optional="hide"/>
+                <field name="craf_press_avg" string="Kuniga, kg"/>
+                <field name="craf_press_days_text"/>
+                <field name="craf_press_end_date" string="Tugash"/>
+                <field name="craf_press_status" widget="badge"
+                       decoration-danger="craf_press_status in ('neg', 'out', 'low')"
+                       decoration-warning="craf_press_status == 'soon'"
+                       decoration-success="craf_press_status == 'ok'"
+                       decoration-muted="craf_press_status == 'idle'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="product_template_view_kanban_press_billet" model="ir.ui.view">
+        <field name="name">product.template.kanban.press.billet</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" create="false">
+                <field name="craf_press_status"/>
+                <field name="craf_press_days_text"/>
+                <field name="craf_min_qty"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center">
+                            <field name="name" class="fw-bold"/>
+                            <field name="craf_press_status" widget="badge" class="ms-auto"
+                                   decoration-danger="craf_press_status in ('neg', 'out', 'low')"
+                                   decoration-warning="craf_press_status == 'soon'"
+                                   decoration-success="craf_press_status == 'ok'"
+                                   decoration-muted="craf_press_status == 'idle'"/>
+                        </div>
+                        <div class="text-muted small"><field name="default_code"/></div>
+                        <div class="d-flex mt-2">
+                            <div class="me-4">
+                                <div class="text-muted small">Zavodda</div>
+                                <div class="fw-bold"><field name="craf_press_qty"/> kg</div>
+                            </div>
+                            <div class="me-4">
+                                <div class="text-muted small">Kuniga</div>
+                                <div><field name="craf_press_avg"/> kg</div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Yetadi</div>
+                                <div class="fw-bold">
+                                    <t t-if="record.craf_press_days_text.raw_value"><field name="craf_press_days_text"/></t>
+                                    <t t-else="">—</t>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="pt-1 text-muted small">
+                            <span>Press sexida <field name="craf_press_in_press"/> kg</span>
+                            <span class="ms-auto" t-if="record.craf_min_qty.raw_value">minimal <field name="craf_min_qty"/></span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_craf_press_billet" model="ir.actions.act_window">
+        <field name="name">Quyma qoldig'i va prognoz</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('product_template_view_list_press_billet')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('product_template_view_kanban_press_billet')})]"/>
+        <field name="domain">[('default_code', 'in', ['XA-09', 'XA-02'])]</field>
+        <field name="context">{'create': False}</field>
+    </record>
+</odoo>

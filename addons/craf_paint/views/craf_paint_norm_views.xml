@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rang normalari (kukun g/m²) -->
+    <record id="craf_color_view_list_boyash_norm" model="ir.ui.view">
+        <field name="name">craf.color.list.boyash.norm</field>
+        <field name="model">craf.color</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Rang normalari" editable="bottom" create="false" delete="false">
+                <header>
+                    <button name="action_craf_norm_from_fact" type="object" string="Normani faktdan olish"
+                            icon="fa-magic"
+                            confirm="Tanlangan ranglarning kukun normasi oxirgi davrdagi fakt qiymatga almashtiriladi. Davom etasizmi?"/>
+                </header>
+                <field name="name" readonly="1"/>
+                <field name="code" readonly="1" optional="show"/>
+                <field name="paint_tmpl_id" readonly="1" optional="show"/>
+                <field name="craf_powder_norm" string="Norma, g/m²" placeholder="120"/>
+                <field name="craf_fact_powder_g_m2" string="Fakt, g/m²" invisible="not craf_fact_batch_count"
+                       decoration-danger="craf_fact_batch_count and craf_fact_powder_g_m2 &gt; (craf_powder_norm or 120)"
+                       decoration-success="craf_fact_batch_count and craf_fact_powder_g_m2 and craf_fact_powder_g_m2 &lt;= (craf_powder_norm or 120)"/>
+                <field name="craf_fact_defect_pct" string="Brak, %" invisible="not craf_fact_batch_count"/>
+                <field name="craf_fact_area" optional="show" invisible="not craf_fact_batch_count"/>
+                <field name="craf_fact_batch_count" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_color_view_kanban_boyash_norm" model="ir.ui.view">
+        <field name="name">craf.color.kanban.boyash.norm</field>
+        <field name="model">craf.color</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" create="false">
+                <field name="craf_powder_norm"/>
+                <field name="craf_fact_batch_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-baseline">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <field name="code" class="ms-2 text-muted small"/>
+                        </div>
+                        <div class="text-muted small"><field name="paint_tmpl_id"/></div>
+                        <div class="d-flex mt-2">
+                            <div class="me-4">
+                                <div class="text-muted small">Norma, g/m²</div>
+                                <div class="fw-bold"><t t-if="record.craf_powder_norm.raw_value"><field name="craf_powder_norm"/></t><t t-else="">120 (standart)</t></div>
+                            </div>
+                            <div class="me-4">
+                                <div class="text-muted small">Fakt, g/m²</div>
+                                <div class="fw-bold"><t t-if="record.craf_fact_batch_count.raw_value"><field name="craf_fact_powder_g_m2"/></t><t t-else="">—</t></div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Brak, %</div>
+                                <div class="fw-bold"><t t-if="record.craf_fact_batch_count.raw_value"><field name="craf_fact_defect_pct"/></t><t t-else="">—</t></div>
+                            </div>
+                        </div>
+                        <footer class="pt-1 text-muted small">
+                            <span><field name="craf_fact_batch_count"/> smena · <field name="craf_fact_area"/> m²</span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_color_view_form_boyash_norm" model="ir.ui.view">
+        <field name="name">craf.color.form.boyash.norm</field>
+        <field name="model">craf.color</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form string="Rang normasi" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <field name="paint_tmpl_id" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="Norma">
+                            <field name="craf_powder_norm" placeholder="120"/>
+                        </group>
+                        <group string="Fakt (oxirgi davr)">
+                            <field name="craf_fact_powder_g_m2"/>
+                            <field name="craf_fact_defect_pct"/>
+                            <field name="craf_fact_area"/>
+                            <field name="craf_fact_batch_count"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_boyash_norm" model="ir.actions.act_window">
+        <field name="name">Rang normalari</field>
+        <field name="res_model">craf.color</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('is_painted', '=', True)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('craf_color_view_list_boyash_norm')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('craf_color_view_kanban_boyash_norm')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('craf_color_view_form_boyash_norm')})]"/>
+    </record>
+
+    <!-- Bo'yash sozlamasi: brak va kukun chegarasi -->
+    <record id="view_craf_bolim_form_boyash_norm" model="ir.ui.view">
+        <field name="name">craf.bolim.form.boyash.norm</field>
+        <field name="model">craf.bolim</field>
+        <field name="inherit_id" ref="craf_production.view_craf_bolim_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='notify_app']" position="before">
+                <field name="defect_max_pct" invisible="code != 'boyash'"/>
+                <field name="powder_tolerance" invisible="code != 'boyash'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Materiallar qoldig'i va prognoz -->
+    <record id="product_template_view_list_boyash_material" model="ir.ui.view">
+        <field name="name">product.template.list.boyash.material</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Materiallar prognozi" editable="bottom" create="false" delete="false"
+                  decoration-danger="craf_boyash_status in ('neg', 'out', 'low')"
+                  decoration-warning="craf_boyash_status == 'soon'">
+                <field name="default_code" readonly="1" string="Kod" optional="show"/>
+                <field name="name" readonly="1"/>
+                <field name="uom_id" readonly="1" string="Birlik" optional="show"/>
+                <field name="craf_boyash_qty"/>
+                <field name="craf_boyash_in_sex" optional="show"/>
+                <field name="craf_min_qty" string="Minimal"/>
+                <field name="craf_boyash_used" string="Sarf (davr)" optional="hide"/>
+                <field name="craf_boyash_avg" string="Kuniga"/>
+                <field name="craf_boyash_days_text"/>
+                <field name="craf_boyash_end_date" string="Tugash" optional="show"/>
+                <field name="craf_boyash_status" widget="badge"
+                       decoration-danger="craf_boyash_status in ('neg', 'out', 'low')"
+                       decoration-warning="craf_boyash_status == 'soon'"
+                       decoration-success="craf_boyash_status == 'ok'"
+                       decoration-muted="craf_boyash_status == 'idle'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="product_template_view_kanban_boyash_material" model="ir.ui.view">
+        <field name="name">product.template.kanban.boyash.material</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" create="false">
+                <field name="craf_boyash_status"/>
+                <field name="craf_boyash_days_text"/>
+                <field name="craf_min_qty"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center">
+                            <field name="name" class="fw-bold"/>
+                            <field name="craf_boyash_status" widget="badge" class="ms-auto"
+                                   decoration-danger="craf_boyash_status in ('neg', 'out', 'low')"
+                                   decoration-warning="craf_boyash_status == 'soon'"
+                                   decoration-success="craf_boyash_status == 'ok'"
+                                   decoration-muted="craf_boyash_status == 'idle'"/>
+                        </div>
+                        <div class="text-muted small"><field name="default_code"/></div>
+                        <div class="d-flex mt-2">
+                            <div class="me-4">
+                                <div class="text-muted small">Zavodda</div>
+                                <div class="fw-bold"><field name="craf_boyash_qty"/> <field name="uom_id"/></div>
+                            </div>
+                            <div class="me-4">
+                                <div class="text-muted small">Kuniga</div>
+                                <div><field name="craf_boyash_avg"/></div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Yetadi</div>
+                                <div class="fw-bold">
+                                    <t t-if="record.craf_boyash_days_text.raw_value"><field name="craf_boyash_days_text"/></t>
+                                    <t t-else="">—</t>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="pt-1 text-muted small">
+                            <span t-if="record.craf_min_qty.raw_value">minimal <field name="craf_min_qty"/></span>
+                            <span class="ms-auto"><field name="craf_boyash_end_date"/></span>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_craf_boyash_material" model="ir.actions.act_window">
+        <field name="name">Materiallar qoldig'i va prognoz</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('product_template_view_list_boyash_material')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('product_template_view_kanban_boyash_material')})]"/>
+        <field name="domain">[('craf_boyash_material', '=', True)]</field>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p>Kukun bo'yoqlar (rang kartochkasidagi), kimyo, plyonka va lenta. Sarf — oxirgi N kun
+                (Bo'yash sozlamalari → Prognoz davri) ichida ishlab chiqarishga ketgan miqdor.</p>
+        </field>
+    </record>
+</odoo>

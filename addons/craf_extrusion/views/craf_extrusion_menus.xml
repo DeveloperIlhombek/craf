@@ -6,4 +6,8 @@
               action="action_craf_semi_profiles" sequence="22"/>
     <menuitem id="menu_craf_briket" name="Briketlash" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_briket" sequence="30"/>
+    <menuitem id="menu_craf_press_billet" name="Quyma qoldig'i va prognoz" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_press_billet" sequence="25"/>
+    <menuitem id="menu_craf_press_norm" name="Matritsa normalari" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_press_norm" sequence="80"/>
 </odoo>

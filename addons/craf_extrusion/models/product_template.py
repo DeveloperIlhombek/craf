@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+from odoo.addons.craf_production.models.craf_production_mixin import FORECAST_STATUS
+
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
@@ -11,6 +13,38 @@ class ProductTemplate(models.Model):
         "product.product", string="Питак (shu quymadan)",
         help="Quyma (stalba) uchun: press kesgan qoldiq qaysi mahsulotga yoziladi. "
              "Masalan, o'z stalbamiz → Питак (вторичка), RusAl → Питак (русал).")
+
+    # Quyma prognozi (Press → Quyma qoldig'i va prognoz). craf_min_qty asli craf_hisobot da — bu modul undan
+    # oldin o'rnatiladi, shuning uchun shu yerda ham (bir xil) e'lon qilingan.
+    craf_min_qty = fields.Float("Minimal qoldiq", digits=(16, 1),
+                                help="Qoldiq shundan kamaysa, kunlik hisobotda va panelda ogohlantiriladi.")
+    craf_press_qty = fields.Float("Zavodda, kg", compute="_compute_craf_press_forecast", digits=(16, 1))
+    craf_press_in_press = fields.Float("Press sexida, kg", compute="_compute_craf_press_forecast", digits=(16, 1))
+    craf_press_used = fields.Float("Press sarfi (davr), kg", compute="_compute_craf_press_forecast", digits=(16, 1))
+    craf_press_period = fields.Integer("Davr, kun", compute="_compute_craf_press_forecast")
+    craf_press_avg = fields.Float("O'rtacha kunlik sarf, kg", compute="_compute_craf_press_forecast",
+                                  digits=(16, 1))
+    craf_press_days_left = fields.Float("Necha kunga yetadi", compute="_compute_craf_press_forecast",
+                                        digits=(16, 1))
+    craf_press_days_text = fields.Char("Yetadi", compute="_compute_craf_press_forecast")
+    craf_press_end_date = fields.Date("Tugash sanasi", compute="_compute_craf_press_forecast")
+    craf_press_status = fields.Selection(FORECAST_STATUS, string="Holat", compute="_compute_craf_press_forecast")
+
+    def _compute_craf_press_forecast(self):
+        Shift = self.env["craf.extrusion.shift"]
+        rows = Shift._craf_billet_forecast(self.product_variant_ids)
+        for tmpl in self:
+            r = rows.get(tmpl.product_variant_id.id)
+            days = r["days_left"] if r else None
+            tmpl.craf_press_qty = r["qty"] if r else 0.0
+            tmpl.craf_press_in_press = r["in_press"] if r else 0.0
+            tmpl.craf_press_used = r["used"] if r else 0.0
+            tmpl.craf_press_period = r["period"] if r else 0
+            tmpl.craf_press_avg = r["avg"] if r else 0.0
+            tmpl.craf_press_days_left = days or 0.0
+            tmpl.craf_press_days_text = Shift._craf_days_text(days)
+            tmpl.craf_press_end_date = r["end_date"] if days is not None and days <= 365 else False
+            tmpl.craf_press_status = r["status"] if r else False
 
     @api.model
     def _craf_raw_color(self):

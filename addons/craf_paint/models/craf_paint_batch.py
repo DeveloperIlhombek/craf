@@ -1,19 +1,30 @@
+from datetime import timedelta
+
 from markupsafe import Markup
 
 from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
 
-from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
+from odoo.addons.craf_production.models.craf_production_mixin import EPS, NORM_STATUS, fmt
 
 # Kimyo normasi, kg / m² (namuna; haqiqiy norma bilan almashtiriladi)
 CHEM_NORMS = [("XA-03", 0.012), ("XA-04", 0.008), ("XA-05", 0.006)]
+# Bo'yash va qadoqlash materiallari (kukun bo'yoqlar rang kartochkasidan qo'shiladi): rangsiz kukunlar
+# (9005, Uzpon), kimyo, kaustik soda, plyonka, lenta
+MATERIAL_CODES = ("XA-01", "XA-03", "XA-04", "XA-05", "XA-10", "XA-11", "XA-12", "QM-01", "QM-02")
+DEFAULT_POWDER_NORM = 120.0
 
 
 class CrafPaintBatch(models.Model):
     _name = "craf.paint.batch"
     _description = "Bo'yash smenasi"
-    _inherit = ["craf.production.mixin"]
+    _inherit = ["craf.production.mixin", "mail.activity.mixin"]
     _order = "date desc, id desc"
+    _craf_weighted_avg = {
+        "defect_pct": ("pcs_defect", "pcs_in", 100.0),
+        "powder_diff_pct": ("powder_qty", "powder_norm_qty", 100.0, -100.0),
+        "powder_g_m2": ("powder_qty", "area_total", 1000.0),
+    }
 
     _craf_sequence_code = "craf.paint.batch"
     _craf_stage = "paint"
@@ -24,11 +35,14 @@ class CrafPaintBatch(models.Model):
                                tracking=True)
     powder_product_id = fields.Many2one(
         "product.product", string="Kukun bo'yoq", compute="_compute_powder_product_id", store=True, readonly=False)
-    powder_norm = fields.Float("Kukun normasi, g/m²", default=120.0)
+    powder_norm = fields.Float("Kukun normasi, g/m²", compute="_compute_powder_norm", store=True, readonly=False,
+                               help="Rang kartochkasidagi normadan olinadi (yo'q bo'lsa 120 g/m²).")
     powder_norm_qty = fields.Float("Kukun normada, kg", compute="_compute_kpi", store=True, digits=(16, 2))
     powder_qty = fields.Float("Kukun sarfi, kg", digits=(16, 2), tracking=True, aggregator="sum")
     powder_diff_pct = fields.Float("Kukun farqi, %", compute="_compute_kpi", store=True, digits=(16, 1),
                                    aggregator="avg")
+    powder_g_m2 = fields.Float("Kukun fakt, g/m²", compute="_compute_powder_g_m2", store=True, digits=(16, 1),
+                               aggregator="avg")
     location_dest_id = fields.Many2one(
         "stock.location", string="Bo'yalgan qayerga", required=True, domain=[("usage", "=", "internal")],
         default=lambda self: self._craf_loc(self._craf_default_dest))
@@ -50,6 +64,45 @@ class CrafPaintBatch(models.Model):
     kg_ok = fields.Float("Bo'yaldi, kg", compute="_compute_kpi", store=True, digits=(16, 1), aggregator="sum")
     area_total = fields.Float("Maydon, m²", compute="_compute_kpi", store=True, digits=(16, 1), aggregator="sum")
     defect_pct = fields.Float("Brak, %", compute="_compute_kpi", store=True, digits=(16, 2), aggregator="avg")
+
+    norm_status = fields.Selection(NORM_STATUS, string="Norma", compute="_compute_norm_status", store=True,
+                                   index=True)
+    norm_warning = fields.Char("Normadan chetlanish", compute="_compute_norm_status", store=True)
+    powder_days_left = fields.Float(related="powder_product_id.product_tmpl_id.craf_boyash_days_left",
+                                    string="Kukun necha kunga yetadi")
+
+    @api.depends("color_id")
+    def _compute_powder_norm(self):
+        for batch in self:
+            batch.powder_norm = batch.color_id.craf_powder_norm or DEFAULT_POWDER_NORM
+
+    @api.depends("powder_qty", "area_total")
+    def _compute_powder_g_m2(self):
+        for batch in self:
+            has_data = batch.area_total > EPS and batch.powder_qty > EPS
+            batch.powder_g_m2 = batch.powder_qty * 1000.0 / batch.area_total if has_data else 0.0
+
+    @api.depends("defect_pct", "powder_diff_pct", "powder_g_m2", "powder_norm", "pcs_in", "powder_qty")
+    def _compute_norm_status(self):
+        bolim = self.env["craf.bolim"]._get("boyash")
+        for batch in self:
+            issues = batch._craf_norm_issues(bolim)
+            batch.norm_status = ("low" if issues else "ok") if batch.pcs_in else False
+            batch.norm_warning = "Normadan tashqari: " + "; ".join(issues) if issues else False
+
+    def _craf_norm_issues(self, bolim):
+        """Brak — Bo'yash sozlamasidagi chegaradan ko'p; kukun — normadan chegara foizidan ortiq sarf."""
+        self.ensure_one()
+        issues = []
+        if not self.pcs_in:
+            return issues
+        if bolim.defect_max_pct and self.defect_pct > bolim.defect_max_pct + EPS:
+            issues.append("brak %s%% (chegara %s%%)" % (fmt(self.defect_pct, 2), fmt(bolim.defect_max_pct, 1)))
+        if (bolim.powder_tolerance and self.powder_qty > EPS and self.powder_norm_qty > EPS
+                and self.powder_diff_pct > bolim.powder_tolerance + EPS):
+            issues.append("kukun normadan %s%% ko'p (%s g/m², norma %s)" % (
+                fmt(self.powder_diff_pct, 1), fmt(self.powder_g_m2, 0), fmt(self.powder_norm, 0)))
+        return issues
 
     @api.depends("color_id")
     def _compute_powder_product_id(self):
@@ -147,6 +200,56 @@ class CrafPaintBatch(models.Model):
             "Maydon %s m²; kukun %s kg (normada %s kg)" % (
                 fmt(self.area_total, 1), fmt(self.powder_qty, 2), fmt(self.powder_norm_qty, 2)),
         ])
+        self._craf_norm_notify("boyash", "craf_paint.mail_activity_boyash_norm",
+                               "Bo'yash: %s — normadan tashqari" % self.color_id.name)
+
+    # ------------------------------------------------------------------ material prognozi
+    @api.model
+    def _craf_material_products(self):
+        """Kukun bo'yoqlar (faol ranglar kartochkasidagi), kimyo, plyonka va lenta."""
+        colors = self.env["craf.color"].search([("is_painted", "=", True), ("paint_tmpl_id", "!=", False)])
+        return colors.paint_tmpl_id.product_variant_ids | self.env["product.product"].search(
+            [("default_code", "in", MATERIAL_CODES)])
+
+    @api.model
+    def _craf_material_forecast(self, products=None):
+        """Material: qoldiq va oxirgi N kun (Bo'yash sozlamasi) sarfi bo'yicha necha kunga yetishi.
+
+        Sarf — ichki joydan ishlab chiqarishga ketgan bajarilgan ombor harakatlari (bo'yash, kimyoviy ishlov,
+        qadoqlash). Tarix N kundan qisqa bo'lsa, N — birinchi sarf kunidan bugungacha."""
+        if products is None:
+            products = self._craf_material_products()
+        today = fields.Date.context_today(self)
+        period, warn, used = self._craf_consumption(products, "boyash", self._craf_material_products())
+        sex_locs = self.env["stock.location"]
+        for name in (self._craf_default_src, self._craf_default_dest, "Kimyoviy ishlov"):
+            sex_locs |= self._craf_loc(name)
+        on_hand, in_sex = {}, {}
+        for product, location, qty in self.env["stock.quant"].sudo()._read_group(
+                [("product_id", "in", products.ids), ("location_id.usage", "=", "internal")],
+                ["product_id", "location_id"], ["quantity:sum"]):
+            on_hand[product.id] = on_hand.get(product.id, 0.0) + qty
+            if location in sex_locs:
+                in_sex[product.id] = in_sex.get(product.id, 0.0) + qty
+        rows = {}
+        for product in products:
+            qty = on_hand.get(product.id, 0.0)
+            spent = used.get(product.id, 0.0)
+            avg = spent / period
+            min_qty = product.craf_min_qty or 0.0
+            status, days_left = self._craf_forecast_status(qty, avg, min_qty, warn)
+            rows[product.id] = {
+                "product": product, "qty": qty, "in_sex": in_sex.get(product.id, 0.0), "min_qty": min_qty,
+                "used": spent, "avg": avg, "period": period, "days_left": days_left,
+                "end_date": today + timedelta(days=int(days_left)) if days_left is not None else False,
+                "status": status, "uom": product.uom_id.name,
+            }
+        return rows
+
+    @api.model
+    def _cron_material_min_qty(self):
+        self._craf_min_qty_sync(list(self._craf_material_forecast().values()), "boyash",
+                                "craf_paint.mail_activity_boyash_material", "Bo'yash")
 
     def _craf_pack_materials(self):
         """[(mahsulot, miqdor)] — qadoqlash materiallari sarfi (plyonka, lenta)."""

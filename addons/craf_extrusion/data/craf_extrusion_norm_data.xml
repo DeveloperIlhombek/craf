@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_activity_press_norm" model="mail.activity.type">
+        <field name="name">Press normasi</field>
+        <field name="summary">Press smenasi normadan past</field>
+        <field name="icon">fa-tachometer</field>
+        <field name="decoration_type">warning</field>
+        <field name="res_model">craf.extrusion.shift</field>
+        <field name="delay_count">0</field>
+    </record>
+
+    <record id="mail_activity_press_billet" model="mail.activity.type">
+        <field name="name">Quyma kam</field>
+        <field name="summary">Quyma minimal qoldiqdan kam</field>
+        <field name="icon">fa-exclamation-triangle</field>
+        <field name="decoration_type">warning</field>
+        <field name="res_model">product.template</field>
+        <field name="delay_count">0</field>
+    </record>
+
+    <!-- Press: quyma minimal qoldiq eslatmalarini har soatda yangilash -->
+    <record id="ir_cron_craf_press_billet_min_qty" model="ir.cron">
+        <field name="name">Craf Press: quyma minimal qoldiq eslatmasi</field>
+        <field name="model_id" ref="model_craf_extrusion_shift"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_billet_min_qty()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+</odoo>
