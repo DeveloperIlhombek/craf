@@ -1,6 +1,6 @@
 {
     "name": "Craf Литейка: daftar va hisobot",
-    "version": "19.0.1.3.0",
+    "version": "19.0.1.4.0",
     "summary": "Plavka daftar ko'rinishida, Литейка qoldig'i → sarf → stalba → otxod sikli, Excel eksport va import",
     "description": """
 Литейка (pech) ishini ishchilar daftari va Excel jadvaliga moslash:

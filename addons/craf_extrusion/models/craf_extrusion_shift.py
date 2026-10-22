@@ -23,8 +23,10 @@ class CrafExtrusionShift(models.Model):
     _craf_sequence_code = "craf.extrusion.shift"
     _craf_stage = "press"
     _craf_default_src = "Press sexi"
+    _craf_default_waste = "Литейка"  # brak profil va питак Liteykada qayta eritiladi
 
-    section_id = fields.Many2one("craf.profile.section", string="Matritsa (kesim)", required=True, tracking=True)
+    section_id = fields.Many2one("craf.profile.section", string="Matritsa (kesim)", tracking=True,
+                                 help="Bir varaqda bir nechta profil bo'lsa — eng ko'p chiqqani (norma shundan olinadi).")
     die_code = fields.Char(related="section_id.die_code", string="Matritsa kodi")
     kg_per_m = fields.Float(related="section_id.kg_per_m", string="kg/m")
     billet_product_id = fields.Many2one(
@@ -33,7 +35,9 @@ class CrafExtrusionShift(models.Model):
         default=lambda self: self._craf_product("XA-09"))
     melt_ids = fields.Many2many(
         "craf.foundry.melt", string="Quyma partiyasi (plavka)", domain=[("state", "=", "done")])
-    billet_qty = fields.Float("Quyma sarfi, kg", digits=(16, 1), tracking=True, aggregator="sum")
+    billet_qty = fields.Float("Quyma sarfi, kg", digits=(16, 1), tracking=True, aggregator="sum",
+                              help="Ixtiyoriy: stalba sarfi Liteyka kunlik qoldig'i orqali yuritiladi. Kiritilsa, "
+                                   "Press sexidan yechiladi va chiqish % hisoblanadi.")
     billet_available = fields.Float("Pressda bor", compute="_compute_billet_available", digits=(16, 1))
     billet_days_left = fields.Float(related="billet_product_id.product_tmpl_id.craf_press_days_left",
                                     string="Quyma necha kunga yetadi")
@@ -78,11 +82,11 @@ class CrafExtrusionShift(models.Model):
     def _compute_norm_status(self):
         tol = self.env["craf.bolim"]._get("press").norm_tolerance or 0.0
         for shift in self:
-            has_data = shift.billet_qty > EPS and shift.output_kg > EPS
-            shift.yield_diff = shift.yield_pct - shift.norm_yield_pct if shift.norm_yield_pct and has_data else 0.0
+            has_yield = shift.billet_qty > EPS and shift.output_kg > EPS
+            shift.yield_diff = shift.yield_pct - shift.norm_yield_pct if shift.norm_yield_pct and has_yield else 0.0
             issues = shift._craf_norm_issues(tol)
-            has_norm = shift.norm_yield_pct or shift.norm_productivity
-            shift.norm_status = ("low" if issues else "ok") if has_norm and has_data else False
+            has_norm = (shift.norm_yield_pct and has_yield) or (shift.norm_productivity and shift.duration > EPS)
+            shift.norm_status = ("low" if issues else "ok") if has_norm and shift.output_kg > EPS else False
             shift.norm_warning = "Normadan past: " + "; ".join(issues) if issues else False
 
     def _craf_norm_issues(self, tol):
@@ -143,15 +147,15 @@ class CrafExtrusionShift(models.Model):
         lines = self.line_ids.filtered(lambda l: l.pcs > 0)
         if not lines:
             raise UserError("Chiqqan profil donasini kiriting.")
-        if self.billet_qty <= EPS:
-            raise UserError("Quyma sarfini (kg) kiriting.")
         if any(not l.kg_per_pc for l in lines):
             raise UserError("Kesimda kg/m yoki mahsulotda uzunlik kiritilmagan — nazariy kg hisoblanmaydi.")
-        total_out = self.output_kg + self.rest_qty + self.scrap_qty
-        if total_out > self.billet_qty + EPS:
-            raise UserError("Chiqish + qoldiq + brak (%s kg) quyma sarfidan (%s kg) ko'p bo'lishi mumkin emas." % (
-                fmt(total_out, 1), fmt(self.billet_qty, 1)))
-        self._craf_check_available(self.location_src_id, {self.billet_product_id: self.billet_qty})
+        billet = self.billet_qty > EPS  # quyma ixtiyoriy: yozilmasa stalba Liteyka qoldig'i orqali yuritiladi
+        if billet:
+            total_out = self.output_kg + self.rest_qty + self.scrap_qty
+            if total_out > self.billet_qty + EPS:
+                raise UserError("Chiqish + qoldiq + brak (%s kg) quyma sarfidan (%s kg) ko'p bo'lishi mumkin emas." % (
+                    fmt(total_out, 1), fmt(self.billet_qty, 1)))
+            self._craf_check_available(self.location_src_id, {self.billet_product_id: self.billet_qty})
         byproducts = []
         if self.rest_qty > EPS:
             byproducts.append((self.rest_product_id, self.rest_qty, self.waste_location_id))
@@ -165,20 +169,22 @@ class CrafExtrusionShift(models.Model):
             last = i == len(lines) - 1
             share = remaining if last else round(self.billet_qty * line.kg / self.output_kg, 3)
             remaining -= share
+            components = [(self.billet_product_id, share)] if billet else []
             mo = self._craf_produce(line.product_id, line.pcs, self.location_src_id, line.location_dest_id,
-                                    [(self.billet_product_id, share)], byproducts if i == 0 else None)
+                                    components, byproducts if i == 0 else None)
             names.append(mo.name)
         self._craf_post_summary([
             Markup("<b>Press smenasi tasdiqlandi</b> — %s") % ", ".join(names),
-            "Quyma: %s kg%s" % (fmt(self.billet_qty, 1),
-                                (" (partiya: %s)" % ", ".join(self.melt_ids.mapped("name"))) if self.melt_ids else ""),
-            "Profil: %s dona = %s kg, chiqish %s%%" % (fmt(self.output_pcs), fmt(self.output_kg, 1),
-                                                        fmt(self.yield_pct, 1)),
-            "Qoldiq %s kg, brak %s kg, farq %s kg" % (fmt(self.rest_qty, 1), fmt(self.scrap_qty, 1),
-                                                     fmt(self.loss_qty, 1)),
+            ("Quyma: %s kg%s" % (fmt(self.billet_qty, 1),
+                                 (" (partiya: %s)" % ", ".join(self.melt_ids.mapped("name"))) if self.melt_ids else ""))
+            if billet else "Quyma: yozilmagan (stalba Liteyka qoldig'i orqali)",
+            "Profil: %s dona = %s kg%s" % (fmt(self.output_pcs), fmt(self.output_kg, 1),
+                                           (", chiqish %s%%" % fmt(self.yield_pct, 1)) if billet else ""),
+            "Питак %s kg, brak %s kg → %s" % (fmt(self.rest_qty, 1), fmt(self.scrap_qty, 1),
+                                               self.waste_location_id.name),
         ])
         self._craf_norm_notify("press", "craf_extrusion.mail_activity_press_norm",
-                               "Press: %s — normadan past" % self.section_id.name)
+                               "Press: %s — normadan past" % (self.section_id.name or self.name))
 
     # ------------------------------------------------------------------ quyma prognozi
     @api.model

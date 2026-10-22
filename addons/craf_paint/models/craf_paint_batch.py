@@ -30,6 +30,7 @@ class CrafPaintBatch(models.Model):
     _craf_stage = "paint"
     _craf_default_src = "Bo'yash sexi"
     _craf_default_dest = "Qadoqlash"
+    _craf_default_waste = "Литейка"  # brak profil Liteykada qayta eritiladi
 
     color_id = fields.Many2one("craf.color", string="Rang", required=True, domain=[("is_painted", "=", True)],
                                tracking=True)

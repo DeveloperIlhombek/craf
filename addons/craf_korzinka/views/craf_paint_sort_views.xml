@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_paint_sort_view_list" model="ir.ui.view">
+        <field name="name">craf.paint.sort.list</field>
+        <field name="model">craf.paint.sort</field>
+        <field name="arch" type="xml">
+            <list string="Brak ajratish" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="basket_count" string="Korzinka"/>
+                <field name="brak_pcs" sum="Jami"/>
+                <field name="cut_pcs" sum="Jami"/>
+                <field name="kg_total" sum="Jami"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_paint_sort_view_kanban" model="ir.ui.view">
+        <field name="name">craf.paint.sort.kanban</field>
+        <field name="model">craf.paint.sort</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center mb-1">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : (record.state.raw_value === 'draft' ? 'text-bg-info' : 'text-bg-secondary')"><field name="state"/></span>
+                        </div>
+                        <div class="text-muted small"><field name="date"/> · <field name="basket_count"/> korzinka</div>
+                        <div class="d-flex mt-1">
+                            <span>brak <field name="brak_pcs" class="fw-bold"/> · kesildi <field name="cut_pcs" class="fw-bold"/> dona</span>
+                            <span class="ms-auto"><field name="kg_total" class="fw-bold"/> kg</span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_paint_sort_view_form" model="ir.ui.view">
+        <field name="name">craf.paint.sort.form</field>
+        <field name="model">craf.paint.sort</field>
+        <field name="arch" type="xml">
+            <form string="Brak ajratish">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary" icon="fa-check"
+                            invisible="state != 'draft'"
+                            confirm="Brak profillar korzinkalardan chiqariladi va kg Liteykaga yoziladi; kesilganlar 5 m ga o'tadi. Davom etasizmi?"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_productions" type="object" class="oe_stat_button" icon="fa-cogs"
+                                invisible="not production_count">
+                            <field name="production_count" widget="statinfo" string="MRP buyurtma"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted">Brak ajratish (bo'yashdan oldin)</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                        </group>
+                        <group>
+                            <field name="scrap_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="waste_location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <div class="text-muted small mb-2">
+                        Har qatorda: korzinka, profil, nima bo'ldi (brak yoki 6 m → 5 m kesildi), dona. Kg o'zi
+                        hisoblanadi — tortilgan bo'lsa, tortilganini yozing.
+                    </div>
+                    <field name="line_ids" readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="load_id" options="{'no_create': True}"/>
+                            <field name="allowed_product_ids" column_invisible="1"/>
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="kind"/>
+                            <field name="qty" sum="Jami"/>
+                            <field name="target_product_id" optional="hide"/>
+                            <field name="kg" sum="Jami"/>
+                            <field name="note" optional="show"/>
+                            <field name="state" column_invisible="1"/>
+                        </list>
+                        <kanban class="o_kanban_mobile">
+                            <templates>
+                                <t t-name="card">
+                                    <div class="d-flex"><field name="load_id" class="fw-bold"/>
+                                        <span class="ms-auto"><field name="kg" class="fw-bold"/> kg</span></div>
+                                    <div class="small"><field name="product_id"/></div>
+                                    <div class="text-muted small"><field name="kind"/>: <field name="qty"/> dona</div>
+                                </t>
+                            </templates>
+                        </kanban>
+                        <form string="Ajratilgan profil">
+                            <group>
+                                <field name="load_id" options="{'no_create': True}"/>
+                                <field name="allowed_product_ids" invisible="1"/>
+                                <field name="product_id" options="{'no_create': True}"/>
+                                <field name="kind"/>
+                                <field name="qty"/>
+                                <field name="target_product_id" invisible="kind != 'cut'"/>
+                                <field name="kg"/>
+                                <field name="note"/>
+                            </group>
+                        </form>
+                    </field>
+                    <group class="mt-2">
+                        <group string="Jami">
+                            <field name="brak_pcs"/>
+                            <field name="cut_pcs"/>
+                            <field name="kg_total" class="fw-bold"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Izoh…"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_paint_sort_view_search" model="ir.ui.view">
+        <field name="name">craf.paint.sort.search</field>
+        <field name="model">craf.paint.sort</field>
+        <field name="arch" type="xml">
+            <search string="Brak ajratish">
+                <field name="name"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="week" string="Oxirgi 7 kun"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_paint_sort" model="ir.actions.act_window">
+        <field name="name">Brak ajratish</field>
+        <field name="res_model">craf.paint.sort</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="path">craf-brak-ajratish</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Bo'yashga kelgan korzinkalardan ajratilgan brakni yozing</p>
+            <p>Brak profil kg Liteykaga (brak profil + briket otxod) yoziladi; 6 m dan kesib 5 m qilinganlar
+                5 m profilga o'tadi, kesilgan uchlar Liteykaga.</p>
+        </field>
+    </record>
+
+    <!-- Bo'yashda ajratilganlar (qatorlar) — hisobot uchun -->
+    <record id="craf_paint_sort_line_view_list" model="ir.ui.view">
+        <field name="name">craf.paint.sort.line.list</field>
+        <field name="model">craf.paint.sort.line</field>
+        <field name="arch" type="xml">
+            <list string="Ajratilgan profillar" create="false">
+                <field name="sort_id"/>
+                <field name="load_id"/>
+                <field name="product_id"/>
+                <field name="kind"/>
+                <field name="qty" sum="Jami"/>
+                <field name="kg" sum="Jami"/>
+                <field name="note"/>
+                <field name="state" optional="hide"/>
+            </list>
+        </field>
+    </record>
+</odoo>

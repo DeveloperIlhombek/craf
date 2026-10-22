@@ -116,13 +116,14 @@
                 <field name="date"/>
                 <field name="basket_id"/>
                 <field name="shift_id"/>
-                <field name="section_id"/>
-                <field name="qty_6" sum="Jami"/>
-                <field name="qty_5" sum="Jami"/>
+                <field name="content"/>
                 <field name="pcs_total" sum="Jami"/>
                 <field name="kg_theory" sum="Jami"/>
                 <field name="net_kg" sum="Jami" optional="show"/>
                 <field name="kg_diff" optional="hide"/>
+                <field name="defect_pcs" sum="Jami" optional="show"/>
+                <field name="cut_pcs" sum="Jami" optional="hide"/>
+                <field name="defect_kg" sum="Jami" optional="show"/>
                 <field name="state" widget="badge" decoration-warning="state == 'press'"
                        decoration-success="state == 'kimyo'" decoration-muted="state == 'boyash'"/>
                 <field name="location_id" optional="show"/>
@@ -150,11 +151,25 @@
                         <group>
                             <field name="qty_6"/>
                             <field name="qty_5"/>
+                            <field name="section2_id"/>
+                            <field name="qty2_6" invisible="not section2_id"/>
+                            <field name="qty2_5" invisible="not section2_id"/>
                             <field name="pcs_total"/>
                             <field name="kg_theory"/>
+                        </group>
+                        <group string="Og'irlik">
+                            <field name="tare_kg"/>
+                            <field name="hook_kg"/>
+                            <field name="stick_kg"/>
                             <field name="gross_kg"/>
                             <field name="net_kg"/>
                             <field name="kg_diff"/>
+                        </group>
+                        <group string="Bo'yashda ajratilgan" invisible="not defect_pcs and not cut_pcs">
+                            <field name="defect_pcs"/>
+                            <field name="cut_pcs"/>
+                            <field name="defect_kg"/>
+                            <field name="left_text"/>
                         </group>
                         <group>
                             <field name="treatment_id"/>

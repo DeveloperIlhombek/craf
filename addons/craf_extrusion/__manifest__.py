@@ -1,12 +1,12 @@
 {
     "name": "Craf Press",
-    "version": "19.0.1.2.0",
+    "version": "19.0.1.3.0",
     "summary": "Press smena hisoboti: matritsa, quyma sarfi, profil chiqishi, qoldiq va brak",
     "description": """
 Press smenasi:
 - matritsa (kesim), quyma mahsuloti va partiyasi (plavka raqami), quyma sarfi kg
 - chiqish: bo'yalmagan profil dona bo'yicha, nazariy kg avtomatik (dona × uzunlik × kg/m)
-- press qoldig'i (питак) va brak profil kg — Chiqindiga
+- press qoldig'i (питак) va brak profil kg — Liteykaga (qayta eritiladi); quyma sarfi ixtiyoriy
 - chiqish %, hisobga olinmagan farq, unumdorlik kg/soat
 - bo'yaladigan profillar uchun bo'yalmagan yarim tayyor mahsulotlar avtomatik yaratiladi
 - guruh va jami qatorlarida chiqish % va unumdorlik og'irlik bo'yicha (Σ chiqish / Σ quyma), oddiy o'rtacha emas

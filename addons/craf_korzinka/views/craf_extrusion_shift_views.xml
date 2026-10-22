@@ -15,53 +15,79 @@
                     <field name="basket_count" widget="statinfo" string="Korzinka"/>
                 </button>
             </xpath>
+            <xpath expr="//page[@name='output']" position="attributes">
+                <attribute name="string">Chiqish (avtomatik)</attribute>
+            </xpath>
             <xpath expr="//page[@name='output']" position="before">
                 <page string="Korzinkalar" name="baskets">
                     <div class="text-muted small mb-2">
-                        Har bir to'ldirilgan korzinka: kodi, 6 m va 5 m profil soni (ko'pi bilan 120 dona), tortilgan og'irlik.
-                        Tasdiqlashda profil chiqishi shu yerdan hisoblanadi.
+                        Press varag'idagi kabi: korzinka, profil (6 m / 5 m dona), kerak bo'lsa ikkinchi profil,
+                        kryuchok, palka va brutto. Netto = brutto − korzinka − kryuchok − palka.
                     </div>
-                    <field name="basket_load_ids" readonly="state != 'draft'">
+                    <field name="basket_load_ids" readonly="state != 'draft'"
+                           context="{'default_section_id': section_id}">
                         <list editable="bottom">
-                            <field name="basket_id" options="{'no_create': True}"/>
-                            <field name="qty_6" sum="Jami"/>
-                            <field name="qty_5" sum="Jami"/>
-                            <field name="pcs_total" sum="Jami"/>
-                            <field name="kg_theory" sum="Jami"/>
-                            <field name="gross_kg" sum="Jami"/>
-                            <field name="net_kg" sum="Jami" optional="show"/>
-                            <field name="kg_diff" optional="show" decoration-danger="kg_diff &lt; -10 or kg_diff &gt; 10"/>
+                            <field name="basket_id" options="{'no_create_edit': True}"/>
+                            <field name="tare_kg" sum="Jami"/>
+                            <field name="section_id" options="{'no_create': True}"/>
+                            <field name="qty_6" sum="Jami" string="6 m"/>
+                            <field name="qty_5" sum="Jami" string="5 m"/>
+                            <field name="section2_id" options="{'no_create': True}" optional="show"/>
+                            <field name="qty2_6" sum="Jami" string="+6 m" optional="show"/>
+                            <field name="qty2_5" sum="Jami" string="+5 m" optional="show"/>
+                            <field name="hook_kg" sum="Jami" string="Kryuchok"/>
+                            <field name="stick_kg" sum="Jami" string="Palka"/>
+                            <field name="gross_kg" sum="Jami" string="Brutto"/>
+                            <field name="net_kg" sum="Jami" string="Netto"/>
+                            <field name="kg_theory" sum="Jami" string="Nazariy" optional="show"/>
+                            <field name="kg_diff" string="Farq" optional="hide"
+                                   decoration-danger="kg_diff &lt; -15 or kg_diff &gt; 15"/>
                             <field name="state" optional="hide"/>
                         </list>
                         <kanban class="o_kanban_mobile">
                             <templates>
                                 <t t-name="card">
                                     <div class="d-flex align-items-center">
-                                        <field name="basket_id" class="fw-bold fs-5"/>
-                                        <span class="ms-auto"><field name="pcs_total" class="fw-bold"/> dona</span>
+                                        <span class="fw-bold fs-5"><field name="basket_id"/></span>
+                                        <span class="ms-2 text-muted small"><field name="tare_kg"/> kg</span>
+                                        <span class="ms-auto">netto <field name="net_kg" class="fw-bold"/> kg</span>
                                     </div>
+                                    <div class="small"><field name="content"/></div>
                                     <div class="text-muted small">
-                                        6 m: <field name="qty_6"/> · 5 m: <field name="qty_5"/> · <field name="kg_theory"/> kg
+                                        brutto <field name="gross_kg"/> · kryuchok <field name="hook_kg"/> · palka <field name="stick_kg"/>
                                     </div>
                                 </t>
                             </templates>
                         </kanban>
                         <form string="Korzinka">
                             <group>
-                                <field name="basket_id" options="{'no_create': True}"/>
-                                <field name="qty_6"/>
-                                <field name="qty_5"/>
-                                <field name="pcs_total"/>
-                                <field name="kg_theory"/>
-                                <field name="gross_kg"/>
-                                <field name="net_kg"/>
+                                <group string="Korzinka">
+                                    <field name="basket_id" options="{'no_create_edit': True}"/>
+                                    <field name="tare_kg"/>
+                                    <field name="hook_kg"/>
+                                    <field name="stick_kg"/>
+                                    <field name="gross_kg"/>
+                                    <field name="net_kg"/>
+                                </group>
+                                <group string="Profil">
+                                    <field name="section_id" options="{'no_create': True}"/>
+                                    <field name="qty_6"/>
+                                    <field name="qty_5"/>
+                                    <field name="section2_id" options="{'no_create': True}"/>
+                                    <field name="qty2_6" invisible="not section2_id"/>
+                                    <field name="qty2_5" invisible="not section2_id"/>
+                                    <field name="pcs_total"/>
+                                    <field name="kg_theory"/>
+                                </group>
                             </group>
                         </form>
                     </field>
                     <group class="mt-2">
-                        <group>
+                        <group string="Jami">
                             <field name="basket_pcs"/>
-                            <field name="basket_kg"/>
+                            <field name="basket_gross_kg"/>
+                            <field name="basket_net_kg" class="fw-bold"/>
+                            <field name="basket_theory_kg"/>
                         </group>
                     </group>
                 </page>
@@ -76,6 +102,7 @@
         <field name="arch" type="xml">
             <field name="output_pcs" position="before">
                 <field name="basket_count" sum="Jami" string="Korzinka"/>
+                <field name="basket_net_kg" sum="Jami" string="Netto, kg"/>
             </field>
         </field>
     </record>

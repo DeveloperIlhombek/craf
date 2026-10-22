@@ -11,13 +11,13 @@
                 <field name="equipment_id" optional="show"/>
                 <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
                 <field name="section_id"/>
-                <field name="billet_qty" sum="Jami"/>
+                <field name="billet_qty" sum="Jami" optional="hide"/>
                 <field name="output_pcs" sum="Jami"/>
                 <field name="output_kg" sum="Jami"/>
                 <field name="rest_qty" sum="Jami" optional="hide"/>
                 <field name="scrap_qty" sum="Jami" optional="show"/>
                 <field name="duration" sum="Jami" widget="float_time" optional="hide"/>
-                <field name="yield_pct" avg="O'rtacha (og'irlik bo'yicha)"
+                <field name="yield_pct" avg="O'rtacha (og'irlik bo'yicha)" optional="hide"
                        options="{'weighted': ['output_kg', 'billet_qty', 100]}"
                        decoration-danger="norm_status == 'low'" decoration-success="norm_status == 'ok'"/>
                 <field name="norm_yield_pct" optional="hide"/>
@@ -50,14 +50,14 @@
                         <div class="mt-1"><span class="text-muted small">Matritsa </span><field name="section_id" class="fw-bold"/></div>
                         <div class="d-flex mt-1 align-items-baseline">
                             <div><field name="output_pcs" class="fw-bold"/> dona · <field name="output_kg"/> kg</div>
-                            <div class="ms-auto"><span class="text-muted small">chiqish </span><field name="yield_pct" class="fw-bold"/> %</div>
+                            <div class="ms-auto"><span class="text-muted small">brak </span><field name="scrap_qty" class="fw-bold"/> kg</div>
                         </div>
                         <div t-if="record.norm_status.raw_value === 'low'" class="text-danger small mt-1">
                             <field name="norm_warning"/>
                         </div>
                         <footer class="pt-1">
                             <field name="employee_id" widget="many2one_avatar_employee"/>
-                            <span class="ms-auto text-muted small">quyma <field name="billet_qty"/> kg</span>
+                            <span class="ms-auto text-muted small">питак <field name="rest_qty"/> kg</span>
                         </footer>
                     </t>
                 </templates>
@@ -73,7 +73,7 @@
                 <header>
                     <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary"
                             icon="fa-check" invisible="state != 'draft'"
-                            confirm="Smena tasdiqlansa, quyma Press sexi qoldig'idan yechiladi va profillar keyingi bosqichga o'tadi. Davom etasizmi?"/>
+                            confirm="Smena tasdiqlansa, korzinkalardagi profillar keyingi bosqichga o'tadi, brak va питак Liteykaga yoziladi. Davom etasizmi?"/>
                     <button name="action_make_packs" type="object" string="Pachka yorliqlari" icon="fa-qrcode"
                             invisible="state != 'done' or not has_pack_items"/>
                     <field name="has_pack_items" invisible="1"/>
@@ -114,21 +114,25 @@
                             <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
                             <field name="duration" readonly="state != 'draft'" widget="float_time"/>
                         </group>
-                        <group string="Matritsa va quyma">
-                            <field name="section_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        <group string="Matritsa" name="die">
+                            <field name="section_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   placeholder="korzinkalardan o'zi aniqlanadi"/>
                             <field name="die_code" invisible="not die_code"/>
-                            <field name="kg_per_m"/>
-                            <field name="billet_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="kg_per_m" invisible="not section_id"/>
+                            <!-- quyma (stalba) sarfi ixtiyoriy: Liteyka kunlik qoldig'i orqali yuritiladi -->
+                            <field name="billet_product_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   invisible="not billet_qty"/>
                             <field name="melt_ids" widget="many2many_tags" readonly="state != 'draft'"
-                                   options="{'no_create': True}"/>
-                            <label for="billet_qty"/>
-                            <div class="o_row">
+                                   options="{'no_create': True}" invisible="not billet_qty"/>
+                            <label for="billet_qty" invisible="not billet_qty"/>
+                            <div class="o_row" invisible="not billet_qty">
                                 <field name="billet_qty" readonly="state != 'draft'" class="fw-bold"/>
                                 <span class="text-muted" invisible="state != 'draft'">
                                     bor: <field name="billet_available" class="oe_inline"/> kg
                                 </span>
                             </div>
-                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   invisible="not billet_qty"/>
                         </group>
                     </group>
                     <notebook>
@@ -178,9 +182,9 @@
                         </page>
                     </notebook>
                     <group>
-                        <group string="Qoldiq va brak">
-                            <field name="rest_qty" readonly="state != 'draft'"/>
-                            <field name="scrap_qty" readonly="state != 'draft'"/>
+                        <group string="Brak va питак (Liteykaga)" name="waste">
+                            <field name="scrap_qty" readonly="state != 'draft'" string="Brak profil, kg"/>
+                            <field name="rest_qty" readonly="state != 'draft'" string="Питак, kg"/>
                             <field name="rest_product_id" readonly="state != 'draft'" options="{'no_create': True}"
                                    groups="base.group_no_one"/>
                             <field name="scrap_product_id" readonly="state != 'draft'" options="{'no_create': True}"
@@ -190,12 +194,13 @@
                         <group string="Ko'rsatkichlar">
                             <field name="output_pcs"/>
                             <field name="output_kg"/>
-                            <field name="yield_pct" decoration-danger="norm_status == 'low'"
+                            <field name="billet_qty" invisible="1"/>
+                            <field name="yield_pct" invisible="not billet_qty" decoration-danger="norm_status == 'low'"
                                    decoration-success="norm_status == 'ok'"/>
-                            <field name="norm_yield_pct" invisible="not norm_yield_pct"/>
+                            <field name="norm_yield_pct" invisible="not norm_yield_pct or not billet_qty"/>
                             <field name="yield_diff" invisible="not norm_yield_pct or not output_kg"
                                    decoration-danger="yield_diff &lt; 0" decoration-success="yield_diff &gt;= 0"/>
-                            <field name="loss_qty" decoration-warning="loss_qty &gt; 5 or loss_qty &lt; -5"/>
+                            <field name="loss_qty" invisible="not billet_qty" decoration-warning="loss_qty &gt; 5 or loss_qty &lt; -5"/>
                             <field name="productivity" decoration-danger="norm_status == 'low'"/>
                             <field name="norm_productivity" invisible="not norm_productivity"/>
                             <field name="norm_status" invisible="1"/>

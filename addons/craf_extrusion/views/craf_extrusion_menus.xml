@@ -4,8 +4,8 @@
               action="action_craf_extrusion_shift" sequence="20"/>
     <menuitem id="menu_craf_semi_profiles" name="Bo'yalmagan profillar" parent="stock.menu_stock_inventory_control"
               action="action_craf_semi_profiles" sequence="22"/>
-    <menuitem id="menu_craf_briket" name="Briketlash" parent="craf_production.menu_craf_bolim_press"
-              action="action_craf_briket" sequence="30"/>
+    <!-- Briketlash menyusi olib tashlandi (2026-10-23): briket yasaladi, lekin dasturga kiritilmaydi —
+         Liteykada «brak profil + briket otxod» bitta material. -->
     <menuitem id="menu_craf_press_billet" name="Quyma qoldig'i va prognoz" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_press_billet" sequence="25"/>
     <menuitem id="menu_craf_press_norm" name="Matritsa normalari" parent="craf_production.menu_craf_bolim_press"

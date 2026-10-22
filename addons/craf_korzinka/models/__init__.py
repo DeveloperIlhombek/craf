@@ -1,5 +1,6 @@
 from . import (
     craf_basket,
+    craf_paint_sort,
     craf_production_mixin,
     craf_chem_treatment,
     craf_extrusion_shift,
