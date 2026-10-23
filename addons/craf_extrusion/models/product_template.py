@@ -7,7 +7,7 @@ class ProductTemplate(models.Model):
     _inherit = "product.template"
 
     craf_press_waste = fields.Boolean(
-        "Press chiqindisi", help="Питак, brak profil, briket — press bo'limida chiqadi, sotib olinmaydi "
+        "Press chiqindisi", help="Pitak, brak profil, briket — press bo'limida chiqadi, sotib olinmaydi "
                                  "(Литейка kirimida ko'rinmaydi).")
     craf_butt_product_id = fields.Many2one(
         "product.product", string="Питак (shu quymadan)",
@@ -29,6 +29,19 @@ class ProductTemplate(models.Model):
     craf_press_days_text = fields.Char("Yetadi", compute="_compute_craf_press_forecast")
     craf_press_end_date = fields.Date("Tugash sanasi", compute="_compute_craf_press_forecast")
     craf_press_status = fields.Selection(FORECAST_STATUS, string="Holat", compute="_compute_craf_press_forecast")
+
+    craf_press_count_date = fields.Date("Oxirgi sanash", compute="_compute_craf_press_count")
+    craf_press_count_kg = fields.Float("Sanalgan, kg", compute="_compute_craf_press_count", digits=(16, 1))
+    craf_press_count_pcs = fields.Integer("Sanalgan, dona", compute="_compute_craf_press_count")
+
+    def _compute_craf_press_count(self):
+        Line = self.env["craf.billet.count.line"]
+        for tmpl in self:
+            line = Line.search([("product_id", "in", tmpl.product_variant_ids.ids), ("count_id.state", "=", "done")]
+                               ).sorted(lambda l: (l.count_id.date, l.id))[-1:]
+            tmpl.craf_press_count_date = line.count_id.date
+            tmpl.craf_press_count_kg = line.qty_kg
+            tmpl.craf_press_count_pcs = line.pcs
 
     def _compute_craf_press_forecast(self):
         Shift = self.env["craf.extrusion.shift"]

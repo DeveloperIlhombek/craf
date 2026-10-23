@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_chem_treatment" name="Kimyoviy ishlov" parent="craf_production.menu_craf_bolim_boyash"
-              action="action_craf_chem_treatment" sequence="10"/>
+    <!-- Kimyoviy ishlov menyusi olib tashlandi (2026-10-23): bu jarayon ma'lumoti yuritilmaydi, press chiqishi
+         to'g'ri Bo'yash sexiga boradi. -->
     <menuitem id="menu_craf_paint_sort" name="Brak ajratish" parent="craf_production.menu_craf_bolim_boyash"
               action="action_craf_paint_sort" sequence="20"/>
     <menuitem id="menu_craf_basket" name="Korzinkalar" parent="craf_production.menu_craf_bolim_press"

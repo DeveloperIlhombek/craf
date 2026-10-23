@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_craf_billet_count" model="ir.sequence">
+            <field name="name">Craf quyma sanash</field>
+            <field name="code">craf.billet.count</field>
+            <field name="prefix">QS-%(y)s-</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

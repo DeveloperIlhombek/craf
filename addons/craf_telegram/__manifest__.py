@@ -10,7 +10,7 @@ Telegram bot (Ishlab chiqarish → Konfiguratsiya → Sozlamalar → Craf Telegr
 - Kishi botga /start bosadi — bot unga Telegram ID sini yozib beradi; ID sozlamaga yozilgach
   bot uni taniydi
 - Kunlik hisobot (har kuni belgilangan soatda, standart 11:00, «Kunlik hisobot» belgilanganlarga) — ixcham:
-  bo'lim bo'yicha kechagi ish yakuni (Liteyka: plavka, sarf, kirim; Press: korzinka, netto, brak, питак;
+  bo'lim bo'yicha kechagi ish yakuni (Liteyka: plavka, sarf, kirim; Press: korzinka, netto, brak, pitak;
   Bo'yash: kimyo, brak ajratish, bo'yash) va faqat muammoli qoldiq — tugagan, kam, tez tugaydigan
 - Minimal qoldiq eslatmasi (Liteyka, Press quymasi, Bo'yash materiallari): minimaldan kamaysa yoki tugasa — darhol
   («Minimal qoldiq» belgilanganlarga), tiklanganda yana kuzatiladi

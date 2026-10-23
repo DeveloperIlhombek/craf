@@ -152,6 +152,12 @@
             <list string="Quyma prognozi" editable="bottom" create="false" delete="false"
                   decoration-danger="craf_press_status in ('neg', 'out', 'low')"
                   decoration-warning="craf_press_status == 'soon'">
+                <header>
+                    <button name="%(action_craf_billet_count_new)d" type="action" string="Sanash" icon="fa-balance-scale"
+                            class="btn-primary" display="always"/>
+                    <button name="%(action_craf_billet_count)d" type="action" string="Sanashlar tarixi" icon="fa-history"
+                            display="always"/>
+                </header>
                 <field name="default_code" readonly="1" string="Kod"/>
                 <field name="name" readonly="1"/>
                 <field name="craf_press_qty"/>
@@ -162,6 +168,9 @@
                 <field name="craf_press_avg" string="Kuniga, kg"/>
                 <field name="craf_press_days_text"/>
                 <field name="craf_press_end_date" string="Tugash"/>
+                <field name="craf_press_count_date" optional="show"/>
+                <field name="craf_press_count_pcs" optional="show"/>
+                <field name="craf_press_count_kg" optional="show"/>
                 <field name="craf_press_status" widget="badge"
                        decoration-danger="craf_press_status in ('neg', 'out', 'low')"
                        decoration-warning="craf_press_status == 'soon'"

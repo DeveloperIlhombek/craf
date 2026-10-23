@@ -5,3 +5,9 @@ access_craf_extrusion_shift_line_user,craf.extrusion.shift.line user,model_craf_
 access_craf_extrusion_shift_line_mrp,craf.extrusion.shift.line mrp,model_craf_extrusion_shift_line,mrp.group_mrp_user,1,1,1,1
 access_craf_briket_user,craf.briket user,model_craf_briket,base.group_user,1,0,0,0
 access_craf_briket_mrp,craf.briket mrp,model_craf_briket,mrp.group_mrp_user,1,1,1,1
+access_craf_press_smena_user,craf.press.smena user,model_craf_press_smena,base.group_user,1,0,0,0
+access_craf_press_smena_mrp,craf.press.smena mrp,model_craf_press_smena,mrp.group_mrp_user,1,1,1,1
+access_craf_billet_count_user,craf.billet.count user,model_craf_billet_count,base.group_user,1,0,0,0
+access_craf_billet_count_mrp,craf.billet.count mrp,model_craf_billet_count,mrp.group_mrp_user,1,1,1,1
+access_craf_billet_count_line_user,craf.billet.count.line user,model_craf_billet_count_line,base.group_user,1,0,0,0
+access_craf_billet_count_line_mrp,craf.billet.count.line mrp,model_craf_billet_count_line,mrp.group_mrp_user,1,1,1,1

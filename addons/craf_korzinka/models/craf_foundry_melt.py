@@ -27,7 +27,7 @@ class CrafFoundryMelt(models.Model):
     def _compute_balance_text(self):
         super()._compute_balance_text()
         for melt in self.filtered(lambda m: m.charge_metal and m.cut_waste_qty):
-            melt.balance_text = "%s kg metall = %s stalba + %s kesilgan chiqindi + %s шлак + %s угар" % (
+            melt.balance_text = "%s kg metall = %s stalba + %s kesilgan chiqindi + %s shlak + %s ugar" % (
                 fmt(melt.charge_metal), fmt(melt.billet_qty), fmt(melt.cut_waste_qty), fmt(melt.slag_qty),
                 fmt(melt.burn_loss_qty, 1))
 

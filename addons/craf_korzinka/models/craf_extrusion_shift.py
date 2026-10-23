@@ -32,19 +32,33 @@ class CrafExtrusionShift(models.Model):
             shift.basket_net_kg = sum(loads.mapped("net_kg"))
             shift.basket_theory_kg = sum(loads.mapped("kg_theory"))
 
+    # Yangi korzinka qatori oxirgisidan profil, 1 dona kg, kryuchok va palkani oladi (daftarda odatda bir xil):
+    # formada qator konteksti shu maydonlardan default_* qiymat oladi.
+    last_section_id = fields.Many2one("craf.profile.section", compute="_compute_last_load")
+    last_piece_kg = fields.Float(compute="_compute_last_load", digits=(16, 3))
+    last_hook_kg = fields.Float(compute="_compute_last_load", digits=(16, 1))
+    last_stick_kg = fields.Float(compute="_compute_last_load", digits=(16, 1))
+
+    @api.depends("basket_load_ids.section_id", "basket_load_ids.piece_kg", "basket_load_ids.hook_kg",
+                 "basket_load_ids.stick_kg")
+    def _compute_last_load(self):
+        for shift in self:
+            last = shift.basket_load_ids.filtered("section_id")[-1:]
+            shift.last_section_id = last.section_id
+            shift.last_piece_kg = last.piece_kg
+            shift.last_hook_kg = last.hook_kg if last else 28.0
+            shift.last_stick_kg = last.stick_kg if last else 6.0
+
     def _craf_sync_lines_from_baskets(self):
         """Korzinkalardagi profillarni chiqish qatorlariga yig'adi (boshqa qatorlarga tegmaydi)."""
         for shift in self:
             quantities = shift.basket_load_ids._product_quantities()
             if not quantities:
                 continue
-            kimyo = shift._craf_loc("Kimyoviy ishlov")
+            # joy qatorning o'zida: bo'yaladigan profil — Bo'yash sexi, sotiladigan bo'yalmagan — Qadoqlash
+            # (kimyoviy ishlov alohida yuritilmaydi)
             commands = [Command.unlink(l.id) for l in shift.line_ids if l.product_id in quantities]
-            for product, qty in quantities.items():
-                vals = {"product_id": product.id, "pcs": qty}
-                if kimyo:
-                    vals["location_dest_id"] = kimyo.id
-                commands.append(Command.create(vals))
+            commands += [Command.create({"product_id": product.id, "pcs": qty}) for product, qty in quantities.items()]
             vals = {"line_ids": commands}
             if not shift.section_id:
                 # bir varaqda bir nechta profil — norma eng ko'p chiqqan profildan olinadi
@@ -53,6 +67,15 @@ class CrafExtrusionShift(models.Model):
                     kg[product.craf_section_id] = kg.get(product.craf_section_id, 0.0) + qty * product.craf_kg_per_pc
                 vals["section_id"] = max(kg, key=kg.get).id
             shift.write(vals)
+
+    def _craf_check_reopen(self):
+        moved = self.basket_load_ids.filtered(
+            lambda l: l.state != "press" or l.sort_line_ids.filtered(lambda s: s.state == "done"))
+        if moved:
+            raise UserError("%s ni qaytarib bo'lmaydi: korzinkalar keyingi bosqichga o'tgan (%s). Avval kimyoviy "
+                            "ishlov / brak ajratish hujjatini bekor qiling." % (
+                                self.name, ", ".join(moved.basket_id.mapped("name"))))
+        return super()._craf_check_reopen()
 
     def action_fill_from_baskets(self):
         drafts = self.filtered(lambda s: s.state == "draft")
@@ -73,16 +96,3 @@ class CrafExtrusionShift(models.Model):
         action["context"] = {"default_shift_id": self.id}
         return action
 
-
-class CrafExtrusionShiftLine(models.Model):
-    _inherit = "craf.extrusion.shift.line"
-
-    @api.depends("product_id")
-    def _compute_location_dest_id(self):
-        super()._compute_location_dest_id()
-        kimyo = self.env["craf.production.mixin"]._craf_loc("Kimyoviy ishlov")
-        if kimyo:
-            for line in self:
-                # bo'yaladigan profil press dan keyin kimyoviy ishlovga boradi
-                if line.product_id and not line.product_id.sale_ok:
-                    line.location_dest_id = kimyo

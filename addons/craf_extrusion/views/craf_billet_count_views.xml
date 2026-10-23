@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_billet_count_view_list" model="ir.ui.view">
+        <field name="name">craf.billet.count.list</field>
+        <field name="model">craf.billet.count</field>
+        <field name="arch" type="xml">
+            <list string="Quyma sanash" decoration-info="state == 'draft'">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="total_pcs" sum="Jami"/>
+                <field name="total_kg" sum="Jami"/>
+                <field name="note" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_billet_count_view_kanban" model="ir.ui.view">
+        <field name="name">craf.billet.count.kanban</field>
+        <field name="model">craf.billet.count</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center">
+                            <field name="date" class="fw-bold fs-5"/>
+                            <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : 'text-bg-info'"><field name="state"/></span>
+                        </div>
+                        <div class="text-muted small"><field name="name"/></div>
+                        <div><field name="total_pcs" class="fw-bold"/> dona · <field name="total_kg" class="fw-bold"/> kg</div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_billet_count_view_form" model="ir.ui.view">
+        <field name="name">craf.billet.count.form</field>
+        <field name="model">craf.billet.count</field>
+        <field name="arch" type="xml">
+            <form string="Quyma sanash">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary" icon="fa-check"
+                            invisible="state != 'draft'"
+                            confirm="Press sexidagi quyma qoldig'i sanalganga tenglashadi (kam bo'lsa — pressga sarf). Davom etasizmi?"/>
+                    <button name="action_reopen" type="object" string="Tahrirlash" icon="fa-pencil"
+                            invisible="state != 'done'"
+                            confirm="Sanash qoralamaga qaytariladi, uning ombor harakatlari bekor qilinadi. Davom etasizmi?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted">Quyma sanash</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="location_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    <div class="text-muted small mb-2">
+                        Har bir quyma (alyuminiy silindr) uchun sanalgan dona va tortilgan kg. «Dasturda» — shu kungacha
+                        Press sexidagi qoldiq; farq manfiy bo'lsa — pressga sarf.
+                    </div>
+                    <field name="line_ids" readonly="state != 'draft'">
+                        <list editable="bottom" create="false" delete="false">
+                            <field name="product_id" readonly="1"/>
+                            <field name="system_qty"/>
+                            <field name="pcs" sum="Jami"/>
+                            <field name="qty_kg" sum="Jami" class="fw-bold"/>
+                            <field name="diff_kg" decoration-danger="diff_kg &lt; 0" decoration-success="diff_kg &gt; 0"/>
+                            <field name="avg_kg" optional="show"/>
+                            <field name="state" column_invisible="1"/>
+                        </list>
+                        <kanban class="o_kanban_mobile">
+                            <templates>
+                                <t t-name="card">
+                                    <field name="product_id" class="fw-bold"/>
+                                    <div class="d-flex mt-1">
+                                        <span><field name="pcs"/> dona · <field name="qty_kg" class="fw-bold"/> kg</span>
+                                        <span class="ms-auto small">farq <field name="diff_kg"/> kg</span>
+                                    </div>
+                                    <div class="text-muted small">dasturda <field name="system_qty"/> kg</div>
+                                </t>
+                            </templates>
+                        </kanban>
+                        <form string="Quyma">
+                            <group>
+                                <field name="product_id" readonly="1"/>
+                                <field name="system_qty"/>
+                                <field name="pcs"/>
+                                <field name="qty_kg"/>
+                                <field name="diff_kg"/>
+                                <field name="avg_kg"/>
+                            </group>
+                        </form>
+                    </field>
+                    <group>
+                        <group string="Jami">
+                            <field name="total_pcs"/>
+                            <field name="total_kg"/>
+                            <field name="diff_kg" decoration-danger="diff_kg &lt; 0"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Izoh…"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_billet_count_view_search" model="ir.ui.view">
+        <field name="name">craf.billet.count.search</field>
+        <field name="model">craf.billet.count</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
+                <filter name="done" string="Tasdiqlangan" domain="[('state', '=', 'done')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_billet_count" model="ir.actions.act_window">
+        <field name="name">Quyma sanash</field>
+        <field name="res_model">craf.billet.count</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="path">craf-quyma-sanash</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Bugungi quyma sanashini yozing</p>
+            <p>Har kuni Press sexidagi alyuminiy silindrlar sanaladi: dona va tortilgan kg.</p>
+        </field>
+    </record>
+
+    <!-- prognoz sahifasidagi «Sanash» tugmasi — yangi sanash formasi -->
+    <record id="action_craf_billet_count_new" model="ir.actions.act_window">
+        <field name="name">Quyma sanash</field>
+        <field name="res_model">craf.billet.count</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+</odoo>

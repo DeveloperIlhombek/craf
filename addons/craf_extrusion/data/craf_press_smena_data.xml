@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="press_smena_day" model="craf.press.smena">
+            <field name="name">Kunduzgi smena</field>
+            <field name="sequence">10</field>
+            <field name="time_from">8.0</field>
+            <field name="time_to">20.0</field>
+        </record>
+        <record id="press_smena_night" model="craf.press.smena">
+            <field name="name">Tungi smena</field>
+            <field name="sequence">20</field>
+            <field name="time_from">20.0</field>
+            <field name="time_to">8.0</field>
+        </record>
+    </data>
+</odoo>

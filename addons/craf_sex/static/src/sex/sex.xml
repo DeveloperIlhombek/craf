@@ -84,7 +84,7 @@
         <h2 class="sx-h">Ochiq smenalar</h2>
         <div class="cl-empty sx-empty-card" t-if="!d.drafts.length">
             <i class="fa fa-cogs"/>
-            <div>Ochiq smena yo'q.</div>
+            <div>Ochiq smena yo'q. ✅</div>
             <button class="btn btn-primary mt-2" t-on-click="() => this.openPress()"><i class="fa fa-plus"/> Smena ochish</button>
         </div>
         <section class="sx-card" t-foreach="d.drafts" t-as="c" t-key="c.id">

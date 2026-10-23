@@ -322,6 +322,69 @@ class CrafProductionMixin(models.AbstractModel):
     def action_draft(self):
         self.filtered(lambda r: r.state == "cancel").state = "draft"
 
+    def action_reopen(self):
+        """Tasdiqlangan hujjatni tahrirlash uchun qoralamaga qaytaradi: shu hujjat yozgan ombor harakatlari
+        teskari harakat bilan bekor qilinadi. Keyin tuzatib qayta tasdiqlanadi yoki o'chiriladi."""
+        for rec in self.filtered(lambda r: r.state == "done"):
+            rec._craf_check_reopen()
+            names = rec._craf_reverse_productions()
+            vals = {"state": "draft"}
+            if "c1_state" in rec._fields:
+                vals["c1_state"] = "new"  # 1C ga qayta kiritiladi
+            rec.write(vals)
+            rec.message_post(body=Markup("<b>Tahrirlash uchun qoralamaga qaytarildi</b> — ombor harakatlari "
+                                         "bekor qilindi: %s") % (", ".join(names) or "—"))
+        return True
+
+    def _craf_check_reopen(self):
+        """Qaytarish mumkinmi: chiqqan mahsulot hali o'z joyida bo'lishi kerak (keyingi bosqichga o'tmagan)."""
+        self.ensure_one()
+        if self.pack_count:
+            raise UserError("%s bo'yicha pachka yorliqlari yaratilgan — avval ularni o'chiring." % self.name)
+        needs = {}
+        for move in self.production_ids.move_finished_ids.filtered(lambda m: m.state == "done"):
+            loc = self._craf_now_at(move.location_dest_id)
+            if loc.usage == "internal":
+                needs.setdefault(loc, {})
+                needs[loc][move.product_id] = needs[loc].get(move.product_id, 0.0) + move.product_qty
+        for loc, need in needs.items():
+            try:
+                self._craf_check_available(loc, need)
+            except UserError as err:
+                raise UserError("%s ni qaytarib bo'lmaydi: chiqqan mahsulot %s da yetarli emas (keyingi bosqichda "
+                                "ishlatilgan bo'lishi mumkin).\n%s" % (self.name, loc.name, err.args[0])) from err
+
+    @api.model
+    def _craf_now_at(self, location):
+        """Mahsulot hozir qayerda: «Kimyoviy ishlov» endi yuritilmaydi — u yerdagi profillar Bo'yash sexiga
+        ko'chirilgan (2026-10-23), eski hujjatlar shu joydan qaytariladi."""
+        kimyo = self._craf_loc("Kimyoviy ishlov")
+        if kimyo and location == kimyo:
+            return self._craf_loc("Bo'yash sexi") or location
+        return location
+
+    def _craf_reverse_productions(self):
+        """Hujjatning MRP buyurtmalaridagi bajarilgan harakatlarni teskari harakat bilan bekor qiladi."""
+        self.ensure_one()
+        Move = self.env["stock.move"]
+        names = []
+        for mo in self.production_ids:
+            for move in (mo.move_raw_ids | mo.move_finished_ids).filtered(lambda m: m.state == "done"):
+                rev = Move.create({
+                    "product_id": move.product_id.id, "product_uom_qty": move.quantity,
+                    "product_uom": move.product_uom.id, "location_id": self._craf_now_at(move.location_dest_id).id,
+                    "location_dest_id": move.location_id.id, "origin": "%s (qaytarildi)" % self.name,
+                    "company_id": move.company_id.id,
+                })
+                rev._action_confirm()
+                rev.quantity = move.quantity
+                rev.picked = True
+                rev._action_done()
+            mo.write({"origin": "%s (qaytarildi)" % (mo.origin or self.name)})
+            names.append(mo.name)
+        self.production_ids = [Command.clear()]
+        return names
+
     def unlink(self):
         if any(rec.state == "done" for rec in self):
             raise UserError("Bajarilgan hujjatni o'chirib bo'lmaydi.")

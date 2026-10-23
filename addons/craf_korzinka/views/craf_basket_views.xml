@@ -1,22 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Korzinka (jismoniy) -->
+    <!-- Korzinka (jismoniy). Ro'yxat va kartochka tepasida kichik dashboard (js_class craf_basket_*). -->
     <record id="craf_basket_view_list" model="ir.ui.view">
         <field name="name">craf.basket.list</field>
         <field name="model">craf.basket</field>
         <field name="arch" type="xml">
-            <list string="Korzinkalar" editable="bottom" decoration-muted="state == 'empty'"
-                  decoration-warning="state == 'press'" decoration-success="state == 'kimyo'">
+            <list string="Korzinkalar" editable="bottom" js_class="craf_basket_list"
+                  decoration-muted="state == 'empty'" decoration-warning="is_stale"
+                  decoration-danger="state == 'broken'">
+                <header>
+                    <button name="action_release" type="object" string="Bo'shatish" icon="fa-undo"
+                            confirm="Tanlangan korzinkalar bo'sh qaytdi (profillari bo'yash va qadoqlashdan o'tgan) deb belgilanadi. Davom etasizmi?"/>
+                    <button name="action_mark_broken" type="object" string="Yaroqsiz" icon="fa-ban"/>
+                    <button name="action_mark_ok" type="object" string="Yaroqli" icon="fa-check"/>
+                </header>
                 <field name="name"/>
-                <field name="tare_kg"/>
-                <field name="capacity"/>
-                <field name="state" widget="badge" decoration-warning="state == 'press'"
-                       decoration-success="state == 'kimyo'" decoration-muted="state == 'empty'"/>
+                <field name="state" widget="badge" decoration-warning="state in ('press', 'kimyo')"
+                       decoration-danger="state == 'broken'" decoration-muted="state == 'empty'"/>
                 <field name="content"/>
-                <field name="pcs"/>
-                <field name="kg"/>
-                <field name="location_id"/>
-                <field name="load_count" optional="hide"/>
+                <field name="pcs" sum="Jami"/>
+                <field name="kg" sum="Jami"/>
+                <field name="loaded_date" optional="show"/>
+                <field name="days_full" optional="show" decoration-danger="is_stale"/>
+                <field name="load_count" optional="show"/>
+                <field name="cycle_days" optional="show"/>
+                <field name="tare_kg" optional="show"/>
+                <field name="capacity" optional="hide"/>
+                <field name="broken_note" optional="hide"/>
+                <field name="is_stale" column_invisible="1"/>
                 <field name="note" optional="hide"/>
             </list>
         </field>
@@ -26,21 +37,25 @@
         <field name="name">craf.basket.kanban</field>
         <field name="model">craf.basket</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_mobile">
+            <kanban class="o_kanban_mobile" js_class="craf_basket_kanban">
                 <field name="state"/>
+                <field name="is_stale"/>
+                <field name="days_full"/>
                 <templates>
                     <t t-name="card">
                         <div class="d-flex align-items-center">
                             <field name="name" class="fw-bold fs-5"/>
                             <span class="ms-auto badge"
-                                  t-att-class="record.state.raw_value === 'press' ? 'text-bg-warning' : (record.state.raw_value === 'kimyo' ? 'text-bg-success' : 'text-bg-light')">
+                                  t-att-class="record.state.raw_value === 'broken' ? 'text-bg-danger' : (record.state.raw_value === 'empty' ? 'text-bg-light' : (record.is_stale.raw_value ? 'text-bg-warning' : 'text-bg-info'))">
                                 <field name="state"/>
                             </span>
                         </div>
                         <field name="content" class="text-muted small"/>
-                        <div class="d-flex mt-1">
+                        <div class="d-flex mt-1" t-if="record.state.raw_value === 'press' or record.state.raw_value === 'kimyo'">
                             <span><field name="pcs"/> dona · <field name="kg"/> kg</span>
-                            <span class="ms-auto text-muted small"><field name="location_id"/></span>
+                            <span class="ms-auto small" t-att-class="record.is_stale.raw_value ? 'text-danger fw-bold' : 'text-muted'">
+                                <field name="days_full"/> kun
+                            </span>
                         </div>
                     </t>
                 </templates>
@@ -53,18 +68,31 @@
         <field name="model">craf.basket</field>
         <field name="arch" type="xml">
             <form string="Korzinka">
+                <header>
+                    <button name="action_release" type="object" string="Bo'shatish" icon="fa-undo"
+                            invisible="state not in ('press', 'kimyo')"
+                            confirm="Korzinka bo'sh qaytdi (profillari bo'yash va qadoqlashdan o'tgan) deb belgilanadi. Davom etasizmi?"/>
+                    <button name="action_mark_broken" type="object" string="Yaroqsiz deb belgilash" icon="fa-ban"
+                            invisible="broken or state in ('press', 'kimyo')"/>
+                    <button name="action_mark_ok" type="object" string="Yaroqli" icon="fa-check" class="btn-primary"
+                            invisible="not broken"/>
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_loads" type="object" class="oe_stat_button" icon="fa-history">
-                            <field name="load_count" widget="statinfo" string="To'ldirish"/>
+                            <field name="load_count" widget="statinfo" string="Aylanish"/>
                         </button>
                     </div>
+                    <widget name="web_ribbon" title="Yaroqsiz" bg_color="text-bg-danger" invisible="not broken"/>
                     <div class="oe_title"><h1><field name="name"/></h1></div>
                     <group>
                         <group>
                             <field name="tare_kg"/>
                             <field name="capacity"/>
                             <field name="note"/>
+                            <field name="broken" invisible="1"/>
+                            <field name="broken_date" invisible="not broken"/>
+                            <field name="broken_note" invisible="not broken" placeholder="masalan: tagi singan"/>
                             <field name="active" invisible="1"/>
                         </group>
                         <group string="Hozir">
@@ -72,8 +100,11 @@
                             <field name="content"/>
                             <field name="pcs"/>
                             <field name="kg"/>
-                            <field name="location_id"/>
+                            <field name="loaded_date"/>
+                            <field name="days_full"/>
+                            <field name="cycle_days"/>
                             <field name="current_load_id"/>
+                            <field name="is_stale" invisible="1"/>
                         </group>
                     </group>
                 </sheet>
@@ -88,8 +119,9 @@
             <search string="Korzinkalar">
                 <field name="name"/>
                 <filter name="empty" string="Bo'sh" domain="[('state', '=', 'empty')]"/>
-                <filter name="waiting" string="Kimyoga kutmoqda" domain="[('state', '=', 'press')]"/>
-                <filter name="ready" string="Bo'yashga tayyor" domain="[('state', '=', 'kimyo')]"/>
+                <filter name="filled" string="To'la" domain="[('state', 'in', ('press', 'kimyo'))]"/>
+                <filter name="stale" string="Uzoq turgan" domain="[('is_stale', '=', True)]"/>
+                <filter name="broken" string="Yaroqsiz" domain="[('broken', '=', True)]"/>
                 <separator/>
                 <filter name="archived" string="Arxiv" domain="[('active', '=', False)]"/>
             </search>
@@ -127,6 +159,7 @@
                 <field name="state" widget="badge" decoration-warning="state == 'press'"
                        decoration-success="state == 'kimyo'" decoration-muted="state == 'boyash'"/>
                 <field name="location_id" optional="show"/>
+                <field name="returned_date" optional="show"/>
                 <field name="treatment_id" optional="hide"/>
                 <field name="paint_batch_id" optional="hide"/>
             </list>
@@ -149,11 +182,9 @@
                             <field name="location_id"/>
                         </group>
                         <group>
+                            <field name="piece_kg"/>
                             <field name="qty_6"/>
                             <field name="qty_5"/>
-                            <field name="section2_id"/>
-                            <field name="qty2_6" invisible="not section2_id"/>
-                            <field name="qty2_5" invisible="not section2_id"/>
                             <field name="pcs_total"/>
                             <field name="kg_theory"/>
                         </group>
@@ -176,6 +207,15 @@
                             <field name="paint_batch_id"/>
                         </group>
                     </group>
+                    <field name="extra_line_ids" invisible="not extra_line_ids" readonly="1">
+                        <list>
+                            <field name="section_id"/>
+                            <field name="piece_kg"/>
+                            <field name="qty_6"/>
+                            <field name="qty_5"/>
+                            <field name="kg_theory"/>
+                        </list>
+                    </field>
                 </sheet>
             </form>
         </field>
@@ -190,8 +230,8 @@
                 <field name="shift_id"/>
                 <field name="section_id"/>
                 <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
-                <filter name="waiting" string="Kimyoga kutmoqda" domain="[('state', '=', 'press')]"/>
-                <filter name="ready" string="Bo'yashga tayyor" domain="[('state', '=', 'kimyo')]"/>
+                <filter name="active_loads" string="Bo'yashda" domain="[('state', 'in', ('press', 'kimyo'))]"/>
+                <filter name="returned" string="Qaytgan" domain="[('state', '=', 'boyash')]"/>
                 <group>
                     <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
                     <filter name="group_section" string="Profil" context="{'group_by': 'section_id'}"/>

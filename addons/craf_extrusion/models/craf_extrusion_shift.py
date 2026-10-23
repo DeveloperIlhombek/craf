@@ -12,7 +12,7 @@ BILLET_CODES = ("XA-09", "XA-02")
 
 class CrafExtrusionShift(models.Model):
     _name = "craf.extrusion.shift"
-    _description = "Press smenasi"
+    _description = "Press varag'i"
     _inherit = ["craf.production.mixin", "mail.activity.mixin"]
     _craf_weighted_avg = {
         "yield_pct": ("output_kg", "billet_qty", 100.0),
@@ -23,14 +23,18 @@ class CrafExtrusionShift(models.Model):
     _craf_sequence_code = "craf.extrusion.shift"
     _craf_stage = "press"
     _craf_default_src = "Press sexi"
-    _craf_default_waste = "Литейка"  # brak profil va питак Liteykada qayta eritiladi
+    _craf_default_waste = "Литейка"  # profil brak va pitak otxod Liteykada qayta eritiladi
 
+    smena_id = fields.Many2one("craf.press.smena", string="Smena", tracking=True, index=True)
+    smena_time = fields.Char(related="smena_id.time_text", string="Ish vaqti")
     section_id = fields.Many2one("craf.profile.section", string="Matritsa (kesim)", tracking=True,
                                  help="Bir varaqda bir nechta profil bo'lsa — eng ko'p chiqqani (norma shundan olinadi).")
     die_code = fields.Char(related="section_id.die_code", string="Matritsa kodi")
     kg_per_m = fields.Float(related="section_id.kg_per_m", string="kg/m")
     billet_product_id = fields.Many2one(
-        "product.product", string="Quyma", required=True,
+        "product.product", string="Stalba turi", required=True,
+        help="Qaysi stalbadan presslangan: o'z Liteykamiz yoki RusAl. Pitak otxod shunga qarab yoziladi "
+             "(Liteyka → вторичка, RusAl → русал).",
         domain=[("default_code", "in", BILLET_CODES)],
         default=lambda self: self._craf_product("XA-09"))
     melt_ids = fields.Many2many(
@@ -46,10 +50,10 @@ class CrafExtrusionShift(models.Model):
     rest_product_id = fields.Many2one(
         "product.product", string="Press qoldig'i (mahsulot)", compute="_compute_rest_product_id", store=True,
         readonly=False, help="Quyma kartochkasidagi «Питак (shu quymadan)»: o'z stalbamiz → вторичка, RusAl → русал")
-    rest_qty = fields.Float("Press qoldig'i (питак), kg", digits=(16, 1), aggregator="sum")
+    rest_qty = fields.Float("Pitak otxod, kg", digits=(16, 1), aggregator="sum")
     scrap_product_id = fields.Many2one(
         "product.product", string="Brak (mahsulot)", default=lambda self: self._craf_product("PF-07"))
-    scrap_qty = fields.Float("Brak profil, kg", digits=(16, 1), aggregator="sum")
+    scrap_qty = fields.Float("Profil brak, kg", digits=(16, 1), aggregator="sum")
 
     output_pcs = fields.Integer("Chiqdi, dona", compute="_compute_kpi", store=True, aggregator="sum")
     output_kg = fields.Float("Chiqdi, kg", compute="_compute_kpi", store=True, digits=(16, 1), aggregator="sum")
@@ -69,6 +73,15 @@ class CrafExtrusionShift(models.Model):
     norm_status = fields.Selection(NORM_STATUS, string="Norma", compute="_compute_norm_status", store=True,
                                    index=True)
     norm_warning = fields.Char("Normadan chetlanish", compute="_compute_norm_status", store=True)
+
+    @api.onchange("smena_id")
+    def _onchange_smena_id(self):
+        """Smenadan press, mas'ul va ish vaqti varaqqa yoziladi (keyin smena o'zgarsa ham varaqda qoladi)."""
+        smena = self.smena_id
+        if smena:
+            self.equipment_id = smena.equipment_id or self.equipment_id
+            self.employee_id = smena.responsible_id or self.employee_id
+            self.duration = smena.duration or self.duration
 
     @api.depends("section_id")
     def _compute_norm(self):
@@ -174,13 +187,13 @@ class CrafExtrusionShift(models.Model):
                                     components, byproducts if i == 0 else None)
             names.append(mo.name)
         self._craf_post_summary([
-            Markup("<b>Press smenasi tasdiqlandi</b> — %s") % ", ".join(names),
+            Markup("<b>Press varag'i tasdiqlandi</b> — %s") % ", ".join(names),
             ("Quyma: %s kg%s" % (fmt(self.billet_qty, 1),
                                  (" (partiya: %s)" % ", ".join(self.melt_ids.mapped("name"))) if self.melt_ids else ""))
             if billet else "Quyma: yozilmagan (stalba Liteyka qoldig'i orqali)",
             "Profil: %s dona = %s kg%s" % (fmt(self.output_pcs), fmt(self.output_kg, 1),
                                            (", chiqish %s%%" % fmt(self.yield_pct, 1)) if billet else ""),
-            "Питак %s kg, brak %s kg → %s" % (fmt(self.rest_qty, 1), fmt(self.scrap_qty, 1),
+            "Pitak %s kg, brak %s kg → %s" % (fmt(self.rest_qty, 1), fmt(self.scrap_qty, 1),
                                                self.waste_location_id.name),
         ])
         self._craf_norm_notify("press", "craf_extrusion.mail_activity_press_norm",

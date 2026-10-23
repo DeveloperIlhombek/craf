@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_korzinka.BasketDashboard">
+        <div class="craf_basket_dash">
+            <button type="button" class="cbd_card" t-on-click="() => this.filter('all')">
+                <span class="cbd_label">Jami korzinka</span>
+                <span class="cbd_value" t-esc="fmt(data.total)"/>
+            </button>
+            <button type="button" class="cbd_card cbd_empty" t-on-click="() => this.filter('empty')">
+                <span class="cbd_label">Bo'sh</span>
+                <span class="cbd_value" t-esc="fmt(data.empty)"/>
+            </button>
+            <button type="button" class="cbd_card cbd_filled" t-on-click="() => this.filter('filled')">
+                <span class="cbd_label">To'la (bo'yashda)</span>
+                <span class="cbd_value" t-esc="fmt(data.filled)"/>
+                <span class="cbd_sub" t-if="data.total"><t t-esc="fmt(data.filled / data.total * 100)"/> %</span>
+            </button>
+            <button type="button" class="cbd_card cbd_kg" t-on-click="() => this.filter('filled')">
+                <span class="cbd_label">Korzinkalardagi profil</span>
+                <span class="cbd_value"><t t-esc="fmt(data.kg)"/> kg</span>
+                <span class="cbd_sub"><t t-esc="fmt(data.pcs)"/> dona</span>
+            </button>
+            <div class="cbd_card cbd_cycle">
+                <span class="cbd_label">O'rtacha aylanish</span>
+                <span class="cbd_value"><t t-esc="fmt(data.cycle_days, 1)"/> kun</span>
+                <span class="cbd_sub">press → bo'yash → press</span>
+            </div>
+            <button type="button" class="cbd_card" t-att-class="data.stale ? 'cbd_stale' : ''"
+                    t-on-click="() => this.filter('stale')">
+                <span class="cbd_label">Uzoq turgan (&gt;<t t-esc="data.stale_days"/> kun)</span>
+                <span class="cbd_value" t-esc="fmt(data.stale)"/>
+                <span class="cbd_sub" t-if="data.oldest.length">
+                    <t t-foreach="data.oldest" t-as="o" t-key="o.name"><t t-esc="o.name"/> — <t t-esc="o.days"/> kun<t t-if="!o_last">, </t></t>
+                </span>
+            </button>
+            <button type="button" class="cbd_card" t-att-class="data.broken ? 'cbd_broken' : ''"
+                    t-on-click="() => this.filter('broken')">
+                <span class="cbd_label">Yaroqsiz</span>
+                <span class="cbd_value" t-esc="fmt(data.broken)"/>
+            </button>
+        </div>
+    </t>
+
+    <t t-name="craf_korzinka.BasketListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_list_renderer')]" position="before">
+            <CrafBasketDashboard list="props.list"/>
+        </xpath>
+    </t>
+
+    <t t-name="craf_korzinka.BasketKanbanRenderer" t-inherit="web.KanbanRenderer" t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_kanban_renderer')]" position="before">
+            <CrafBasketDashboard list="props.list"/>
+        </xpath>
+    </t>
+</templates>

@@ -1,6 +1,6 @@
 {
     "name": "Craf Korzinka va kimyoviy ishlov",
-    "version": "19.0.1.1.0",
+    "version": "19.0.1.3.0",
     "summary": "Press chiqishi korzinkalar bo'yicha, kimyoviy ishlov bosqichi, stalba chiqindisi, omborga topshirish",
     "description": """
 Zavodning haqiqiy jarayoniga moslash:
@@ -8,7 +8,7 @@ Zavodning haqiqiy jarayoniga moslash:
 - Korzinka: kodi, o'z og'irligi, sig'imi (120 dona); press smenasida korzinkalar to'ldiriladi
   (6 m va 5 m dona, tortilgan og'irlik) — profil chiqishi korzinkalardan hisoblanadi
 - Press varag'i: korzinka (o'z og'irligi), 1-2 profil 6 m / 5 m dona, kryuchok, palka, brutto → netto;
-  brak profil va питак Liteykaga; quyma sarfi ixtiyoriy (Liteyka qoldig'i orqali)
+  profil brak va pitak otxod Liteykaga; quyma sarfi ixtiyoriy (Liteyka qoldig'i orqali)
 - Brak ajratish (bo'yashdan oldin): korzinkadan brak dona → kg Liteykaga, 6 m → 5 m kesilganlar
 - Kimyoviy ishlov — alohida bosqich: korzinkalar tanlanadi, kimyo sarfi (me'yor: maydon × kg/m²);
   profillar "Kimyoviy ishlov" joyidan Bo'yash sexiga o'tadi
@@ -35,6 +35,9 @@ Zavodning haqiqiy jarayoniga moslash:
     "assets": {
         "web.assets_backend": [
             "craf_korzinka/static/src/panel_korzinka.xml",
+            "craf_korzinka/static/src/basket_dashboard/basket_dashboard.js",
+            "craf_korzinka/static/src/basket_dashboard/basket_dashboard.xml",
+            "craf_korzinka/static/src/basket_dashboard/basket_dashboard.scss",
         ],
     },
     "post_init_hook": "post_init_hook",

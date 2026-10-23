@@ -1,0 +1,55 @@
+.craf_basket_dash {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 10px 12px;
+    background: $o-view-background-color;
+    border-bottom: 1px solid $border-color;
+
+    .cbd_card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 8px 12px;
+        border: 1px solid $border-color;
+        border-left: 4px solid $gray-400;
+        border-radius: 6px;
+        background: $o-view-background-color;
+        text-align: left;
+        min-width: 0;
+    }
+    button.cbd_card:hover {
+        background: $gray-100;
+    }
+    .cbd_label {
+        font-size: 0.8rem;
+        color: $text-muted;
+    }
+    .cbd_value {
+        font-size: 1.35rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .cbd_sub {
+        font-size: 0.75rem;
+        color: $text-muted;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+    .cbd_empty { border-left-color: $gray-500; }
+    .cbd_filled { border-left-color: $info; }
+    .cbd_kg { border-left-color: $primary; }
+    .cbd_cycle { border-left-color: $success; }
+    .cbd_stale { border-left-color: $warning; .cbd_value { color: darken($warning, 20%); } }
+    .cbd_broken { border-left-color: $danger; .cbd_value { color: $danger; } }
+}
+
+@media (max-width: 767.98px) {
+    .craf_basket_dash {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        .cbd_value { font-size: 1.15rem; }
+    }
+}

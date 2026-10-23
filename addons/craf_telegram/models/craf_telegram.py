@@ -188,7 +188,7 @@ class CrafTelegram(models.AbstractModel):
         k = d["kpi"]
         lines = [self._title("litey", day)]
         if k["melts"]:
-            lines.append("Plavka %s ta: stalba %s kg, угар %s %%" % (k["melts"], num(k["billet"], 0),
+            lines.append("Plavka %s ta: stalba %s kg, ugar %s %%" % (k["melts"], num(k["billet"], 0),
                                                                    num(k["loss_pct"], 1)))
         if k["drafts"]:
             lines.append("Qoralama plavka: %s ta" % k["drafts"])
@@ -220,7 +220,7 @@ class CrafTelegram(models.AbstractModel):
             net = sum(done.mapped("basket_net_kg")) if "basket_net_kg" in Shift._fields else 0.0
             parts.append("netto %s kg" % num(net or sum(done.mapped("output_kg")), 0))
             lines.append(" · ".join(parts))
-            lines.append("Brak %s kg · питак %s kg" % (num(sum(done.mapped("scrap_qty")), 0),
+            lines.append("Brak %s kg · pitak %s kg" % (num(sum(done.mapped("scrap_qty")), 0),
                                                        num(sum(done.mapped("rest_qty")), 0)))
             billet = sum(done.mapped("billet_qty"))
             if billet:

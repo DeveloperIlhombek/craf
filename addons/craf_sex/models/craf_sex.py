@@ -655,9 +655,9 @@ class CrafSex(models.AbstractModel):
     def _touched_products(self, rec):
         if rec._name == "craf.extrusion.shift":
             return rec.billet_product_id | rec.rest_product_id | rec.scrap_product_id | rec.line_ids.product_id \
-                | rec.basket_load_ids.product_6_id | rec.basket_load_ids.product_5_id
+                | rec.basket_load_ids.product_6_id | rec.basket_load_ids.product_5_id                 | rec.basket_load_ids.extra_line_ids.product_6_id | rec.basket_load_ids.extra_line_ids.product_5_id
         if rec._name == "craf.chem.treatment":
-            return rec.chem_line_ids.product_id | rec.load_ids.product_6_id | rec.load_ids.product_5_id
+            return rec.chem_line_ids.product_id | rec.load_ids.product_6_id | rec.load_ids.product_5_id                 | rec.load_ids.extra_line_ids.product_6_id | rec.load_ids.extra_line_ids.product_5_id
         return rec.line_ids.semi_product_id | rec.line_ids.product_id | rec.powder_product_id | rec.scrap_product_id \
             | rec.film_product_id | rec.tape_product_id
 

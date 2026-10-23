@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_craf_extrusion_shift" name="Press smenalari" parent="craf_production.menu_craf_bolim_press"
+    <menuitem id="menu_craf_extrusion_shift" name="Press varaqlari" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_extrusion_shift" sequence="20"/>
     <menuitem id="menu_craf_semi_profiles" name="Bo'yalmagan profillar" parent="stock.menu_stock_inventory_control"
               action="action_craf_semi_profiles" sequence="22"/>
@@ -8,6 +8,9 @@
          Liteykada «brak profil + briket otxod» bitta material. -->
     <menuitem id="menu_craf_press_billet" name="Quyma qoldig'i va prognoz" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_press_billet" sequence="25"/>
-    <menuitem id="menu_craf_press_norm" name="Matritsa normalari" parent="craf_production.menu_craf_bolim_press"
-              action="action_craf_press_norm" sequence="80"/>
+    <menuitem id="menu_craf_billet_count" name="Quyma sanash" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_billet_count" sequence="26"/>
+    <!-- Matritsa normalari menyusi olib tashlandi (2026-10-23): press varag'ida matritsa belgilanmaydi -->
+    <menuitem id="menu_craf_press_smena" name="Smenalar" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_press_smena" sequence="85"/>
 </odoo>

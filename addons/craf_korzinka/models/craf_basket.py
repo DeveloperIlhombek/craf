@@ -1,11 +1,17 @@
-from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from datetime import timedelta
 
+from odoo import api, fields, models
+from odoo.exceptions import UserError, ValidationError
+
+# Korzinka aylanishi: press yuklaydi → bo'yash va qadoqlash bo'limida («press»/«kimyo» — eski kimyoviy ishlov holati)
+# → korzinka press varag'ida qayta yozilganda oldingi yuk «Qaytdi» bo'ladi (profillar bo'yashdan o'tgan).
 LOAD_STATES = [
-    ("press", "Kimyoga kutmoqda"),
-    ("kimyo", "Bo'yashga tayyor"),
-    ("boyash", "Bo'yashga berildi"),
+    ("press", "Bo'yashda"),
+    ("kimyo", "Bo'yashda"),
+    ("boyash", "Qaytdi"),
 ]
+ACTIVE = ("press", "kimyo")
+STALE_DAYS = 3  # shundan ko'p kun to'la turgan korzinka «uzoq turgan»
 
 
 class CrafBasket(models.Model):
@@ -18,15 +24,25 @@ class CrafBasket(models.Model):
     capacity = fields.Integer("Sig'imi, dona", default=120)
     active = fields.Boolean(default=True)
     note = fields.Char("Izoh")
+    broken = fields.Boolean("Yaroqsiz", copy=False, index=True, tracking=False,
+                            help="Yaroqsiz korzinka press varag'ida tanlanmaydi; tuzatilgach «Yaroqli» qilinadi.")
+    broken_date = fields.Date("Yaroqsiz bo'lgan sana", copy=False)
+    broken_note = fields.Char("Yaroqsizlik sababi", copy=False)
     load_ids = fields.One2many("craf.basket.load", "basket_id", string="To'ldirishlar")
     current_load_id = fields.Many2one("craf.basket.load", "Hozirgi yuk", compute="_compute_current")
-    state = fields.Selection([("empty", "Bo'sh")] + LOAD_STATES[:2], string="Holati", compute="_compute_current",
-                             search="_search_state")
+    state = fields.Selection([("empty", "Bo'sh"), ("press", "To'la"), ("kimyo", "To'la"), ("broken", "Yaroqsiz")],
+                             string="Holati", compute="_compute_current", search="_search_state")
     location_id = fields.Many2one("stock.location", "Qayerda", compute="_compute_current")
     pcs = fields.Integer("Ichida, dona", compute="_compute_current")
     kg = fields.Float("Ichida, kg", compute="_compute_current", digits=(16, 1))
     content = fields.Char("Ichida", compute="_compute_current")
-    load_count = fields.Integer("To'ldirishlar soni", compute="_compute_load_count")
+    loaded_date = fields.Date("To'ldirilgan sana", compute="_compute_current")
+    days_full = fields.Integer("To'la turibdi, kun", compute="_compute_current")
+    load_count = fields.Integer("Aylanishlar soni", compute="_compute_cycle")
+    cycle_days = fields.Float("O'rtacha aylanish, kun", compute="_compute_cycle", digits=(16, 1),
+                              help="Ketma-ket ikki to'ldirish orasidagi o'rtacha kun (press → bo'yash → press)")
+    is_stale = fields.Boolean("Uzoq turgan", compute="_compute_current", search="_search_stale",
+                              help="%s kundan ko'p to'la turgan" % STALE_DAYS)
 
     _name_uniq = models.Constraint("unique(name)", "Korzinka kodi takrorlanmasligi kerak.")
 
@@ -36,18 +52,34 @@ class CrafBasket(models.Model):
 
     def _active_loads(self):
         return self.env["craf.basket.load"].search(
-            [("basket_id", "in", self.ids), ("state", "in", ("press", "kimyo"))], order="id desc")
+            [("basket_id", "in", self.ids), ("state", "in", ACTIVE)], order="id desc")
 
     def _compute_current(self):
         loads = self._active_loads()
+        today = fields.Date.context_today(self)
         for basket in self:
             load = loads.filtered(lambda l: l.basket_id == basket)[:1]
             basket.current_load_id = load
-            basket.state = load.state if load else "empty"
+            basket.state = "broken" if basket.broken else (load.state if load else "empty")
             basket.location_id = load.location_id
             basket.pcs = load.pcs_total
             basket.kg = load.net_kg or load.kg_theory
             basket.content = load.content if load else False
+            basket.loaded_date = load.date
+            basket.days_full = (today - load.date).days if load.date else 0
+            basket.is_stale = bool(load) and basket.days_full > STALE_DAYS
+
+    def _compute_cycle(self):
+        Load = self.env["craf.basket.load"]
+        dates = {}
+        for basket, date in Load._read_group([("basket_id", "in", self.ids), ("date", "!=", False)],
+                                             ["basket_id", "date:day"]):
+            dates.setdefault(basket.id, []).append(date)
+        for basket in self:
+            days = sorted(set(dates.get(basket.id, [])))
+            basket.load_count = len(days)
+            gaps = [(b - a).days for a, b in zip(days, days[1:])]
+            basket.cycle_days = sum(gaps) / len(gaps) if gaps else 0.0
 
     def _search_state(self, operator, value):
         if operator in ("!=", "not in"):
@@ -57,20 +89,42 @@ class CrafBasket(models.Model):
         if operator not in ("=", "in"):
             raise NotImplementedError
         values = [value] if operator == "=" else list(value)
-        busy = self.env["craf.basket.load"].search([("state", "in", ("press", "kimyo"))])
+        busy = self.env["craf.basket.load"].search([("state", "in", ACTIVE)])
+        broken = self.search([("broken", "=", True)]).ids
         ids = set()
         for state in values:
-            if state == "empty":
-                ids |= set(self.search([("id", "not in", busy.basket_id.ids)]).ids)
+            if state == "broken":
+                ids |= set(broken)
+            elif state == "empty":
+                ids |= set(self.search([("id", "not in", busy.basket_id.ids), ("broken", "=", False)]).ids)
             else:
-                ids |= set(busy.filtered(lambda l: l.state == state).basket_id.ids)
+                ids |= set(busy.filtered(lambda l: l.state == state).basket_id.ids) - set(broken)
         return [("id", "in", list(ids))]
 
-    def _compute_load_count(self):
-        data = self.env["craf.basket.load"]._read_group([("basket_id", "in", self.ids)], ["basket_id"], ["__count"])
-        counts = {b.id: c for b, c in data}
+    def _search_stale(self, operator, value):
+        if operator not in ("=", "in", "!=", "not in"):
+            raise NotImplementedError
+        limit = fields.Date.context_today(self) - timedelta(days=STALE_DAYS)
+        ids = self.env["craf.basket.load"].search([("state", "in", ACTIVE), ("date", "<", limit)]).basket_id.ids
+        positive = operator in ("=", "in")
+        return [("id", "in" if positive else "not in", ids)]
+
+    # ------------------------------------------------------------------ tugmalar
+    def action_mark_broken(self):
         for basket in self:
-            basket.load_count = counts.get(basket.id, 0)
+            if basket.current_load_id:
+                raise UserError("%s to'la (%s) — avval bo'shating." % (basket.name, basket.content))
+        self.write({"broken": True, "broken_date": fields.Date.context_today(self)})
+        return True
+
+    def action_mark_ok(self):
+        self.write({"broken": False, "broken_date": False, "broken_note": False})
+        return True
+
+    def action_release(self):
+        """Korzinka bo'yash va qadoqlashdan bo'sh qaytdi (press varag'ida qayta yozilmasdan)."""
+        self._active_loads().write({"state": "boyash", "returned_date": fields.Date.context_today(self)})
+        return True
 
     def action_view_loads(self):
         self.ensure_one()
@@ -79,34 +133,55 @@ class CrafBasket(models.Model):
         action["context"] = {"default_basket_id": self.id}
         return action
 
+    @api.model
+    def get_dashboard(self):
+        """Korzinkalar sahifasi tepasidagi kichik dashboard."""
+        baskets = self.search([])
+        filled = baskets.filtered(lambda b: b.state in ACTIVE)
+        cycles = [b.cycle_days for b in baskets if b.cycle_days]
+        stale = filled.filtered("is_stale")
+        return {
+            "total": len(baskets),
+            "empty": len(baskets.filtered(lambda b: b.state == "empty")),
+            "filled": len(filled),
+            "broken": len(baskets.filtered("broken")),
+            "kg": round(sum(filled.mapped("kg")), 1),
+            "pcs": sum(filled.mapped("pcs")),
+            "cycle_days": round(sum(cycles) / len(cycles), 1) if cycles else 0,
+            "stale": len(stale),
+            "stale_days": STALE_DAYS,
+            "oldest": [{"name": b.name, "days": b.days_full, "content": b.content or ""}
+                       for b in stale.sorted(lambda b: -b.days_full)[:3]],
+        }
+
 
 class CrafBasketLoad(models.Model):
     """Press varag'idagi bitta qator: qaysi korzinkaga nima va nechta yuklangan.
 
-    Daftardagi kabi: korzinka (№ va o'z og'irligi), profil va 6 m / 5 m dona, ikkinchi profil («Профил номи +»),
-    kryuchok va palka og'irligi, brutto. Netto = brutto − korzinka − kryuchok − palka.
+    Daftardagi kabi: korzinka (№ va o'z og'irligi), asosiy profil va 6 m / 5 m dona, kerak bo'lsa qo'shimcha
+    profillar (bitta korzinkada 2-3 xil), kryuchok va palka og'irligi, brutto. Netto = brutto − korzinka − kryuchok − palka.
     Bo'yash bo'limida ajratilgan brak va 6 m → 5 m kesilganlar (craf.paint.sort) yuk tarkibidan chiqariladi."""
     _name = "craf.basket.load"
     _description = "Korzinka yuki (press smenasidan)"
-    _order = "date desc, id desc"
+    _order = "date desc, id"  # varaq ichida — kiritilgan tartibda
     _rec_name = "display_name"
 
     basket_id = fields.Many2one("craf.basket", "Korzinka", required=True, index=True,
-                                domain="[('state', '=', 'empty')]")
-    shift_id = fields.Many2one("craf.extrusion.shift", "Press smenasi", required=True, ondelete="cascade", index=True)
+                                domain="[('broken', '=', False)]",
+                                help="To'la korzinka ham tanlanadi: press varag'ida qayta yozilgani — oldingi yuki "
+                                     "bo'yash va qadoqlashdan o'tgan degani, u «Qaytdi» bo'ladi.")
+    shift_id = fields.Many2one("craf.extrusion.shift", "Press varag'i", required=True, ondelete="cascade", index=True)
     date = fields.Date(related="shift_id.date", store=True, string="Sana")
     section_id = fields.Many2one("craf.profile.section", "Profil", required=True, index=True)
     qty_6 = fields.Integer("6 m, dona")
     qty_5 = fields.Integer("5 m, dona")
-    section2_id = fields.Many2one("craf.profile.section", "Profil 2", help="Shu korzinkadagi ikkinchi profil")
-    qty2_6 = fields.Integer("Profil 2: 6 m")
-    qty2_5 = fields.Integer("Profil 2: 5 m")
+    extra_line_ids = fields.One2many("craf.basket.load.line", "load_id", string="Qo'shimcha profillar", copy=True,
+                                     help="Shu korzinkadagi boshqa profillar (2-, 3-profil)")
     product_6_id = fields.Many2one("product.product", "6 m mahsulot", compute="_compute_products", store=True)
     product_5_id = fields.Many2one("product.product", "5 m mahsulot", compute="_compute_products", store=True)
-    product2_6_id = fields.Many2one("product.product", "Profil 2: 6 m mahsulot", compute="_compute_products",
-                                    store=True)
-    product2_5_id = fields.Many2one("product.product", "Profil 2: 5 m mahsulot", compute="_compute_products",
-                                    store=True)
+    piece_kg = fields.Float("1 dona, kg", compute="_compute_piece_kg", store=True, readonly=False, digits=(16, 3),
+                            help="6 metrlik 1 dona profilning tortilgan og'irligi (daftardagi «КГ 1шт»). Katalogdagi "
+                                 "og'irlikdan olinadi; boshqa bo'lsa yozing. 5 m — shuning 5/6 qismi.")
     pcs_total = fields.Integer("Jami, dona", compute="_compute_totals", store=True, aggregator="sum")
     kg_theory = fields.Float("Nazariy kg", compute="_compute_totals", store=True, digits=(16, 1), aggregator="sum")
     area_m2 = fields.Float("Maydon, m²", compute="_compute_totals", store=True, digits=(16, 1), aggregator="sum")
@@ -124,6 +199,8 @@ class CrafBasketLoad(models.Model):
     defect_kg = fields.Float("Brak, kg", compute="_compute_left", store=True, digits=(16, 1), aggregator="sum")
     left_text = fields.Char("Hozir ichida", compute="_compute_left")
     state = fields.Selection(LOAD_STATES, string="Holati", default="press", required=True, index=True)
+    returned_date = fields.Date("Qaytgan sana", copy=False,
+                                help="Korzinka bo'yash va qadoqlashdan qaytgan (qayta to'ldirilgan yoki bo'shatilgan) kun")
     location_id = fields.Many2one("stock.location", "Qayerda", compute="_compute_location", store=True)
     treatment_id = fields.Many2one("craf.chem.treatment", "Kimyoviy ishlov", copy=False, index=True)
     paint_batch_id = fields.Many2one("craf.paint.batch", "Bo'yash smenasi", copy=False, index=True)
@@ -139,45 +216,53 @@ class CrafBasketLoad(models.Model):
         for load in self:
             load.tare_kg = load.basket_id.tare_kg
 
-    @api.onchange("shift_id")
-    def _onchange_shift_id(self):
-        if self.shift_id.section_id and not self.section_id:
+    @api.onchange("shift_id", "basket_id")
+    def _onchange_defaults_from_last(self):
+        """Yangi korzinka: profil, 1 dona kg, kryuchok va palka shu varaqdagi oxirgi korzinkadan
+        (daftarda odatda bir xil). Formadagi hali saqlanmagan korzinkalar ham hisobga olinadi."""
+        if self.section_id or not self.shift_id:
+            return
+        last = (self.shift_id.basket_load_ids - self).filtered("section_id")[-1:]
+        if last:
+            self.update({"section_id": last.section_id, "piece_kg": last.piece_kg,
+                         "hook_kg": last.hook_kg, "stick_kg": last.stick_kg})
+        elif self.shift_id.section_id:
             self.section_id = self.shift_id.section_id
 
     def _slots(self):
-        """[(dona, mahsulot)] — yuk tarkibi (yuklangan holatda)."""
+        """[(dona, mahsulot)] — yuk tarkibi (yuklangan holatda): asosiy profil va qo'shimchalari."""
         self.ensure_one()
-        return [(self.qty_6, self.product_6_id), (self.qty_5, self.product_5_id),
-                (self.qty2_6, self.product2_6_id), (self.qty2_5, self.product2_5_id)]
+        slots = [(self.qty_6, self.product_6_id), (self.qty_5, self.product_5_id)]
+        for line in self.extra_line_ids:
+            slots += [(line.qty_6, line.product_6_id), (line.qty_5, line.product_5_id)]
+        return slots
 
-    @api.depends("section_id", "section2_id")
+    @api.depends("section_id")
     def _compute_products(self):
         Tmpl = self.env["product.template"]
         for load in self:
-            for sec, f6, f5 in ((load.section_id, "product_6_id", "product_5_id"),
-                                (load.section2_id, "product2_6_id", "product2_5_id")):
-                load[f6] = Tmpl._craf_semi_for(sec, 6.0) if sec else False
-                load[f5] = Tmpl._craf_semi_for(sec, 5.0, create=False) if sec else False
+            sec = load.section_id
+            load.product_6_id = Tmpl._craf_semi_for(sec, 6.0) if sec else False
+            load.product_5_id = Tmpl._craf_semi_for(sec, 5.0, create=False) if sec else False
 
-    @api.depends("qty_6", "qty_5", "qty2_6", "qty2_5", "product_6_id", "product_5_id", "product2_6_id",
-                 "product2_5_id", "section_id.perimeter_m", "section2_id.perimeter_m")
+    @api.depends("product_6_id")
+    def _compute_piece_kg(self):
+        for load in self:
+            load.piece_kg = load.product_6_id.craf_kg_per_pc
+
+    @api.depends("qty_6", "qty_5", "product_6_id", "product_5_id", "piece_kg", "section_id.perimeter_m",
+                 "extra_line_ids.pcs", "extra_line_ids.kg_theory", "extra_line_ids.area_m2", "extra_line_ids.content")
     def _compute_totals(self):
         for load in self:
-            kg = area = 0.0
-            pcs = 0
-            parts = []
-            for sec, slots in ((load.section_id, ((load.qty_6, load.product_6_id), (load.qty_5, load.product_5_id))),
-                               (load.section2_id, ((load.qty2_6, load.product2_6_id),
-                                                   (load.qty2_5, load.product2_5_id)))):
-                sub = []
-                for qty, product in slots:
-                    if qty and product:
-                        kg += qty * product.craf_kg_per_pc
-                        area += qty * product.craf_length_m * (sec.perimeter_m or 0.0)
-                        pcs += qty
-                        sub.append("%s×%gm" % (qty, product.craf_length_m))
-                if sec and sub:
-                    parts.append("%s: %s" % (sec.name, " + ".join(sub)))
+            kg, area, pcs, text = _profile_totals(load.section_id, load.piece_kg, (
+                (load.qty_6, load.product_6_id), (load.qty_5, load.product_5_id)))
+            parts = [text] if text else []
+            for line in load.extra_line_ids:
+                kg += line.kg_theory
+                area += line.area_m2
+                pcs += line.pcs
+                if line.content:
+                    parts.append(line.content)
             load.pcs_total = pcs
             load.kg_theory = kg
             load.area_m2 = area
@@ -207,16 +292,17 @@ class CrafBasketLoad(models.Model):
                                 Mixin._craf_loc("Bo'yash sexi"))
         for load in self:
             if load.state == "press":
-                load.location_id = (kimyo or press) if load.shift_id.state == "done" else press
+                # kimyoviy ishlov alohida yuritilmaydi: tasdiqlangan press chiqishi to'g'ri bo'yash sexida
+                load.location_id = boyash if load.shift_id.state == "done" else press
             elif load.state == "kimyo":
                 load.location_id = boyash
             else:
                 load.location_id = False
 
-    @api.constrains("qty_6", "qty_5", "qty2_6", "qty2_5", "basket_id", "section2_id")
+    @api.constrains("qty_6", "qty_5", "basket_id", "extra_line_ids")
     def _check_capacity(self):
         for load in self:
-            if min(load.qty_6, load.qty_5, load.qty2_6, load.qty2_5) < 0:
+            if min(load.qty_6, load.qty_5) < 0:
                 raise ValidationError("Dona soni manfiy bo'lishi mumkin emas.")
             cap = load.basket_id.capacity
             if cap and load.pcs_total > cap:
@@ -224,26 +310,49 @@ class CrafBasketLoad(models.Model):
                     load.basket_id.name, cap, load.pcs_total))
             if load.qty_5 and not load.product_5_id:
                 raise ValidationError("%s profilining 5 m varianti katalogda yo'q." % load.section_id.name)
-            if load.qty2_5 and not load.product2_5_id:
-                raise ValidationError("%s profilining 5 m varianti katalogda yo'q." % load.section2_id.name)
-            if (load.qty2_6 or load.qty2_5) and not load.section2_id:
-                raise ValidationError("%s: ikkinchi profil donasi bor, lekin profili tanlanmagan." % load.basket_id.name)
 
     @api.constrains("basket_id", "state")
     def _check_basket_free(self):
-        for load in self.filtered(lambda l: l.state in ("press", "kimyo")):
+        for load in self.filtered(lambda l: l.state in ACTIVE):
+            if load.basket_id.broken:
+                raise ValidationError("%s korzinka yaroqsiz deb belgilangan." % load.basket_id.name)
             other = self.search_count([("basket_id", "=", load.basket_id.id), ("id", "!=", load.id),
-                                       ("state", "in", ("press", "kimyo"))])
+                                       ("state", "in", ACTIVE)])
             if other:
                 raise ValidationError("%s korzinka band: u hali bo'shatilmagan." % load.basket_id.name)
 
+    def _craf_release_previous(self, basket_ids, shift_ids):
+        """Korzinka press varag'ida qayta yozildi — oldingi yuki bo'yash va qadoqlashdan o'tgan: «Qaytdi».
+        Shu varaqning o'zida (yoki hali tasdiqlanmagan boshqa varaqda) bo'lsa — xato."""
+        prev = self.search([("basket_id", "in", basket_ids), ("state", "in", ACTIVE)])
+        for load in prev:
+            if load.shift_id.id in shift_ids:
+                raise ValidationError("%s korzinka shu varaqda allaqachon yozilgan." % load.basket_id.name)
+            if load.shift_id.state != "done":
+                raise ValidationError("%s korzinka hali tasdiqlanmagan %s varag'ida turibdi." % (
+                    load.basket_id.name, load.shift_id.name))
+        prev.write({"state": "boyash", "returned_date": fields.Date.context_today(self)})
+
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("section_id") and vals.get("shift_id"):
+                # «Press sahifasi» profilni yubormaydi — varaq matritsasi yoki oxirgi korzinka profili
+                shift = self.env["craf.extrusion.shift"].browse(vals["shift_id"])
+                section = shift.section_id or shift.basket_load_ids.filtered("section_id")[-1:].section_id
+                if section:
+                    vals["section_id"] = section.id
+        for vals in vals_list:
+            if vals.get("basket_id"):
+                self._craf_release_previous([vals["basket_id"]], [vals.get("shift_id")])
         loads = super().create(vals_list)
         loads._craf_remember_tare()
         return loads
 
     def write(self, vals):
+        if vals.get("basket_id"):
+            for load in self.filtered(lambda l: l.basket_id.id != vals["basket_id"] and l.state in ACTIVE):
+                self._craf_release_previous([vals["basket_id"]], [load.shift_id.id])
         res = super().write(vals)
         if "tare_kg" in vals:
             self._craf_remember_tare()
@@ -275,6 +384,68 @@ class CrafBasketLoad(models.Model):
                 if line.kind == "cut" and line.target_product_id:
                     result[line.target_product_id] = result.get(line.target_product_id, 0) + line.qty
         return {p: q for p, q in result.items() if q}
+
+
+def _profile_totals(section, piece_kg, slots):
+    """(kg, maydon, dona, matn) — bitta profilning 6 m / 5 m donasi bo'yicha. piece_kg — tortilgan 1 dona (6 m) kg."""
+    kg = area = 0.0
+    pcs = 0
+    sub = []
+    for qty, product in slots:
+        if qty and product:
+            per = piece_kg * product.craf_length_m / 6.0 if piece_kg else product.craf_kg_per_pc
+            kg += qty * per
+            area += qty * product.craf_length_m * (section.perimeter_m or 0.0)
+            pcs += qty
+            sub.append("%s×%gm" % (qty, product.craf_length_m))
+    return kg, area, pcs, ("%s: %s" % (section.name, " + ".join(sub)) if section and sub else "")
+
+
+class CrafBasketLoadLine(models.Model):
+    """Korzinkadagi qo'shimcha profil (bitta korzinkaga 2-3 xil profil solinganda)."""
+    _name = "craf.basket.load.line"
+    _description = "Korzinkadagi qo'shimcha profil"
+    _order = "id"
+
+    load_id = fields.Many2one("craf.basket.load", required=True, ondelete="cascade", index=True)
+    section_id = fields.Many2one("craf.profile.section", "Profil", required=True)
+    piece_kg = fields.Float("1 dona, kg", compute="_compute_piece_kg", store=True, readonly=False, digits=(16, 3),
+                            help="6 metrlik 1 dona og'irligi; 5 m — shuning 5/6 qismi.")
+    qty_6 = fields.Integer("6 m, dona")
+    qty_5 = fields.Integer("5 m, dona")
+    product_6_id = fields.Many2one("product.product", "6 m mahsulot", compute="_compute_products", store=True)
+    product_5_id = fields.Many2one("product.product", "5 m mahsulot", compute="_compute_products", store=True)
+    pcs = fields.Integer("Dona", compute="_compute_totals", store=True)
+    kg_theory = fields.Float("Nazariy kg", compute="_compute_totals", store=True, digits=(16, 1))
+    area_m2 = fields.Float("Maydon, m²", compute="_compute_totals", store=True, digits=(16, 1))
+    content = fields.Char("Ichida", compute="_compute_totals", store=True)
+
+    @api.depends("section_id")
+    def _compute_products(self):
+        Tmpl = self.env["product.template"]
+        for line in self:
+            sec = line.section_id
+            line.product_6_id = Tmpl._craf_semi_for(sec, 6.0) if sec else False
+            line.product_5_id = Tmpl._craf_semi_for(sec, 5.0, create=False) if sec else False
+
+    @api.depends("product_6_id")
+    def _compute_piece_kg(self):
+        for line in self:
+            line.piece_kg = line.product_6_id.craf_kg_per_pc
+
+    @api.depends("qty_6", "qty_5", "product_6_id", "product_5_id", "piece_kg", "section_id.perimeter_m")
+    def _compute_totals(self):
+        for line in self:
+            line.kg_theory, line.area_m2, line.pcs, line.content = _profile_totals(
+                line.section_id, line.piece_kg, ((line.qty_6, line.product_6_id), (line.qty_5, line.product_5_id)))
+
+    @api.constrains("qty_6", "qty_5", "section_id")
+    def _check_qty(self):
+        for line in self:
+            if min(line.qty_6, line.qty_5) < 0:
+                raise ValidationError("Dona soni manfiy bo'lishi mumkin emas.")
+            if line.qty_5 and not line.product_5_id:
+                raise ValidationError("%s profilining 5 m varianti katalogda yo'q." % line.section_id.name)
 
 
 class ProductTemplate(models.Model):

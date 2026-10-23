@@ -1,30 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Press varag'i: smena tugagach ombor nazoratchisi yozadi — sana, smena, stalba turi, profil brak,
+         pitak otxod, keyin korzinkalar birin-ketin (craf_korzinka). Matritsa va quyma sarfi yozilmaydi. -->
     <record id="craf_extrusion_shift_view_list" model="ir.ui.view">
         <field name="name">craf.extrusion.shift.list</field>
         <field name="model">craf.extrusion.shift</field>
         <field name="arch" type="xml">
-            <list string="Press smenalari" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+            <list string="Press varaqlari" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
                 <field name="name"/>
                 <field name="date"/>
-                <field name="shift" optional="show"/>
-                <field name="equipment_id" optional="show"/>
-                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
-                <field name="section_id"/>
-                <field name="billet_qty" sum="Jami" optional="hide"/>
+                <field name="smena_id"/>
+                <field name="equipment_id" string="Press" optional="show"/>
+                <field name="employee_id" string="Mas'ul" widget="many2one_avatar_employee" optional="show"/>
+                <field name="billet_product_id" string="Stalba" optional="show"/>
                 <field name="output_pcs" sum="Jami"/>
-                <field name="output_kg" sum="Jami"/>
-                <field name="rest_qty" sum="Jami" optional="hide"/>
-                <field name="scrap_qty" sum="Jami" optional="show"/>
-                <field name="duration" sum="Jami" widget="float_time" optional="hide"/>
-                <field name="yield_pct" avg="O'rtacha (og'irlik bo'yicha)" optional="hide"
-                       options="{'weighted': ['output_kg', 'billet_qty', 100]}"
-                       decoration-danger="norm_status == 'low'" decoration-success="norm_status == 'ok'"/>
-                <field name="norm_yield_pct" optional="hide"/>
-                <field name="productivity" avg="O'rtacha (og'irlik bo'yicha)" optional="hide"
-                       options="{'weighted': ['output_kg', 'duration', 1]}"/>
-                <field name="norm_status" widget="badge" optional="show"
-                       decoration-danger="norm_status == 'low'" decoration-success="norm_status == 'ok'"/>
+                <field name="output_kg" sum="Jami" optional="hide"/>
+                <field name="scrap_qty" sum="Jami"/>
+                <field name="rest_qty" sum="Jami"/>
+                <field name="section_id" optional="hide"/>
+                <field name="norm_status" column_invisible="1"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
                        decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
             </list>
@@ -37,28 +31,17 @@
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile" sample="1">
                 <field name="state"/>
-                <field name="norm_status"/>
                 <templates>
                     <t t-name="card">
                         <div class="d-flex align-items-center mb-1">
                             <field name="name" class="fw-bold fs-5"/>
                             <span class="ms-auto badge" t-att-class="record.state.raw_value === 'done' ? 'text-bg-success' : (record.state.raw_value === 'draft' ? 'text-bg-info' : 'text-bg-secondary')"><field name="state"/></span>
                         </div>
-                        <div class="text-muted small">
-                            <field name="date"/> · <field name="shift"/> · <field name="equipment_id"/>
-                        </div>
-                        <div class="mt-1"><span class="text-muted small">Matritsa </span><field name="section_id" class="fw-bold"/></div>
+                        <div class="text-muted small"><field name="date"/> · <field name="smena_id"/></div>
                         <div class="d-flex mt-1 align-items-baseline">
-                            <div><field name="output_pcs" class="fw-bold"/> dona · <field name="output_kg"/> kg</div>
-                            <div class="ms-auto"><span class="text-muted small">brak </span><field name="scrap_qty" class="fw-bold"/> kg</div>
+                            <div><field name="output_pcs" class="fw-bold"/> dona</div>
+                            <div class="ms-auto small">brak <field name="scrap_qty" class="fw-bold"/> · pitak <field name="rest_qty" class="fw-bold"/> kg</div>
                         </div>
-                        <div t-if="record.norm_status.raw_value === 'low'" class="text-danger small mt-1">
-                            <field name="norm_warning"/>
-                        </div>
-                        <footer class="pt-1">
-                            <field name="employee_id" widget="many2one_avatar_employee"/>
-                            <span class="ms-auto text-muted small">питак <field name="rest_qty"/> kg</span>
-                        </footer>
                     </t>
                 </templates>
             </kanban>
@@ -69,11 +52,14 @@
         <field name="name">craf.extrusion.shift.form</field>
         <field name="model">craf.extrusion.shift</field>
         <field name="arch" type="xml">
-            <form string="Press smenasi">
+            <form string="Press varag'i">
                 <header>
                     <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary"
                             icon="fa-check" invisible="state != 'draft'"
-                            confirm="Smena tasdiqlansa, korzinkalardagi profillar keyingi bosqichga o'tadi, brak va питак Liteykaga yoziladi. Davom etasizmi?"/>
+                            confirm="Tasdiqlansa, korzinkalardagi profillar keyingi bosqichga o'tadi, profil brak va pitak otxod Liteykaga yoziladi. Davom etasizmi?"/>
+                    <button name="action_reopen" type="object" string="Tahrirlash" icon="fa-pencil"
+                            invisible="state != 'done'"
+                            confirm="Varaq qoralamaga qaytariladi: profillar, brak va pitak bo'yicha ombor harakatlari bekor qilinadi. Tuzatgach, qayta tasdiqlang (yoki o'chiring). Davom etasizmi?"/>
                     <button name="action_make_packs" type="object" string="Pachka yorliqlari" icon="fa-qrcode"
                             invisible="state != 'done' or not has_pack_items"/>
                     <field name="has_pack_items" invisible="1"/>
@@ -84,7 +70,7 @@
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_productions" type="object" class="oe_stat_button" icon="fa-cogs"
-                                invisible="not production_count">
+                                invisible="not production_count" groups="base.group_no_one">
                             <field name="production_count" widget="statinfo" string="MRP buyurtma"/>
                         </button>
                         <button name="action_view_packs" type="object" class="oe_stat_button" icon="fa-cubes"
@@ -92,120 +78,58 @@
                             <field name="pack_count" widget="statinfo" string="Pachka"/>
                         </button>
                     </div>
-                    <div class="alert alert-warning" role="alert" invisible="norm_status != 'low'">
-                        <i class="fa fa-exclamation-triangle me-1" title="Ogohlantirish"/><field name="norm_warning" class="oe_inline"/>
-                        <span invisible="state != 'draft'"> — tasdiqlansa, Press mas'ullariga eslatma boradi.
-                            Sababini «Izoh»ga yozing.</span>
-                    </div>
-                    <div class="alert alert-danger" role="alert"
-                         invisible="state != 'draft' or not billet_days_left or billet_days_left &gt; 7">
-                        <i class="fa fa-cubes me-1" title="Quyma"/>Quyma zavodda ~<field name="billet_days_left" class="oe_inline"/>
-                        kunga yetadi (Press → Quyma qoldig'i va prognoz).
-                    </div>
                     <div class="oe_title">
-                        <span class="text-muted">Press smenasi</span>
+                        <span class="text-muted">Press varag'i</span>
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
-                    <group>
-                        <group string="Smena">
+                    <group name="top">
+                        <group string="Smena" name="general">
+                            <field name="smena_id" readonly="state != 'draft'" required="1"
+                                   options="{'no_create_edit': True}" placeholder="Kunduzgi yoki Tungi smena"/>
                             <field name="date" readonly="state != 'draft'"/>
-                            <field name="shift" readonly="state != 'draft'"/>
-                            <field name="equipment_id" readonly="state != 'draft'" options="{'no_create': True}"/>
-                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
-                            <field name="duration" readonly="state != 'draft'" widget="float_time"/>
                         </group>
-                        <group string="Matritsa" name="die">
-                            <field name="section_id" readonly="state != 'draft'" options="{'no_create': True}"
-                                   placeholder="korzinkalardan o'zi aniqlanadi"/>
-                            <field name="die_code" invisible="not die_code"/>
-                            <field name="kg_per_m" invisible="not section_id"/>
-                            <!-- quyma (stalba) sarfi ixtiyoriy: Liteyka kunlik qoldig'i orqali yuritiladi -->
-                            <field name="billet_product_id" readonly="state != 'draft'" options="{'no_create': True}"
-                                   invisible="not billet_qty"/>
-                            <field name="melt_ids" widget="many2many_tags" readonly="state != 'draft'"
-                                   options="{'no_create': True}" invisible="not billet_qty"/>
-                            <label for="billet_qty" invisible="not billet_qty"/>
-                            <div class="o_row" invisible="not billet_qty">
-                                <field name="billet_qty" readonly="state != 'draft'" class="fw-bold"/>
-                                <span class="text-muted" invisible="state != 'draft'">
-                                    bor: <field name="billet_available" class="oe_inline"/> kg
-                                </span>
-                            </div>
-                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"
-                                   invisible="not billet_qty"/>
+                        <group string="Brak va otxod (Liteykaga)" name="waste">
+                            <field name="scrap_qty" readonly="state != 'draft'"/>
+                            <field name="rest_qty" readonly="state != 'draft'"/>
+                            <!-- pitak mahsuloti stalba turidan, brak — «Brak profil + briket otxod», joy — Литейка (o'zi) -->
+                            <field name="rest_product_id" invisible="1"/>
+                            <field name="scrap_product_id" invisible="1"/>
+                            <field name="waste_location_id" invisible="1"/>
                         </group>
                     </group>
-                    <notebook>
-                        <page string="Chiqish (profil)" name="output">
+                    <group name="press">
+                        <group>
+                            <field name="smena_time" string="Ish vaqti"/>
+                            <field name="equipment_id" string="Press" options="{'no_create': True}"
+                                   readonly="state != 'draft'"/>
+                            <field name="employee_id" string="Mas'ul" widget="many2one_avatar_employee"
+                                   readonly="state != 'draft'"/>
+                            <field name="duration" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="billet_product_id" widget="radio" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <!-- craf_korzinka: korzinkalar va jami shu yerga qo'shiladi -->
+                    <div name="baskets"/>
+                    <div class="o_horizontal_separator mt-3 mb-1 fw-bold">Izoh</div>
+                    <field name="note" placeholder="Masalan: matritsa almashtirildi, to'xtash sababi…"/>
+                    <notebook groups="base.group_no_one">
+                        <page string="Chiqish (avtomatik)" name="output" groups="base.group_no_one">
                             <field name="line_ids" readonly="state != 'draft'">
-                                <kanban class="o_kanban_mobile">
-                                    <templates>
-                                        <t t-name="card">
-                                            <field name="product_id" class="fw-bold"/>
-                                            <div class="d-flex mt-1 align-items-baseline">
-                                                <span><field name="pcs" class="fw-bold"/> dona</span>
-                                                <span class="ms-2 text-muted small"><field name="packs_text"/></span>
-                                                <span class="ms-auto"><field name="kg"/> kg</span>
-                                            </div>
-                                            <div class="text-muted small">→ <field name="location_dest_id"/></div>
-                                        </t>
-                                    </templates>
-                                </kanban>
-                                <form string="Chiqish qatori">
-                                    <group>
-                                        <field name="product_id" options="{'no_create': True}"
-                                               domain="[('craf_section_id', '=', parent.section_id), ('craf_color_id.is_painted', '=', False)]"/>
-                                        <field name="length_m"/>
-                                        <field name="pcs"/>
-                                        <field name="packs_text"/>
-                                        <field name="metres"/>
-                                        <field name="kg"/>
-                                        <field name="location_dest_id" options="{'no_create': True}"/>
-                                        <field name="state" invisible="1"/>
-                                    </group>
-                                </form>
                                 <list editable="bottom">
                                     <field name="product_id" options="{'no_create': True}"
-                                           domain="[('craf_section_id', '=', parent.section_id), ('craf_color_id.is_painted', '=', False)]"/>
+                                           domain="[('craf_color_id.is_painted', '=', False), ('craf_section_id', '!=', False)]"/>
                                     <field name="length_m" optional="show"/>
                                     <field name="pcs" sum="Jami"/>
                                     <field name="packs_text" optional="show"/>
-                                    <field name="metres" sum="Jami" optional="show"/>
                                     <field name="kg" sum="Jami"/>
                                     <field name="location_dest_id" options="{'no_create': True}"/>
                                     <field name="state" column_invisible="1"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Izoh" name="note">
-                            <field name="note" placeholder="Masalan: matritsa almashtirildi, to'xtash sababi…"/>
-                        </page>
                     </notebook>
-                    <group>
-                        <group string="Brak va питак (Liteykaga)" name="waste">
-                            <field name="scrap_qty" readonly="state != 'draft'" string="Brak profil, kg"/>
-                            <field name="rest_qty" readonly="state != 'draft'" string="Питак, kg"/>
-                            <field name="rest_product_id" readonly="state != 'draft'" options="{'no_create': True}"
-                                   groups="base.group_no_one"/>
-                            <field name="scrap_product_id" readonly="state != 'draft'" options="{'no_create': True}"
-                                   groups="base.group_no_one"/>
-                            <field name="waste_location_id" readonly="state != 'draft'" options="{'no_create': True}"/>
-                        </group>
-                        <group string="Ko'rsatkichlar">
-                            <field name="output_pcs"/>
-                            <field name="output_kg"/>
-                            <field name="billet_qty" invisible="1"/>
-                            <field name="yield_pct" invisible="not billet_qty" decoration-danger="norm_status == 'low'"
-                                   decoration-success="norm_status == 'ok'"/>
-                            <field name="norm_yield_pct" invisible="not norm_yield_pct or not billet_qty"/>
-                            <field name="yield_diff" invisible="not norm_yield_pct or not output_kg"
-                                   decoration-danger="yield_diff &lt; 0" decoration-success="yield_diff &gt;= 0"/>
-                            <field name="loss_qty" invisible="not billet_qty" decoration-warning="loss_qty &gt; 5 or loss_qty &lt; -5"/>
-                            <field name="productivity" decoration-danger="norm_status == 'low'"/>
-                            <field name="norm_productivity" invisible="not norm_productivity"/>
-                            <field name="norm_status" invisible="1"/>
-                        </group>
-                    </group>
                 </sheet>
                 <chatter/>
             </form>
@@ -216,24 +140,21 @@
         <field name="name">craf.extrusion.shift.search</field>
         <field name="model">craf.extrusion.shift</field>
         <field name="arch" type="xml">
-            <search string="Press smenalari">
+            <search string="Press varaqlari">
                 <field name="name"/>
+                <field name="smena_id"/>
                 <field name="section_id"/>
-                <field name="equipment_id"/>
-                <field name="employee_id"/>
-                <field name="melt_ids"/>
                 <filter name="draft" string="Qoralama" domain="[('state', '=', 'draft')]"/>
                 <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
                 <separator/>
                 <filter name="today" string="Bugun" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
                 <filter name="week" string="Oxirgi 7 kun"
                         domain="[('date', '&gt;=', (context_today() - relativedelta(days=6)).strftime('%Y-%m-%d'))]"/>
-                <filter name="low_yield" string="Normadan past" domain="[('norm_status', '=', 'low'), ('state', '=', 'done')]"/>
                 <group>
                     <filter name="group_date" string="Sana" context="{'group_by': 'date:day'}"/>
-                    <filter name="group_section" string="Matritsa" context="{'group_by': 'section_id'}"/>
+                    <filter name="group_smena" string="Smena" context="{'group_by': 'smena_id'}"/>
                     <filter name="group_equipment" string="Press" context="{'group_by': 'equipment_id'}"/>
-                    <filter name="group_employee" string="Operator" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_billet" string="Stalba turi" context="{'group_by': 'billet_product_id'}"/>
                 </group>
             </search>
         </field>
@@ -254,25 +175,26 @@
         <field name="name">craf.extrusion.shift.pivot</field>
         <field name="model">craf.extrusion.shift</field>
         <field name="arch" type="xml">
-            <pivot string="Press smenalari">
-                <field name="section_id" type="row"/>
-                <field name="billet_qty" type="measure"/>
-                <field name="output_kg" type="measure"/>
-                <field name="yield_pct" type="measure"/>
-                <field name="productivity" type="measure"/>
+            <pivot string="Press varaqlari">
+                <field name="date" interval="day" type="row"/>
+                <field name="smena_id" type="col"/>
+                <field name="output_pcs" type="measure"/>
+                <field name="scrap_qty" type="measure"/>
+                <field name="rest_qty" type="measure"/>
             </pivot>
         </field>
     </record>
 
     <record id="action_craf_extrusion_shift" model="ir.actions.act_window">
-        <field name="name">Press smenalari</field>
+        <field name="name">Press varaqlari</field>
         <field name="res_model">craf.extrusion.shift</field>
         <field name="view_mode">list,kanban,form,graph,pivot</field>
         <field name="path">craf-press</field>
         <field name="context">{'search_default_week': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Birinchi press smenasini yozing</p>
-            <p>Matritsani tanlang — shu kesimning bo'yalmagan profillari qatorga tushadi. Dona, quyma sarfi, qoldiq va brakni kiriting.</p>
+            <p class="o_view_nocontent_smiling_face">Birinchi press varag'ini yozing</p>
+            <p>Smena tugagach: sana, smena, stalba turi, profil brak va pitak otxod — keyin korzinkalarni birin-ketin
+                (korzinka, profil, 6 m / 5 m dona, brutto).</p>
         </field>
     </record>
 

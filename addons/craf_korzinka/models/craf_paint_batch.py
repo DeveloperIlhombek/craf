@@ -7,7 +7,7 @@ class CrafPaintBatch(models.Model):
 
     load_ids = fields.Many2many(
         "craf.basket.load", "craf_paint_batch_load_rel", "batch_id", "load_id", string="Korzinkalar",
-        domain="[('state', '=', 'kimyo')]")
+        domain="[('state', 'in', ('press', 'kimyo')), ('shift_state', '=', 'done')]")
     basket_count = fields.Integer("Korzinkalar", compute="_compute_basket_count", store=True, aggregator="sum")
     stock_picking_id = fields.Many2one("stock.picking", "Omborga topshirish", readonly=True, copy=False)
     stock_state = fields.Selection([("no", "Topshirilmagan"), ("done", "Omborga topshirildi")],
@@ -25,7 +25,7 @@ class CrafPaintBatch(models.Model):
     def action_fill_from_baskets(self):
         for batch in self.filtered(lambda b: b.state == "draft"):
             if not batch.load_ids:
-                raise UserError("Korzinkalarni tanlang (bo'yashga tayyor bo'lganlar).")
+                raise UserError("Korzinkalarni tanlang (bo'yashdagi korzinkalar).")
             quantities = batch.load_ids._product_quantities()
             commands = [Command.unlink(l.id) for l in batch.line_ids if l.semi_product_id in quantities]
             commands += [Command.create({"semi_product_id": p.id, "pcs_in": q}) for p, q in quantities.items()]
@@ -34,7 +34,8 @@ class CrafPaintBatch(models.Model):
 
     def action_add_ready_baskets(self):
         for batch in self.filtered(lambda b: b.state == "draft"):
-            ready = self.env["craf.basket.load"].search([("state", "=", "kimyo")])
+            ready = self.env["craf.basket.load"].search([("state", "in", ("press", "kimyo")),
+                                                         ("shift_state", "=", "done")])
             batch.load_ids = [Command.link(l.id) for l in ready]
         return True
 
