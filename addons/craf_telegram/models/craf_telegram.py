@@ -13,7 +13,6 @@ import requests
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-from odoo.addons.craf_sex.models.craf_sex import STAGE
 
 _logger = logging.getLogger(__name__)
 
@@ -24,9 +23,10 @@ P_BOT = "craf_telegram.bot_username"
 P_OFFSET = "craf_telegram.update_offset"
 P_HOUR = "craf_telegram.daily_hour"
 P_LAST_DAILY = "craf_telegram.last_daily"
+DEFAULT_HOUR = 11  # kunlik hisobot (kechagi kun) — Toshkent vaqti bilan 11:00
 MAX_LEN = 4000
 BOLIM_ICON = {"litey": "🔥", "press": "⚙️", "boyash": "🎨"}
-HELP = ("Buyruqlar:\n/qoldiq — Liteyka xom-ashyo holati\n/hisobot — kechagi hisobot\n/id — Telegram ID ingiz")
+HELP = ("Buyruqlar:\n/qoldiq — kam qolgan va tugagan materiallar\n/hisobot — kechagi hisobot\n/id — Telegram ID ingiz")
 
 
 class TelegramError(Exception):
@@ -133,18 +133,63 @@ class CrafTelegram(models.AbstractModel):
         return self._now().date() - timedelta(days=1)
 
     # ================================================================== hisobotlar
-    def _litey_text(self, day, with_title=True):
+    # Xabar ixcham: bo'lim bo'yicha kechagi ish yakuni (bir-ikki qator) va faqat muammoli qoldiq —
+    # tugagan, minimaldan kam va tez tugaydigan materiallar. Hammasi yetarli bo'lsa — bitta qator.
+    TOP = 5
+
+    @staticmethod
+    def _days(value):
+        return num(value, 0 if value >= 3 else 1)
+
+    def _top(self, items):
+        """[(qiymat, matn)] → eng kattalari, qolgani «+N ta»."""
+        items = sorted(items, key=lambda x: -x[0])
+        text = ", ".join(t for _v, t in items[:self.TOP])
+        if len(items) > self.TOP:
+            text += " +%s ta" % (len(items) - self.TOP)
+        return text
+
+    def _stock_rows(self, code):
+        """Bo'lim prognozi qatorlari bir xil ko'rinishda: name, qty, uom, min_qty, days_left, status, tmpl_id."""
+        if code == "litey":
+            return self.env["craf.litey.hisobot"].sudo().with_context(tz=TZ)._forecast_rows()[3]
+        if code == "press":
+            rows = self.env["craf.extrusion.shift"].sudo()._craf_billet_forecast().values()
+        else:
+            rows = self.env["craf.paint.batch"].sudo()._craf_material_forecast().values()
+        return [dict(r, name=r["product"].name, tmpl_id=r["product"].product_tmpl_id.id) for r in rows]
+
+    def _alert_lines(self, rows):
+        out = [r for r in rows if r["status"] in ("out", "neg")]
+        low = [r for r in rows if r["status"] == "low"]
+        soon = sorted([r for r in rows if r["status"] == "soon"], key=lambda r: r["days_left"] or 0)
+        lines = []
+        if out:
+            lines.append("⛔ Tugagan: " + ", ".join(esc(r["name"]) for r in out))
+        if low:
+            lines.append("⚠️ Kam: " + "; ".join("%s %s %s (min %s)" % (
+                esc(r["name"]), num(r["qty"]), esc(r["uom"]), num(r["min_qty"], 0)) for r in low))
+        if soon:
+            lines.append("⏳ Tez tugaydi: " + "; ".join("%s ~%s kun" % (esc(r["name"]), self._days(r["days_left"]))
+                                                      for r in soon if r["days_left"] is not None))
+        return lines
+
+    def _stock_text(self, code="litey"):
+        lines = self._alert_lines(self._stock_rows(code))
+        return "\n".join(lines) if lines else "✅ Qoldiq yetarli"
+
+    def _title(self, code, day):
+        title = {"litey": "Liteyka", "press": "Press", "boyash": "Bo'yash va qadoqlash"}[code]
+        return "%s <b>%s</b> · %s" % (BOLIM_ICON[code], title, day.strftime("%d.%m"))
+
+    def _litey_text(self, day):
         H = self.env["craf.litey.hisobot"].sudo().with_context(tz=TZ)
         d = H.get_data(fields.Date.to_string(day), fields.Date.to_string(day))
         k = d["kpi"]
-        lines = []
-        if with_title:
-            lines.append("%s <b>Liteyka</b> — %s" % (BOLIM_ICON["litey"], day.strftime("%d.%m.%Y")))
+        lines = [self._title("litey", day)]
         if k["melts"]:
-            lines.append("Plavka: %s ta · pechga metall %s kg · stalba %s kg · угар %s %%" % (
-                k["melts"], num(k["metal"], 0), num(k["billet"], 0), num(k["loss_pct"], 2)))
-        else:
-            lines.append("Plavka yozilmagan.")
+            lines.append("Plavka %s ta: stalba %s kg, угар %s %%" % (k["melts"], num(k["billet"], 0),
+                                                                   num(k["loss_pct"], 1)))
         if k["drafts"]:
             lines.append("Qoralama plavka: %s ta" % k["drafts"])
         # ombor harakatlari bo'yicha (plavka hujjati bo'lmasa ham — Excel / qo'lda yozilgan sarf va kirim)
@@ -154,65 +199,85 @@ class CrafTelegram(models.AbstractModel):
                 value = {"spent": r["sarf_plavka"] + r["sarf_boshqa"], "kirim": r["kirim"],
                          "out": r["chiqish_plavka"] + r["chiqish_boshqa"]}[key]
                 if value > 1e-6:
-                    items.append((value, r))
+                    items.append((value, "%s %s %s" % (esc(r["name"]), num(value), esc(r["uom"]))))
             if items:
-                items.sort(key=lambda x: -x[0])
-                lines.append("%s: %s" % (title, "; ".join("%s %s %s" % (esc(r["name"]), num(v), esc(r["uom"]))
-                                                          for v, r in items)))
-        lines.append("")
-        lines.append(self._stock_text())
-        return "\n".join(lines)
-
-    def _stock_text(self):
-        H = self.env["craf.litey.hisobot"].sudo().with_context(tz=TZ)
-        _bolim, period, warn, rows = H._forecast_rows()
-        out = [r for r in rows if r["status"] in ("out", "neg")]
-        low = [r for r in rows if r["status"] == "low"]
-        soon = sorted([r for r in rows if r["status"] == "soon"],
-                      key=lambda r: r["days_to_min"] if r["days_to_min"] is not None else (r["days_left"] or 0))
-        main = sorted([r for r in rows if r["status"] == "ok" and r["days_left"] is not None],
-                      key=lambda r: r["days_left"])[:6]
-        lines = ["<b>Xom-ashyo</b> (o'rtacha sarf — oxirgi %s kun):" % period]
-        if out:
-            lines.append("⛔ Tugagan: " + ", ".join(esc(r["name"]) for r in out))
-        for r in low:
-            lines.append("⚠️ %s — %s %s (minimal %s)" % (esc(r["name"]), num(r["qty"]), esc(r["uom"]), num(r["min_qty"], 0)))
-        for r in soon:
-            tail = ", minimalgacha ~%s kun" % num(r["days_to_min"]) if r["days_to_min"] is not None else ""
-            lines.append("⏳ %s — %s %s, ~%s kunga%s" % (esc(r["name"]), num(r["qty"]), esc(r["uom"]),
-                                                      num(r["days_left"]), tail))
-        for r in main:
-            lines.append("• %s — %s %s, ~%s kunga" % (esc(r["name"]), num(r["qty"]), esc(r["uom"]), num(r["days_left"])))
+                lines.append("%s: %s" % (title, self._top(items)))
         if len(lines) == 1:
-            lines.append("Kuzatiladigan sarf yo'q.")
+            lines.append("Harakat yozilmagan.")
+        lines.append(self._stock_text("litey"))
         return "\n".join(lines)
 
-    def _stage_text(self, stage, day):
-        key, label, model, _loc = STAGE[stage]
-        Model = self.env[model].sudo()
-        done = Model.search([("date", "=", day), ("state", "=", "done")])
-        drafts = Model.search_count([("state", "=", "draft"), ("date", "<=", day)])
-        lines = ["<b>%s</b>" % esc(label)]
+    def _press_text(self, day):
+        Shift = self.env["craf.extrusion.shift"].sudo()
+        done = Shift.search([("date", "=", day), ("state", "=", "done")])
+        drafts = Shift.search_count([("state", "=", "draft"), ("date", "<=", day)])
+        lines = [self._title("press", day)]
         if done:
-            for k in getattr(self.env["craf.sex"].sudo(), "_kpi_%s" % key)(done):
-                sub = " (%s)" % esc(k["sub"]) if k.get("sub") else ""
-                lines.append("• %s: %s%s%s" % (esc(k["label"]), esc(k["value"]),
-                                              " " + esc(k["unit"]) if k.get("unit") else "", sub))
+            parts = ["%s smena" % len(done)]
+            if "basket_count" in Shift._fields and sum(done.mapped("basket_count")):
+                parts.append("%s korzinka" % num(sum(done.mapped("basket_count")), 0))
+            parts.append("%s dona" % num(sum(done.mapped("output_pcs")), 0))
+            net = sum(done.mapped("basket_net_kg")) if "basket_net_kg" in Shift._fields else 0.0
+            parts.append("netto %s kg" % num(net or sum(done.mapped("output_kg")), 0))
+            lines.append(" · ".join(parts))
+            lines.append("Brak %s kg · питак %s kg" % (num(sum(done.mapped("scrap_qty")), 0),
+                                                       num(sum(done.mapped("rest_qty")), 0)))
+            billet = sum(done.mapped("billet_qty"))
+            if billet:
+                lines.append("Quyma %s kg, chiqish %s %%" % (num(billet, 0),
+                                                            num(sum(done.mapped("output_kg")) / billet * 100, 1)))
+            low = done.filtered(lambda s: s.norm_status == "low")
+            if low:
+                lines.append("⚠️ Normadan past: %s" % ", ".join(esc(s.name) for s in low))
         else:
+            lines.append("Smena yozilmagan.")
+        if drafts:
+            lines.append("Qoralama: %s ta" % drafts)
+        lines.append(self._stock_text("press"))
+        return "\n".join(lines)
+
+    def _boyash_text(self, day):
+        lines = [self._title("boyash", day)]
+        drafts = 0
+        chem = self.env["craf.chem.treatment"].sudo()
+        done = chem.search([("date", "=", day), ("state", "=", "done")])
+        drafts += chem.search_count([("state", "=", "draft"), ("date", "<=", day)])
+        if done:
+            lines.append("Kimyo: %s korzinka, %s kg profil, kimyo %s kg" % (
+                num(sum(done.mapped("basket_count")), 0), num(sum(done.mapped("kg_total")), 0),
+                num(sum(done.mapped("chem_kg")))))
+        if "craf.paint.sort" in self.env:
+            sort = self.env["craf.paint.sort"].sudo()
+            done = sort.search([("date", "=", day), ("state", "=", "done")])
+            drafts += sort.search_count([("state", "=", "draft"), ("date", "<=", day)])
+            if done:
+                brak, cut = sum(done.mapped("brak_pcs")), sum(done.mapped("cut_pcs"))
+                parts = (["brak %s dona" % num(brak, 0)] if brak else []) + (
+                    ["6→5 m %s dona" % num(cut, 0)] if cut else [])
+                lines.append("Ajratildi: %s → Liteykaga %s kg" % (", ".join(parts), num(sum(done.mapped("kg_total")))))
+        paint = self.env["craf.paint.batch"].sudo()
+        done = paint.search([("date", "=", day), ("state", "=", "done")])
+        drafts += paint.search_count([("state", "=", "draft"), ("date", "<=", day)])
+        if done:
+            pcs_in = sum(done.mapped("pcs_in"))
+            defect = sum(done.mapped("pcs_defect"))
+            lines.append("Bo'yaldi: %s dona (%s kg), brak %s %%, kukun %s kg" % (
+                num(sum(done.mapped("pcs_ok")), 0), num(sum(done.mapped("kg_ok")), 0),
+                num(defect / pcs_in * 100 if pcs_in else 0, 1), num(sum(done.mapped("powder_qty")))))
+            low = done.filtered(lambda b: b.norm_status == "low")
+            if low:
+                lines.append("⚠️ Normadan tashqari: %s" % ", ".join(esc(b.name) for b in low))
+        if len(lines) == 1:
             lines.append("Hujjat yozilmagan.")
         if drafts:
             lines.append("Qoralama: %s ta" % drafts)
+        lines.append(self._stock_text("boyash"))
         return "\n".join(lines)
 
     @api.model
     def report_text(self, code, day=None):
         day = day or self._yesterday()
-        if code == "litey":
-            return self._litey_text(day)
-        title = {"press": "Press", "boyash": "Bo'yash va qadoqlash"}[code]
-        stages = ["press"] if code == "press" else ["kimyo", "boyash"]
-        body = "\n\n".join(self._stage_text(s, day) for s in stages)
-        return "%s <b>%s</b> — %s\n%s" % (BOLIM_ICON[code], title, day.strftime("%d.%m.%Y"), body)
+        return {"litey": self._litey_text, "press": self._press_text, "boyash": self._boyash_text}[code](day)
 
     @api.model
     def send_daily(self, codes=None, day=None):
@@ -232,41 +297,38 @@ class CrafTelegram(models.AbstractModel):
 
     # ================================================================== minimal qoldiq
     @api.model
-    def _min_qty_alerts(self, rows):
+    def _min_qty_alerts(self, rows, code="litey"):
+        """Material minimaldan kamaysa yoki tugasa — bir marta; tiklansa — bir marta. Faqat o'zgarganlari."""
         if not self._token():
             return
-        contacts = self._contacts("litey", "notify_min_qty")
+        contacts = self._contacts(code, "notify_min_qty")
         Tmpl = self.env["product.template"].sudo()
         bad, restored = [], []
         for r in rows:
             if not r["min_qty"]:
                 continue
-            tmpl = Tmpl.browse(r["tmpl_id"])
+            tmpl = Tmpl.browse(r.get("tmpl_id") or r["product"].product_tmpl_id.id)
+            name = r.get("name") or tmpl.name
             is_bad = r["status"] in ("low", "out", "neg")
             if is_bad and not tmpl.craf_tg_alert:
-                bad.append((r, tmpl))
+                bad.append((r, tmpl, name))
             elif not is_bad and tmpl.craf_tg_alert:
-                restored.append((r, tmpl))
+                restored.append((r, tmpl, name))
         if not contacts or not (bad or restored):
             return
-        lines = []
-        if bad:
-            lines.append("⚠️ <b>Liteyka: xom-ashyo minimal qoldiqdan kam</b>")
-            for r, _t in bad:
-                tail = " — tugagan" if r["status"] in ("out", "neg") else ""
-                days = ", ~%s kunga yetadi" % num(r["days_left"]) if r["days_left"] is not None else ""
-                lines.append("• %s: %s %s (minimal %s)%s%s" % (esc(r["name"]), num(r["qty"]), esc(r["uom"]),
-                                                              num(r["min_qty"], 0), days, tail))
-        if restored:
-            if lines:
-                lines.append("")
-            lines.append("✅ <b>Qoldiq tiklandi</b>")
-            for r, _t in restored:
-                lines.append("• %s: %s %s" % (esc(r["name"]), num(r["qty"]), esc(r["uom"])))
+        title = {"litey": "Liteyka", "press": "Press", "boyash": "Bo'yash va qadoqlash"}[code]
+        lines = ["%s <b>%s</b>" % (BOLIM_ICON[code], title)]
+        for r, _t, name in bad:
+            state = "⛔ tugadi" if r["status"] in ("out", "neg") else "⚠️ kam"
+            days = ", ~%s kun" % self._days(r["days_left"]) if r["days_left"] is not None else ""
+            lines.append("%s: %s — %s %s (min %s)%s" % (state, esc(name), num(r["qty"]), esc(r["uom"]),
+                                                       num(r["min_qty"], 0), days))
+        for r, _t, name in restored:
+            lines.append("✅ tiklandi: %s — %s %s" % (esc(name), num(r["qty"]), esc(r["uom"])))
         if self._send_contacts(contacts, "\n".join(lines), "alert"):
-            for _r, tmpl in bad:
+            for _r, tmpl, _n in bad:
                 tmpl.craf_tg_alert = True
-            for _r, tmpl in restored:
+            for _r, tmpl, _n in restored:
                 tmpl.craf_tg_alert = False
 
     # ================================================================== bot: kelgan xabarlar
@@ -291,8 +353,9 @@ class CrafTelegram(models.AbstractModel):
                        "bot sizga hisobot va eslatmalar yuboradi." % (", " + esc(first_name) if first_name else "", chat_id))
             return self._reply(chat_id, msg)
         if cmd == "/qoldiq":
-            return self._reply(chat_id, "🔥 <b>Liteyka</b> — %s\n%s" % (
-                self._now().strftime("%d.%m.%Y %H:%M"), self._stock_text()))
+            codes = [c for c in ("litey", "press", "boyash") if c in contacts.bolim_id.mapped("code")]
+            return self._reply(chat_id, "\n\n".join(
+                "%s\n%s" % (self._title(c, self._now().date()), self._stock_text(c)) for c in codes))
         if cmd == "/hisobot":
             codes = sorted(set(contacts.bolim_id.mapped("code")))
             return self._reply(chat_id, "\n\n".join(self.report_text(c) for c in codes))
@@ -334,7 +397,7 @@ class CrafTelegram(models.AbstractModel):
         if not self._token():
             return
         now = self._now()
-        hour = int(self._param(P_HOUR, "8") or 8)
+        hour = int(self._param(P_HOUR, DEFAULT_HOUR) or DEFAULT_HOUR)
         today = now.date().isoformat()
         if now.hour < hour or self._param(P_LAST_DAILY) == today:
             return

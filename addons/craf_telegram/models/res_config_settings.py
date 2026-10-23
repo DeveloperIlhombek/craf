@@ -1,7 +1,7 @@
 from odoo import fields, models
 from odoo.exceptions import UserError
 
-from .craf_telegram import P_BOT, P_HOUR, P_TOKEN
+from .craf_telegram import DEFAULT_HOUR, P_BOT, P_HOUR, P_TOKEN
 
 
 class ResConfigSettings(models.TransientModel):
@@ -10,7 +10,7 @@ class ResConfigSettings(models.TransientModel):
     craf_tg_token = fields.Char("Bot tokeni", config_parameter=P_TOKEN,
                                 help="BotFather bergan token, masalan 123456789:AA...")
     craf_tg_bot_username = fields.Char("Bot", config_parameter=P_BOT, readonly=True)
-    craf_tg_daily_hour = fields.Integer("Kunlik hisobot soati", config_parameter=P_HOUR, default=8,
+    craf_tg_daily_hour = fields.Integer("Kunlik hisobot soati", config_parameter=P_HOUR, default=DEFAULT_HOUR,
                                         help="Toshkent vaqti bilan; hisobot kechagi kun uchun yuboriladi.")
 
     def set_values(self):

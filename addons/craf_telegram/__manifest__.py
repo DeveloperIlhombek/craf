@@ -1,6 +1,6 @@
 {
     "name": "Craf: Telegram bot",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Bitta umumiy Telegram bot: bo'lim mas'ullariga kunlik hisobot va minimal qoldiq eslatmasi",
     "description": """
 Telegram bot (Ishlab chiqarish → Konfiguratsiya → Sozlamalar → Craf Telegram bot):
@@ -9,12 +9,12 @@ Telegram bot (Ishlab chiqarish → Konfiguratsiya → Sozlamalar → Craf Telegr
 - Mas'ul shaxslar va Telegram ID — har bo'lim sozlamasida (Liteyka, Press, Bo'yash va qadoqlash)
 - Kishi botga /start bosadi — bot unga Telegram ID sini yozib beradi; ID sozlamaga yozilgach
   bot uni taniydi
-- Kunlik hisobot (har kuni belgilangan soatda, «Kunlik hisobot» belgilanganlarga):
-  Liteyka — kechagi plavka, kirim, tugagan / kam qolgan / tez tugaydigan xom-ashyo;
-  Press — smenalar, quyma sarfi, profil chiqishi; Bo'yash va qadoqlash — kimyoviy ishlov va bo'yash
-- Minimal qoldiq eslatmasi: material minimaldan kamaysa yoki tugasa — darhol
+- Kunlik hisobot (har kuni belgilangan soatda, standart 11:00, «Kunlik hisobot» belgilanganlarga) — ixcham:
+  bo'lim bo'yicha kechagi ish yakuni (Liteyka: plavka, sarf, kirim; Press: korzinka, netto, brak, питак;
+  Bo'yash: kimyo, brak ajratish, bo'yash) va faqat muammoli qoldiq — tugagan, kam, tez tugaydigan
+- Minimal qoldiq eslatmasi (Liteyka, Press quymasi, Bo'yash materiallari): minimaldan kamaysa yoki tugasa — darhol
   («Minimal qoldiq» belgilanganlarga), tiklanganda yana kuzatiladi
-- Buyruqlar (faqat ro'yxatdagi mas'ullar uchun): /qoldiq — Liteyka xom-ashyo holati,
+- Buyruqlar (faqat ro'yxatdagi mas'ullar uchun): /qoldiq — kam qolgan va tugagan materiallar,
   /hisobot — kechagi hisobot, /id — Telegram ID
 - Barcha yuborilgan xabarlar jurnali (Konfiguratsiya → Telegram xabarlari)
 """,
