@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Logolar -->
+        <record id="logo_craf" model="craf.sticker.logo">
+            <field name="name">CRAF</field>
+            <field name="sequence">1</field>
+        </record>
+        <record id="logo_alusam" model="craf.sticker.logo">
+            <field name="name">Alusam</field>
+            <field name="sequence">2</field>
+        </record>
+        <record id="logo_crose" model="craf.sticker.logo">
+            <field name="name">Crose</field>
+            <field name="sequence">3</field>
+        </record>
+        <record id="logo_alrom" model="craf.sticker.logo">
+            <field name="name">Alrom</field>
+            <field name="sequence">4</field>
+        </record>
+
+        <!-- Stiker turlari (stiker.xlsx, 2026-10-24): Medium — 50 mic × 500 m, High — 80 mic × 300 m -->
+        <record id="sticker_craf_m_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_craf"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">40</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_craf_m_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_craf"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">52</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_craf_m_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_craf"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">68</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_craf_h_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_craf"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">40</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_craf_h_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_craf"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">52</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_craf_h_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_craf"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">68</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_alusam_m_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_alusam"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">40</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_alusam_m_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_alusam"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">52</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_alusam_m_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_alusam"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">68</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_alusam_h_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_alusam"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">40</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_alusam_h_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_alusam"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">52</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_alusam_h_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_alusam"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">68</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_crose_m_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_crose"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">40</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_crose_m_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_crose"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">52</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_crose_m_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_crose"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">68</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_crose_h_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_crose"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">40</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_crose_h_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_crose"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">52</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_crose_h_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_crose"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">68</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_alrom_m_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_alrom"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">40</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_alrom_m_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_alrom"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">52</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_alrom_m_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_alrom"/>
+            <field name="adhesion">medium</field>
+            <field name="width_mm">68</field>
+            <field name="micron">50</field>
+            <field name="roll_length_m">500</field>
+        </record>
+        <record id="sticker_alrom_h_40" model="craf.sticker">
+            <field name="logo_id" ref="logo_alrom"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">40</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_alrom_h_52" model="craf.sticker">
+            <field name="logo_id" ref="logo_alrom"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">52</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+        <record id="sticker_alrom_h_68" model="craf.sticker">
+            <field name="logo_id" ref="logo_alrom"/>
+            <field name="adhesion">high</field>
+            <field name="width_mm">68</field>
+            <field name="micron">80</field>
+            <field name="roll_length_m">300</field>
+        </record>
+
+        <!-- Profil normalari (stiker.xlsx «Лист15»): 6 m va 5 m li profillar bir xil -->
+        <record id="rule_l_40" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_l"/>
+            <field name="width_mm">40</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: L</field>
+        </record>
+        <record id="rule_l_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_l"/>
+            <field name="width_mm">52</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: L</field>
+        </record>
+        <record id="rule_t_40" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_t"/>
+            <field name="width_mm">40</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: T</field>
+        </record>
+        <record id="rule_t_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_t"/>
+            <field name="width_mm">52</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: T</field>
+        </record>
+        <record id="rule_z_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_z"/>
+            <field name="width_mm">52</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: Z</field>
+        </record>
+        <record id="rule_t_bal_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_t_bal"/>
+            <field name="width_mm">52</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: TB</field>
+        </record>
+        <record id="rule_t_bal_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_t_bal"/>
+            <field name="width_mm">68</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: TB</field>
+        </record>
+        <record id="rule_z_bal_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_z_bal"/>
+            <field name="width_mm">68</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: ZB</field>
+        </record>
+        <record id="rule_l_bal_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_l_bal"/>
+            <field name="width_mm">52</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: LB</field>
+        </record>
+        <record id="rule_l_bal_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_l_bal"/>
+            <field name="width_mm">68</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: LB</field>
+        </record>
+        <record id="rule_t_eko_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_t_eko"/>
+            <field name="width_mm">52</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: ET</field>
+        </record>
+        <record id="rule_z_eko_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_z_eko"/>
+            <field name="width_mm">52</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: EZ</field>
+        </record>
+        <record id="rule_chip_40" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_chip"/>
+            <field name="width_mm">40</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: CHIP</field>
+        </record>
+        <record id="rule_gr90_52" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_gr90"/>
+            <field name="width_mm">52</field>
+            <field name="sides">1</field>
+            <field name="note">Excel: GRADUS</field>
+        </record>
+        <record id="rule_lamber_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_lamber"/>
+            <field name="width_mm">68</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: LAMBIR</field>
+        </record>
+        <record id="rule_kosa50_40" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_kosa50"/>
+            <field name="width_mm">40</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: JP 50</field>
+        </record>
+        <record id="rule_kosa80_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_kosa80"/>
+            <field name="width_mm">68</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: JP 80</field>
+        </record>
+        <record id="rule_kosa100_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_kosa100"/>
+            <field name="width_mm">68</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: JP 100</field>
+        </record>
+        <record id="rule_kosa120_68" model="craf.sticker.rule">
+            <field name="section_id" ref="craf_nomenklatura.sec_kosa120"/>
+            <field name="width_mm">68</field>
+            <field name="sides">2</field>
+            <field name="note">Excel: JP 120</field>
+        </record>
+    </data>
+
+    <record id="mail_activity_stiker_min" model="mail.activity.type">
+        <field name="name">Stiker kam</field>
+        <field name="summary">Stiker lenta minimal qoldiqdan kam</field>
+        <field name="icon">fa-exclamation-triangle</field>
+        <field name="decoration_type">warning</field>
+        <field name="res_model">product.template</field>
+        <field name="delay_count">0</field>
+    </record>
+
+    <!-- Stiker: minimal qoldiq eslatmalarini har soatda yangilash -->
+    <record id="ir_cron_craf_stiker_min_qty" model="ir.cron">
+        <field name="name">Craf Stiker: minimal qoldiq eslatmasi</field>
+        <field name="model_id" ref="model_craf_sticker"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_min_qty()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

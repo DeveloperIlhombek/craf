@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_paint_batch_view_form_stiker" model="ir.ui.view">
+        <field name="name">craf.paint.batch.form.stiker</field>
+        <field name="model">craf.paint.batch</field>
+        <field name="inherit_id" ref="craf_paint.craf_paint_batch_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='chem']" position="before">
+                <page string="Stiker" name="sticker">
+                    <div class="alert alert-warning" role="alert" invisible="state != 'draft' or not sticker_missing">
+                        <i class="fa fa-exclamation-triangle me-1" title="Ogohlantirish"/>Stiker normasi yo'q kesimlar:
+                        <field name="sticker_missing" class="oe_inline"/> — ularga stiker yechilmaydi
+                        (Stiker → Profil normalari).
+                    </div>
+                    <group>
+                        <group>
+                            <field name="sticker_logo_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="sticker_rolls"/>
+                        </group>
+                    </group>
+                    <div class="text-muted small mb-2" invisible="state != 'draft'">
+                        Tasdiqlanganda stiker o'zi hisoblanadi: bo'yalgan dona × uzunlik × tomonlar (profil normasi);
+                        yopishqoqlik rang bo'yicha. «Sarf» ni o'zgartirsangiz — qo'lda yozilgani qoladi.
+                        <button name="action_fill_stickers" type="object" string="Hisoblash" icon="fa-calculator"
+                                class="btn-link p-0 ms-1"/>
+                    </div>
+                    <field name="sticker_line_ids" readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="sticker_id" options="{'no_create': True}"/>
+                            <field name="meters_norm" sum="Jami"/>
+                            <field name="meters" sum="Jami"/>
+                            <field name="rolls" sum="Jami"/>
+                        </list>
+                        <kanban class="o_kanban_mobile">
+                            <templates>
+                                <t t-name="card">
+                                    <field name="sticker_id" class="fw-bold"/>
+                                    <div class="d-flex mt-1">
+                                        <span class="text-muted">norma <field name="meters_norm"/> m</span>
+                                        <span class="ms-auto"><field name="meters" class="fw-bold"/> m ·
+                                            <field name="rolls"/> rulon</span>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

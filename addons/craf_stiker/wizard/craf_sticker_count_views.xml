@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_sticker_count_view_form" model="ir.ui.view">
+        <field name="name">craf.sticker.count.form</field>
+        <field name="model">craf.sticker.count</field>
+        <field name="arch" type="xml">
+            <form string="Stiker sanash">
+                <div class="text-muted small mb-2">
+                    Butun zavod bo'yicha sanalgan rulonlarni yozing. Farq Xom-ashyo omboriga inventarizatsiya
+                    bilan yoziladi.
+                </div>
+                <group>
+                    <field name="note"/>
+                </group>
+                <field name="line_ids">
+                    <list editable="bottom" create="false" delete="false">
+                        <field name="sticker_id"/>
+                        <field name="qty_rolls" sum="Jami"/>
+                        <field name="counted_rolls" sum="Jami"/>
+                        <field name="diff_rolls" sum="Jami" decoration-danger="diff_rolls &lt; 0"
+                               decoration-success="diff_rolls &gt; 0"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_apply" type="object" string="Qoldiqni yozish" class="btn-primary"/>
+                    <button string="Bekor qilish" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_craf_stiker" name="Stiker" parent="craf_production.menu_craf_bolim_boyash" sequence="45"/>
+    <menuitem id="menu_craf_stiker_qoldiq" name="Stiker qoldig'i va prognoz" parent="menu_craf_stiker"
+              action="action_craf_sticker" sequence="10"/>
+    <menuitem id="menu_craf_stiker_sarf" name="Stiker sarfi" parent="menu_craf_stiker"
+              action="action_craf_paint_sticker_line" sequence="20"/>
+    <menuitem id="menu_craf_stiker_rule" name="Profil normalari" parent="menu_craf_stiker"
+              action="action_craf_sticker_rule" sequence="30"/>
+    <menuitem id="menu_craf_stiker_logo" name="Logolar" parent="menu_craf_stiker"
+              action="action_craf_sticker_logo" sequence="40"/>
+</odoo>

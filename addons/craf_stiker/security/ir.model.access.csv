@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_sticker_logo_user,craf.sticker.logo user,model_craf_sticker_logo,base.group_user,1,0,0,0
+access_craf_sticker_logo_mrp,craf.sticker.logo mrp,model_craf_sticker_logo,mrp.group_mrp_user,1,1,1,1
+access_craf_sticker_user,craf.sticker user,model_craf_sticker,base.group_user,1,0,0,0
+access_craf_sticker_mrp,craf.sticker mrp,model_craf_sticker,mrp.group_mrp_user,1,1,1,1
+access_craf_sticker_rule_user,craf.sticker.rule user,model_craf_sticker_rule,base.group_user,1,0,0,0
+access_craf_sticker_rule_mrp,craf.sticker.rule mrp,model_craf_sticker_rule,mrp.group_mrp_user,1,1,1,1
+access_craf_paint_sticker_line_user,craf.paint.sticker.line user,model_craf_paint_sticker_line,base.group_user,1,0,0,0
+access_craf_paint_sticker_line_mrp,craf.paint.sticker.line mrp,model_craf_paint_sticker_line,mrp.group_mrp_user,1,1,1,1
+access_craf_sticker_count_mrp,craf.sticker.count mrp,model_craf_sticker_count,stock.group_stock_user,1,1,1,1
+access_craf_sticker_count_line_mrp,craf.sticker.count.line mrp,model_craf_sticker_count_line,stock.group_stock_user,1,1,1,1

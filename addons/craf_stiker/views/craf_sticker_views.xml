@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Stiker qoldig'i va prognoz -->
+    <record id="craf_sticker_view_list" model="ir.ui.view">
+        <field name="name">craf.sticker.list</field>
+        <field name="model">craf.sticker</field>
+        <field name="arch" type="xml">
+            <list string="Stiker qoldig'i" decoration-danger="status in ('neg', 'out', 'low')"
+                  decoration-warning="status == 'soon'">
+                <header>
+                    <button name="action_count" type="object" string="Sanash" icon="fa-list-ol"/>
+                </header>
+                <field name="logo_id"/>
+                <field name="adhesion"/>
+                <field name="width_mm" string="Kenglik"/>
+                <field name="size_text" optional="show"/>
+                <field name="qty_rolls" sum="Jami"/>
+                <field name="in_sex_rolls" optional="show" sum="Jami"/>
+                <field name="qty_m" optional="hide" sum="Jami"/>
+                <field name="min_rolls" string="Minimal" optional="show"/>
+                <field name="used_rolls" optional="hide" sum="Jami"/>
+                <field name="avg_rolls" sum="Jami"/>
+                <field name="days_text"/>
+                <field name="end_date" string="Tugash" optional="show"/>
+                <field name="status" widget="badge"
+                       decoration-danger="status in ('neg', 'out', 'low')"
+                       decoration-warning="status == 'soon'"
+                       decoration-success="status == 'ok'"
+                       decoration-muted="status == 'idle'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_sticker_view_kanban" model="ir.ui.view">
+        <field name="name">craf.sticker.kanban</field>
+        <field name="model">craf.sticker</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="status"/>
+                <field name="days_text"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-center">
+                            <field name="name" class="fw-bold"/>
+                            <field name="status" widget="badge" class="ms-auto"
+                                   decoration-danger="status in ('neg', 'out', 'low')"
+                                   decoration-warning="status == 'soon'"
+                                   decoration-success="status == 'ok'"
+                                   decoration-muted="status == 'idle'"/>
+                        </div>
+                        <div class="d-flex mt-2">
+                            <div class="me-4">
+                                <div class="text-muted small">Zavodda, rulon</div>
+                                <div class="fw-bold"><field name="qty_rolls"/></div>
+                            </div>
+                            <div class="me-4">
+                                <div class="text-muted small">Kuniga</div>
+                                <div><field name="avg_rolls"/></div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Yetadi</div>
+                                <div class="fw-bold">
+                                    <t t-if="record.days_text.raw_value"><field name="days_text"/></t>
+                                    <t t-else="">—</t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="craf_sticker_view_form" model="ir.ui.view">
+        <field name="name">craf.sticker.form</field>
+        <field name="model">craf.sticker</field>
+        <field name="arch" type="xml">
+            <form string="Stiker">
+                <header>
+                    <button name="action_count" type="object" string="Sanash" icon="fa-list-ol"
+                            invisible="not id"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-exchange"
+                                string="Harakatlar" invisible="not product_id"/>
+                    </div>
+                    <widget name="web_ribbon" title="Arxivda" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <span class="text-muted">Stiker lenta</span>
+                        <h1><field name="name" readonly="1" placeholder="Logo, yopishqoqlik va o'lcham"/></h1>
+                    </div>
+                    <group>
+                        <group string="Turi">
+                            <field name="logo_id" options="{'no_create': True}"/>
+                            <field name="adhesion"/>
+                            <field name="width_mm"/>
+                            <field name="micron"/>
+                            <field name="roll_length_m"/>
+                            <field name="product_id"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Qoldiq va prognoz" invisible="not id">
+                            <field name="qty_rolls" class="fw-bold"/>
+                            <field name="qty_m"/>
+                            <field name="in_sex_rolls"/>
+                            <field name="min_rolls"/>
+                            <field name="used_rolls"/>
+                            <field name="period"/>
+                            <field name="avg_rolls"/>
+                            <field name="days_text"/>
+                            <field name="end_date"/>
+                            <field name="status" widget="badge"
+                                   decoration-danger="status in ('neg', 'out', 'low')"
+                                   decoration-warning="status == 'soon'"
+                                   decoration-success="status == 'ok'"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Izoh…"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_sticker_view_search" model="ir.ui.view">
+        <field name="name">craf.sticker.search</field>
+        <field name="model">craf.sticker</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="logo_id"/>
+                <field name="width_mm"/>
+                <filter name="medium" string="Medium" domain="[('adhesion', '=', 'medium')]"/>
+                <filter name="high" string="High" domain="[('adhesion', '=', 'high')]"/>
+                <separator/>
+                <filter name="archived" string="Arxivda" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_logo" string="Logo" context="{'group_by': 'logo_id'}"/>
+                    <filter name="group_adhesion" string="Yopishqoqlik" context="{'group_by': 'adhesion'}"/>
+                    <filter name="group_width" string="Kenglik" context="{'group_by': 'width_mm'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_sticker" model="ir.actions.act_window">
+        <field name="name">Stiker qoldig'i va prognoz</field>
+        <field name="res_model">craf.sticker</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Stiker turini qo'shing</p>
+            <p>Logo, yopishqoqlik va kenglik bo'yicha. Qoldiq rulonda; sarf — oxirgi N kun (Bo'yash sozlamalari →
+                Prognoz davri) bo'yash smenalarida yechilgan stiker.</p>
+        </field>
+    </record>
+
+    <!-- Profil normalari -->
+    <record id="craf_sticker_rule_view_list" model="ir.ui.view">
+        <field name="name">craf.sticker.rule.list</field>
+        <field name="model">craf.sticker.rule</field>
+        <field name="arch" type="xml">
+            <list string="Profil stiker normalari" editable="bottom">
+                <field name="section_id" options="{'no_create': True}"/>
+                <field name="width_mm"/>
+                <field name="sides"/>
+                <field name="sticker_id" options="{'no_create': True}" placeholder="logo va rang bo'yicha"
+                       domain="[('width_mm', '=', width_mm)]"/>
+                <field name="note" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_sticker_rule_view_search" model="ir.ui.view">
+        <field name="name">craf.sticker.rule.search</field>
+        <field name="model">craf.sticker.rule</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="section_id"/>
+                <field name="width_mm"/>
+                <field name="sticker_id"/>
+                <group>
+                    <filter name="group_section" string="Kesim" context="{'group_by': 'section_id'}"/>
+                    <filter name="group_width" string="Kenglik" context="{'group_by': 'width_mm'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_sticker_rule" model="ir.actions.act_window">
+        <field name="name">Profil normalari</field>
+        <field name="res_model">craf.sticker.rule</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Profil normasini qo'shing</p>
+            <p>Har kesim uchun: qaysi kenglikdagi stiker (40, 52, 68 mm) necha tomoniga ketadi. Bir tomoniga
+                40 mm, ikkinchisiga 52 mm ketsa — ikki qator. Sarf = bo'yalgan dona × uzunlik × tomonlar.</p>
+        </field>
+    </record>
+
+    <!-- Logolar -->
+    <record id="craf_sticker_logo_view_list" model="ir.ui.view">
+        <field name="name">craf.sticker.logo.list</field>
+        <field name="model">craf.sticker.logo</field>
+        <field name="arch" type="xml">
+            <list string="Stiker logolari" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_craf_sticker_logo" model="ir.actions.act_window">
+        <field name="name">Logolar</field>
+        <field name="res_model">craf.sticker.logo</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- Stiker sarfi (bo'yash smenalari bo'yicha) -->
+    <record id="craf_paint_sticker_line_view_list" model="ir.ui.view">
+        <field name="name">craf.paint.sticker.line.list</field>
+        <field name="model">craf.paint.sticker.line</field>
+        <field name="arch" type="xml">
+            <list string="Stiker sarfi" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="batch_id"/>
+                <field name="color_id" optional="show"/>
+                <field name="sticker_id"/>
+                <field name="meters_norm" sum="Jami" optional="hide"/>
+                <field name="meters" sum="Jami"/>
+                <field name="rolls" sum="Jami"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_paint_sticker_line_view_pivot" model="ir.ui.view">
+        <field name="name">craf.paint.sticker.line.pivot</field>
+        <field name="model">craf.paint.sticker.line</field>
+        <field name="arch" type="xml">
+            <pivot string="Stiker sarfi">
+                <field name="sticker_id" type="row"/>
+                <field name="date" interval="day" type="col"/>
+                <field name="rolls" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="craf_paint_sticker_line_view_graph" model="ir.ui.view">
+        <field name="name">craf.paint.sticker.line.graph</field>
+        <field name="model">craf.paint.sticker.line</field>
+        <field name="arch" type="xml">
+            <graph string="Stiker sarfi" type="bar" stacked="1">
+                <field name="date" interval="day"/>
+                <field name="width_mm"/>
+                <field name="rolls" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="craf_paint_sticker_line_view_search" model="ir.ui.view">
+        <field name="name">craf.paint.sticker.line.search</field>
+        <field name="model">craf.paint.sticker.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="sticker_id"/>
+                <field name="batch_id"/>
+                <field name="color_id"/>
+                <filter name="done" string="Tasdiqlangan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="date" string="Sana" date="date"/>
+                <group>
+                    <filter name="group_sticker" string="Stiker" context="{'group_by': 'sticker_id'}"/>
+                    <filter name="group_logo" string="Logo" context="{'group_by': 'logo_id'}"/>
+                    <filter name="group_width" string="Kenglik" context="{'group_by': 'width_mm'}"/>
+                    <filter name="group_date" string="Kun" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_paint_sticker_line" model="ir.actions.act_window">
+        <field name="name">Stiker sarfi</field>
+        <field name="res_model">craf.paint.sticker.line</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="context">{'search_default_done': 1}</field>
+        <field name="help" type="html">
+            <p>Bo'yash smenasi tasdiqlanganda stiker sarfi shu yerda ko'rinadi.</p>
+        </field>
+    </record>
+
+    <!-- Rang normalari: stiker yopishqoqligi -->
+    <record id="craf_color_view_list_boyash_norm_stiker" model="ir.ui.view">
+        <field name="name">craf.color.list.boyash.norm.stiker</field>
+        <field name="model">craf.color</field>
+        <field name="inherit_id" ref="craf_paint.craf_color_view_list_boyash_norm"/>
+        <field name="arch" type="xml">
+            <field name="craf_powder_norm" position="after">
+                <field name="craf_sticker_adhesion" string="Stiker"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="craf_color_view_form_boyash_norm_stiker" model="ir.ui.view">
+        <field name="name">craf.color.form.boyash.norm.stiker</field>
+        <field name="model">craf.color</field>
+        <field name="inherit_id" ref="craf_paint.craf_color_view_form_boyash_norm"/>
+        <field name="arch" type="xml">
+            <field name="craf_powder_norm" position="after">
+                <field name="craf_sticker_adhesion"/>
+            </field>
+        </field>
+    </record>
+</odoo>
