@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="web.ImageField" t-inherit-mode="extension">
+        <xpath expr="//img" position="attributes">
+            <attribute name="t-on-click">crafViewImage</attribute>
+            <attribute name="t-att-role">crafCanView and 'button'</attribute>
+            <attribute name="t-att-class">imgClass + (crafCanView ? ' o_craf_viewable' : '')</attribute>
+        </xpath>
+    </t>
+
+    <!-- kontakt/xodim/kompaniya rasmi: web.ImageField dan oldin nusxalangan, shuning uchun alohida -->
+    <t t-inherit="web.ContactImageField" t-inherit-mode="extension">
+        <xpath expr="//img" position="attributes">
+            <attribute name="t-on-click">crafViewImage</attribute>
+            <attribute name="t-att-role">crafCanView and 'button'</attribute>
+            <attribute name="t-att-class">imgClass + (crafCanView ? ' o_craf_viewable' : '')</attribute>
+        </xpath>
+    </t>
+
+    <t t-inherit="web.Many2ManyBinaryField.attachment_preview" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_image_box')]/a" position="attributes">
+            <attribute name="t-on-click">(ev) => this.crafViewFile(ev, file)</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('caption')]/a" position="attributes">
+            <attribute name="t-on-click">(ev) => this.crafViewFile(ev, file)</attribute>
+        </xpath>
+    </t>
+</templates>
