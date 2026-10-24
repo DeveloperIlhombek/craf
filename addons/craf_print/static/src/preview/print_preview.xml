@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_print.PrintPreview">
+        <Dialog title="props.title" size="'xl'" contentClass="'o_craf_print'" withBodyPadding="false">
+            <iframe t-ref="frame" class="o_craf_print_frame" t-att-src="viewerUrl"
+                    t-on-load="onFrameLoad" title="Hujjat"/>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" t-att-disabled="!state.ready or state.printing"
+                        t-on-click="() => this.print()">
+                    <i t-if="state.ready" class="fa fa-print me-1"/>
+                    <i t-else="" class="fa fa-spinner fa-spin me-1"/>
+                    Chop etish
+                </button>
+                <button class="btn btn-secondary" t-att-disabled="state.downloading"
+                        t-on-click="() => this.download()">
+                    <i class="fa fa-download me-1"/> PDF yuklab olish
+                </button>
+                <button class="btn btn-light" t-on-click="() => this.close()">Yopish</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

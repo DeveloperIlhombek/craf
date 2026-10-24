@@ -1,6 +1,6 @@
 {
     "name": "Craf Pachka yorlig'i",
-    "version": "19.0.1.0.2",
+    "version": "19.0.1.0.3",
     "summary": "Pachka yorlig'i (PDF, QR): tur, rang, dona, nazariy va haqiqiy kg",
     "description": """
 Pachkalar ro'yxati va yorliq:
@@ -12,7 +12,7 @@ Pachkalar ro'yxati va yorliq:
     "author": "Craf",
     "category": "Inventory",
     "license": "LGPL-3",
-    "depends": ["craf_profile", "craf_kochirish"],
+    "depends": ["craf_profile", "craf_kochirish", "craf_print"],
     "data": [
         "security/ir.model.access.csv",
         "data/ir_sequence_data.xml",
