@@ -1,0 +1,38 @@
+name: Serverga chiqarish
+
+# master ga merge bo'lishi bilan craf.mentorme.uz yangilanadi (deploy/gh-deploy.sh → update.sh).
+# Kerakli secrets: DEPLOY_HOST, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS (yo'riqnoma: deploy/AVTO-DEPLOY.md).
+on:
+  push:
+    branches: [master]
+    paths:
+      - "addons/**"
+      - "deploy/**"
+  workflow_dispatch:
+
+concurrency:
+  group: craf-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: SSH kalitini tayyorlash
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$KEY" ] || [ -z "$KNOWN" ]; then
+            echo "::error::DEPLOY_SSH_KEY yoki DEPLOY_KNOWN_HOSTS secret kiritilmagan"; exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+      - name: Serverni yangilash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          # Server tomonda kalit faqat gh-deploy.sh ni ishga tushiradi (command=), shuning uchun buyruq yuborilmaydi.
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=30 "root@${HOST:-13.140.177.217}"
