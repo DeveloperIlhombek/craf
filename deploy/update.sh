@@ -25,6 +25,8 @@ ARGS=()
 [ -n "$INSTALLED" ] && ARGS+=(-u "$INSTALLED")
 [ -n "$NEW" ] && { ARGS+=(-i "$NEW"); echo "Yangi modullar o'rnatiladi: $NEW"; }
 docker compose stop odoo
+# Modullarni yangilash xato bilan to'xtasa ham Odoo qayta yoqilsin (sayt to'xtab qolmasin)
+trap 'rc=$?; if [ $rc -ne 0 ]; then echo "XATO (kod $rc): yangilash bekor qilindi, Odoo qayta yoqilmoqda"; docker compose up -d; fi' EXIT
 docker compose run --rm --no-deps -T --entrypoint sh odoo -c \
   'db="$1"; shift; exec odoo -c /etc/odoo/odoo.conf --db_host "$HOST" --db_port "$PORT" --db_user "$USER" --db_password "$PASSWORD" -d "$db" "$@" --stop-after-init --no-http' \
   sh "$DB_NAME" "${ARGS[@]}"
