@@ -372,7 +372,7 @@ class CrafLiteyHisobot(models.AbstractModel):
 
     def _melt_doc(self, melt, stale_limit):
         when = self._to_local(self._utc(melt.date, time(12)))
-        title = " · ".join(x for x in [melt.equipment_id.name, "%s-plavka" % melt.day_no if melt.day_no else ""] if x)
+        title = " · ".join(x for x in [melt.equipment_id.name, melt.shift_id.name or ""] if x)
         if melt.charge_metal or melt.billet_qty:
             sub = "Metall %s kg → stalba %s kg" % (_q(melt.charge_metal), _q(melt.billet_qty))
             if melt.billet_qty:
@@ -472,15 +472,16 @@ class CrafLiteyHisobot(models.AbstractModel):
         lines = [{"name": self._short(l.product_id), "text": l.qty_text or "", "qty": l.qty, "uom": l.uom_name,
                   "metal": l.is_metal} for l in melt.line_ids.sorted(lambda l: (not l.is_metal, l.sequence, l.id))
                  if l.qty > EPS]
-        outputs = [(n, q) for n, q in [("Stalba", melt.billet_qty), ("Сталба отход", melt.cut_waste_qty),
+        outputs = [(n, q) for n, q in [("Stalba (brutto)", melt.billet_gross), ("Stalba (sof)", melt.billet_qty),
+                                       ("Сталба отход", melt.cut_waste_qty), ("Qirindi", melt.chip_qty),
                                        ("Литейка отход", melt.foundry_waste_qty), ("Шлак", melt.slag_qty)] if q > EPS]
         return {
             "kind": "plavka", "kind_label": "Plavka", "model": "craf.foundry.melt", "id": melt.id, "name": melt.name,
             "state": melt.state, "state_label": MELT_STATES.get(melt.state, melt.state),
             "date_label": melt.date.strftime("%d.%m.%Y"),
             "meta": [m for m in [
-                ("Pech", melt.equipment_id.name), ("Kun ichida №", str(melt.day_no) if melt.day_no else ""),
-                ("Smena", dict(melt._fields["shift"].selection).get(melt.shift)),
+                ("Pech", melt.equipment_id.name),
+                ("Smena", melt.shift_id.name or dict(melt._fields["shift"].selection).get(melt.shift)),
                 ("Mas'ul", melt.employee_id.name), ("Stalba uzunligi", "%s m" % fmt(melt.billet_length, 2)
                                                     if melt.billet_length else ""),
                 ("Ishlab chiqarish", ", ".join(melt.production_ids.mapped("name"))),

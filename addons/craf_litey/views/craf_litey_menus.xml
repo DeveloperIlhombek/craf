@@ -26,6 +26,14 @@
     <menuitem id="menu_craf_litey_hujjat" name="Kirim-chiqim hujjatlari" parent="craf_production.menu_craf_bolim_litey"
               action="action_craf_litey_hujjat" sequence="10"/>
 
+    <!-- Liteyka → Sozlamalar -->
+    <menuitem id="menu_craf_litey_config" name="Sozlamalar" parent="craf_production.menu_craf_bolim_litey"
+              sequence="90" groups="stock.group_stock_manager"/>
+    <menuitem id="menu_craf_litey_settings" name="Liteyka sozlamalari" parent="menu_craf_litey_config"
+              action="action_craf_litey_settings" sequence="1"/>
+    <menuitem id="menu_craf_litey_shifts" name="Smenalar" parent="menu_craf_litey_config"
+              action="action_craf_litey_shift" sequence="5"/>
+
     <!-- Inventarizatsiya: Liteyka xom-ashyo qoldig'i shu yerda ham ko'rinadi -->
     <menuitem id="menu_craf_litey_prognoz_stock" name="Liteyka xom-ashyosi" parent="stock.menu_stock_inventory_control"
               action="action_craf_litey_prognoz" sequence="21"/>

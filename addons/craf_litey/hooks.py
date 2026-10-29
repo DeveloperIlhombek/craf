@@ -52,3 +52,24 @@ def post_init_hook(env):
             "craf_melt_seq": melt_seq,
             "craf_litey_location_id": loc.id or False,
         })
+    craf_setup_settings(env)
+
+
+def craf_setup_settings(env):
+    """19.0.1.5.0: Liteyka sozlamalari, qirindi (PF-20) va nomli smenalar; eski plavkalarga smena biriktirish."""
+    Product = env["product.product"].with_context(active_test=False)
+    chip = Product.search([("default_code", "=", "PF-20")], limit=1)
+    litey = env["stock.location"].search([("name", "=", "Литейка"), ("usage", "=", "internal")], limit=1)
+    if chip and litey and not chip.craf_litey_location_id:
+        chip.product_tmpl_id.craf_litey_location_id = litey
+    cfg = env["craf.litey.settings"].get()
+    if chip and not cfg.chip_product_id:
+        cfg.chip_product_id = chip
+    Shift = env["craf.litey.shift"].with_context(active_test=False)
+    shifts = Shift.search([], order="sequence, id")
+    if shifts:
+        shifts.filtered(lambda s: not s.settings_id).write({"settings_id": cfg.id})
+        day, night = shifts[0], shifts[1:2] or shifts[0]
+        Melt = env["craf.foundry.melt"].with_context(active_test=False)
+        for code, shift in (("1", day), ("2", night), ("3", night)):
+            Melt.search([("shift_id", "=", False), ("shift", "=", code)]).write({"shift_id": shift.id})

@@ -305,7 +305,7 @@ class CrafLiteyHisobot(models.AbstractModel):
 
         # 3) plavkalar
         melts = Melt.search([("date", ">=", dfrom), ("date", "<=", dto), ("state", "!=", "cancel")],
-                            order="date, equipment_id, day_no, id")
+                            order="date, equipment_id, shift_id, id")
         used = melts.line_ids.filtered(lambda l: l.qty > 1e-6).product_id
         used = used.sorted(lambda p: (p.craf_melt_seq or 999, p.default_code or ""))
         metal_cols = [{"product_id": p.id, "name": p.name, "short": p.name, "excel": p.craf_litey_name or p.name,
@@ -321,12 +321,13 @@ class CrafLiteyHisobot(models.AbstractModel):
                     text[line.product_id.id] = line.qty_text
             melt_rows.append({
                 "id": m.id, "name": m.name, "date": fields.Date.to_string(m.date),
-                "date_label": m.date.strftime("%d.%m"), "pech": m.equipment_id.name or "", "day_no": m.day_no,
+                "date_label": m.date.strftime("%d.%m"), "pech": m.equipment_id.name or "", "day_no": m.shift_id.name or "",
                 "state": m.state, "qty": {str(k): round(v, 2) for k, v in qty.items()},
                 "text": {str(k): v for k, v in text.items()},
                 "charge_metal": round(m.charge_metal, 1), "billet_qty": round(m.billet_qty, 1),
                 "billet_length": m.billet_length, "billet_count": m.billet_count,
-                "cut_waste_qty": round(m.cut_waste_qty, 1), "foundry_waste_qty": round(m.foundry_waste_qty, 1),
+                "cut_waste_qty": round(m.cut_waste_qty, 1), "chip_qty": round(m.chip_qty, 1),
+                "billet_gross": round(m.billet_gross, 1), "foundry_waste_qty": round(m.foundry_waste_qty, 1),
                 "slag_qty": round(m.slag_qty, 1), "output_total": round(m.output_total, 1),
                 "loss_qty": round(m.burn_loss_qty, 1), "loss_pct": round(m.burn_loss_pct, 2),
                 "balance_state": m.balance_state, "note": m.balance_note or "",

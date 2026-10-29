@@ -1,13 +1,13 @@
 {
     "name": "Craf Литейка: daftar va hisobot",
-    "version": "19.0.1.4.0",
+    "version": "19.0.1.5.0",
     "summary": "Plavka daftar ko'rinishida, Литейка qoldig'i → sarf → stalba → otxod sikli, Excel eksport va import",
     "description": """
 Литейка (pech) ishini ishchilar daftari va Excel jadvaliga moslash:
 
 - Nomenklatura: Бухоро чушка Юмшоқ, Брикет/Питак (вторичка, русал), Алюминий диск,
   sarf buyumlari (Пробка, Керамический фильтр, Стекловата)
-- Plavka: kun ichidagi №, daftar tartibidagi shixta qatorlari, "993+600+351" kabi tortishlar,
+- Plavka: nomli smena (Liteyka → Sozlamalar → Smenalar), stalba brutto − Сталба отход − qirindi = sof, daftar tartibidagi shixta qatorlari, "993+600+351" kabi tortishlar,
   sarf buyumlari alohida, chiqish: stalba kg va uzunligi, Сталба отход, Литейка отход, шлак;
   balans paneli (kirdi / chiqdi / угар) va me'yordan tashqarida izoh talab qilinadi;
   Литейка da yetmagan material boshqa ichki joydan avtomatik ko'chiriladi
@@ -18,6 +18,8 @@
 - Telefon birinchi (mobile first) sahifa: Qoldiq / Kunlik / Hujjatlar varaqlari
 - Materiallar: yaratish, tahrirlash, o'chirish yoki ro'yxatdan chiqarish, qaytarish
 - Hujjatlar: kirim, ko'chirish, sanash (SN-…, inventarizatsiya), qaytarish; barcha hujjatlar jurnali
+- Liteyka sozlamalari: 1 stalba uchun qirindi va otxod me'yori, угар chegaralari, asosiy pech, joylar,
+  namuna retsept (asos kg, reja kg, qatorlar; oxirgi 30 kun o'rtachasidan tuzish; BoM ga yozish)
 - Xom-ashyo varag'i (Liteyka → Xom-ashyo qoldig'i va prognoz; Inventarizatsiyada ham): qoldiq, minimal qoldiq,
   oxirgi 30 kun o'rtacha sarfi bo'yicha necha kunga yetishi; minimaldan kamaysa mas'ullarga Odoo eslatmasi
 - Kirim-chiqim, plavka, sanash va materiallarni faqat ombor mudiri (Omborchi) va Direktor yozadi
@@ -33,12 +35,14 @@
         "data/craf_litey_data.xml",
         "data/craf_litey_count_data.xml",
         "data/craf_litey_prognoz_data.xml",
+        "data/craf_litey_settings_data.xml",
         "views/craf_foundry_melt_views.xml",
         "views/product_views.xml",
         "views/stock_picking_views.xml",
         "views/craf_litey_kirim_views.xml",
         "views/craf_litey_import_views.xml",
         "views/craf_litey_count_views.xml",
+        "views/craf_litey_settings_views.xml",
         "views/craf_litey_menus.xml",
     ],
     "assets": {
