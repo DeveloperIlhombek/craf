@@ -81,7 +81,7 @@ class CrafLiteyController(http.Controller):
         ws = wb.add_worksheet("Plavkalar")
         ws.freeze_panes(3, 4)
         ws.write(0, 0, "Plavkalar (ishchi daftari) — %s" % data["label"], title)
-        cols = ["Sana", "Pech", "№", "Hujjat"]
+        cols = ["Sana", "Pech", "Smena", "Hujjat"]
         cols += [c["excel"] for c in data["metal_cols"]]
         cols += ["Kirdi (metall), kg", "Stalba, kg", "Uzunlik, m", "Сталба отход", "Литейка отход", "Шлак",
                  "Chiqdi jami", "Угар, kg", "Угар, %", "Balans"]
@@ -91,14 +91,14 @@ class CrafLiteyController(http.Controller):
         ws.set_row(2, 45)
         ws.set_column(0, 0, 11)
         ws.set_column(1, 1, 16)
-        ws.set_column(2, 2, 4)
+        ws.set_column(2, 2, 14)
         ws.set_column(3, 3, 12)
         ws.set_column(4, len(cols), 11)
         for i, m in enumerate(data["melts"], start=3):
             c = 0
             ws.write_datetime(i, c, date.fromisoformat(m["date"]), dfmt)
             ws.write(i, c + 1, m["pech"], cell)
-            ws.write_number(i, c + 2, m["day_no"] or 0, num0)
+            ws.write(i, c + 2, m["day_no"] or "", cell)
             ws.write(i, c + 3, m["name"], cell)
             c = 4
             for col in data["metal_cols"]:

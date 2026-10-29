@@ -5,3 +5,9 @@ access_craf_litey_import,craf.litey.import,model_craf_litey_import,stock.group_s
 access_craf_litey_import_line,craf.litey.import.line,model_craf_litey_import_line,stock.group_stock_manager,1,1,1,1
 access_craf_litey_count,craf.litey.count,model_craf_litey_count,stock.group_stock_user,1,1,1,1
 access_craf_litey_count_line,craf.litey.count.line,model_craf_litey_count_line,stock.group_stock_user,1,1,1,1
+access_craf_litey_settings_user,craf.litey.settings.user,model_craf_litey_settings,stock.group_stock_user,1,0,0,0
+access_craf_litey_settings_mgr,craf.litey.settings.mgr,model_craf_litey_settings,stock.group_stock_manager,1,1,1,0
+access_craf_litey_recipe_user,craf.litey.recipe.line.user,model_craf_litey_recipe_line,stock.group_stock_user,1,0,0,0
+access_craf_litey_recipe_mgr,craf.litey.recipe.line.mgr,model_craf_litey_recipe_line,stock.group_stock_manager,1,1,1,1
+access_craf_litey_shift_user,craf.litey.shift.user,model_craf_litey_shift,stock.group_stock_user,1,0,0,0
+access_craf_litey_shift_mgr,craf.litey.shift.mgr,model_craf_litey_shift,stock.group_stock_manager,1,1,1,1

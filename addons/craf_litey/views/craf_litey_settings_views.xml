@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Liteyka sozlamalari (bitta yozuv) -->
+    <record id="craf_litey_settings_view_form" model="ir.ui.view">
+        <field name="name">craf.litey.settings.form</field>
+        <field name="model">craf.litey.settings</field>
+        <field name="arch" type="xml">
+            <form string="Liteyka sozlamalari" create="0" delete="0">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Liteyka sozlamalari</h1>
+                        <div class="text-muted">Yangi plavka shu qiymatlar bilan ochiladi; plavkaning o'zida o'zgartirish mumkin.</div>
+                    </div>
+                    <notebook>
+                        <page string="Stalba va chiqindi" name="billet">
+                            <group>
+                                <group string="1 stalba uchun me'yor">
+                                    <field name="billet_auto_fill"/>
+                                    <field name="chip_per_billet"/>
+                                    <field name="cut_waste_per_billet"/>
+                                    <field name="billet_length"/>
+                                </group>
+                                <group string="Qirindi">
+                                    <field name="chip_product_id" options="{'no_create': True}"/>
+                                    <field name="chip_to_reuse"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info small mb-0">
+                                Plavkada <b>Stalba og'irligi (brutto)</b> tortiladi. Sof stalba = brutto − Сталба отход − qirindi.
+                                «Stalba soni» yozilganda Сталба отход va qirindi = soni × yuqoridagi me'yor bo'lib qo'yiladi.
+                            </div>
+                        </page>
+                        <page string="Pech va joylar" name="pech">
+                            <group>
+                                <group string="Pech">
+                                    <field name="equipment_id" options="{'no_create': True}"/>
+                                    <field name="temperature"/>
+                                </group>
+                                <group string="Joylar">
+                                    <field name="billet_location_id" options="{'no_create': True}"/>
+                                    <field name="reuse_location_id" options="{'no_create': True}"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Угар" name="ugar">
+                            <group>
+                                <group>
+                                    <field name="ugar_ok"/>
+                                    <field name="ugar_max"/>
+                                    <field name="require_note_warn"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Namuna retsept" name="recipe">
+                            <group>
+                                <group>
+                                    <field name="recipe_base_qty"/>
+                                    <field name="plan_qty"/>
+                                    <field name="recipe_fill_mode" widget="radio"/>
+                                </group>
+                                <group>
+                                    <field name="recipe_metal_total"/>
+                                    <field name="recipe_total"/>
+                                </group>
+                            </group>
+                            <field name="recipe_line_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id" options="{'no_create': True}" context="{'display_default_code': False}"/>
+                                    <field name="qty" sum="Jami"/>
+                                    <field name="uom_name"/>
+                                    <field name="share_pct"/>
+                                    <field name="is_metal" optional="hide"/>
+                                </list>
+                            </field>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <button name="action_recipe_from_history" type="object" class="btn-secondary"
+                                        string="Oxirgi 30 kun o'rtachasidan tuzish"
+                                        confirm="Retsept qatorlari oxirgi 30 kundagi plavkalar o'rtachasi bilan almashtiriladi. Davom etasizmi?"/>
+                                <button name="action_recipe_to_bom" type="object" class="btn-secondary"
+                                        string="BoM ga yozish (MRP rejalashtirish uchun)"/>
+                            </div>
+                            <div class="text-muted small mt-2">Plavkadagi «Namuna retseptdan» tugmasi: miqdor = retsept × (reja ÷ asos).</div>
+                        </page>
+                        <page string="Smenalar" name="shifts">
+                            <field name="shift_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="time_from" widget="float_time"/>
+                                    <field name="time_to" widget="float_time"/>
+                                    <field name="employee_id" options="{'no_create': True}"/>
+                                    <field name="note" optional="hide"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_litey_settings" model="ir.actions.server">
+        <field name="name">Liteyka sozlamalari</field>
+        <field name="model_id" ref="model_craf_litey_settings"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open()</field>
+    </record>
+
+    <record id="craf_litey_shift_view_list" model="ir.ui.view">
+        <field name="name">craf.litey.shift.list</field>
+        <field name="model">craf.litey.shift</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="time_from" widget="float_time"/>
+                <field name="time_to" widget="float_time"/>
+                <field name="employee_id" options="{'no_create': True}"/>
+                <field name="note" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_craf_litey_shift" model="ir.actions.act_window">
+        <field name="name">Liteyka smenalari</field>
+        <field name="res_model">craf.litey.shift</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+</odoo>

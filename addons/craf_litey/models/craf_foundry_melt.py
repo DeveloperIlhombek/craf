@@ -107,6 +107,22 @@ class CrafFoundryMelt(models.Model):
     day_no = fields.Integer("Kun ichida №", copy=False, tracking=True,
                             help="Shu kuni shu pechdagi nechanchi plavka (daftardagi ①, ②)")
 
+    shift_id = fields.Many2one(
+        "craf.litey.shift", string="Smena", tracking=True, index=True,
+        default=lambda self: self.env["craf.litey.shift"]._craf_current(),
+        help="Smenalar: Liteyka → Sozlamalar → Smenalar")
+    billet_gross = fields.Float(
+        "Stalba og'irligi (brutto), kg", digits=(16, 1), tracking=True,
+        help="Tarozida tortilgan og'irlik — ichida kesiladigan Сталба отход va qirindi ham bor. "
+             "Sof stalba = brutto − Сталба отход − qirindi.")
+    billet_qty = fields.Float(
+        compute="_compute_billet_net", store=True, readonly=False, string="Stalba sof, kg",
+        help="Press sexiga o'tadigan sof stalba (brutto − Сталба отход − qirindi)")
+    chip_qty = fields.Float("Qirindi, kg", digits=(16, 1), aggregator="sum",
+                            help="Stalbaning boshi va oxirini kesishda chiqqan qirindi")
+    chip_product_id = fields.Many2one(
+        "product.product", string="Qirindi (mahsulot)",
+        default=lambda self: self.env["craf.litey.settings"].get().chip_product_id)
     billet_length = fields.Float("Stalba uzunligi, m", digits=(16, 2), help="Daftarda: Ст-узун")
     billet_count = fields.Integer("Stalba soni, dona")
     billet_kg_per_m = fields.Float("1 m stalba, kg", compute="_compute_billet_kg_per_m", digits=(16, 2))
@@ -136,12 +152,12 @@ class CrafFoundryMelt(models.Model):
     aux_summary = fields.Char("Sarf buyumlari (qisqa)", compute="_compute_aux_summary")
     craf_title = fields.Char("Sarlavha", compute="_compute_craf_title")
 
-    @api.depends("equipment_id", "day_no", "date")
+    @api.depends("equipment_id", "shift_id", "date")
     def _compute_craf_title(self):
         for melt in self:
             parts = [melt.equipment_id.name or "Pech tanlanmagan"]
-            if melt.day_no:
-                parts.append("%s-plavka" % melt.day_no)
+            if melt.shift_id:
+                parts.append(melt.shift_id.name)
             if melt.date:
                 parts.append(melt.date.strftime("%d.%m.%Y"))
             melt.craf_title = " · ".join(parts)
@@ -155,6 +171,18 @@ class CrafFoundryMelt(models.Model):
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
+        cfg = self.env["craf.litey.settings"].get()
+        for fname, value in (("equipment_id", cfg.equipment_id.id), ("temperature", cfg.temperature),
+                             ("billet_length", cfg.billet_length), ("plan_qty", cfg.plan_qty),
+                             ("location_dest_id", cfg.billet_location_id.id),
+                             ("reuse_location_id", cfg.reuse_location_id.id),
+                             ("chip_product_id", cfg.chip_product_id.id)):
+            if fname in fields_list and value and not self.env.context.get("default_" + fname):
+                res[fname] = value
+        if "employee_id" in fields_list and not res.get("employee_id") and res.get("shift_id"):
+            emp = self.env["craf.litey.shift"].browse(res["shift_id"]).employee_id
+            if emp:
+                res["employee_id"] = emp.id
         if self.env.context.get("craf_litey_no_template"):
             return res
         products = None
@@ -196,22 +224,52 @@ class CrafFoundryMelt(models.Model):
         if self.state == "draft" and self.date:
             self.day_no = self._craf_next_day_no(self.date, self.equipment_id.id, self._origin.id or None)
 
+    @api.onchange("shift_id")
+    def _onchange_shift_id(self):
+        if self.shift_id.employee_id and self.state == "draft":
+            self.employee_id = self.shift_id.employee_id
+
+    @api.onchange("billet_count")
+    def _onchange_billet_count_waste(self):
+        """Stalba soni bo'yicha Сталба отход va qirindi sozlamadagi me'yordan (keyin qo'lda o'zgartiriladi)."""
+        cfg = self.env["craf.litey.settings"].get()
+        if self.state != "draft" or not cfg.billet_auto_fill or not self.billet_count:
+            return
+        if cfg.chip_per_billet:
+            self.chip_qty = round(self.billet_count * cfg.chip_per_billet, 1)
+        if cfg.cut_waste_per_billet:
+            self.cut_waste_qty = round(self.billet_count * cfg.cut_waste_per_billet, 1)
+
+    @api.depends("billet_gross", "cut_waste_qty", "chip_qty")
+    def _compute_billet_net(self):
+        for melt in self:
+            if melt.billet_gross > EPS:
+                melt.billet_qty = max(melt.billet_gross - melt.cut_waste_qty - melt.chip_qty, 0.0)
+            else:
+                melt.billet_qty = melt.billet_qty  # eski (brutto kiritilmagan) plavkalar o'zgarmaydi
+
+    @api.model
+    def _craf_ugar_limits(self):
+        cfg = self.env["craf.litey.settings"].get()
+        return cfg.ugar_ok or UGAR_OK, cfg.ugar_max or UGAR_MAX
+
     # ---------------------------------------------------------------- hisob-kitob
     @api.depends("line_ids.qty", "line_ids.is_metal", "charge_line_ids.qty", "aux_line_ids.qty",
-                 "billet_qty", "slag_qty", "cut_waste_qty", "foundry_waste_qty")
+                 "billet_qty", "slag_qty", "cut_waste_qty", "foundry_waste_qty", "chip_qty")
     def _compute_kpi(self):
+        ugar_ok, ugar_max = self._craf_ugar_limits()
         for melt in self:
             lines = melt.charge_line_ids | melt.aux_line_ids
             metal = sum(lines.filtered("is_metal").mapped("qty"))
-            waste = melt.cut_waste_qty + melt.foundry_waste_qty
+            waste = melt.cut_waste_qty + melt.foundry_waste_qty + melt.chip_qty
             out = melt.billet_qty + waste + melt.slag_qty
             loss = metal - out if melt.billet_qty else 0.0
             pct = loss / metal * 100.0 if metal and melt.billet_qty else 0.0
             if not metal or not melt.billet_qty:
                 state = "none"
-            elif 0.0 <= pct <= UGAR_OK + 1e-9:
+            elif 0.0 <= pct <= ugar_ok + 1e-9:
                 state = "ok"
-            elif UGAR_OK < pct <= UGAR_MAX + 1e-9:
+            elif ugar_ok < pct <= ugar_max + 1e-9:
                 state = "warn"
             else:
                 state = "bad"
@@ -230,12 +288,14 @@ class CrafFoundryMelt(models.Model):
             length = melt.billet_length * (melt.billet_count or 0)
             melt.billet_kg_per_m = melt.billet_qty / length if length > EPS else 0.0
 
-    @api.depends("charge_metal", "billet_qty", "slag_qty", "burn_loss_qty", "cut_waste_qty", "foundry_waste_qty")
+    @api.depends("charge_metal", "billet_qty", "slag_qty", "burn_loss_qty", "cut_waste_qty", "foundry_waste_qty",
+                 "chip_qty")
     def _compute_balance_text(self):
         for melt in self:
             if melt.charge_metal:
-                melt.balance_text = "%s kg metall = %s stalba + %s ст-отход + %s лит-отход + %s шлак + %s угар" % (
-                    fmt(melt.charge_metal), fmt(melt.billet_qty), fmt(melt.cut_waste_qty),
+                melt.balance_text = ("%s kg metall = %s stalba + %s ст-отход + %s qirindi + %s лит-отход + %s шлак"
+                                     " + %s угар") % (
+                    fmt(melt.charge_metal), fmt(melt.billet_qty), fmt(melt.cut_waste_qty), fmt(melt.chip_qty),
                     fmt(melt.foundry_waste_qty), fmt(melt.slag_qty), fmt(melt.burn_loss_qty, 1))
             else:
                 melt.balance_text = False
@@ -250,17 +310,18 @@ class CrafFoundryMelt(models.Model):
             melt.aux_summary = ", ".join(parts) or False
 
     @api.depends("charge_metal", "billet_qty", "cut_waste_qty", "foundry_waste_qty", "slag_qty",
-                 "burn_loss_qty", "burn_loss_pct", "balance_state")
+                 "burn_loss_qty", "burn_loss_pct", "balance_state", "chip_qty", "billet_gross")
     def _compute_balance_html(self):
         css = {"none": "secondary", "ok": "success", "warn": "warning", "bad": "danger"}
+        ugar_ok, ugar_max = self._craf_ugar_limits()
         for melt in self:
             if not melt.charge_metal and not melt.billet_qty:
                 melt.balance_html = Markup(
                     '<div class="alert alert-secondary mb-0 py-2">Shixta va stalba kiritilgach, bu yerda balans '
                     'chiqadi: kirdi = stalba + otxod + шлак + угар.</div>')
                 continue
-            parts = [("Stalba", melt.billet_qty), ("Ст-отход", melt.cut_waste_qty),
-                     ("Лит-отход", melt.foundry_waste_qty), ("Шлак", melt.slag_qty)]
+            parts = [("Stalba (sof)", melt.billet_qty), ("Ст-отход", melt.cut_waste_qty),
+                     ("Qirindi", melt.chip_qty), ("Лит-отход", melt.foundry_waste_qty), ("Шлак", melt.slag_qty)]
             out_txt = " + ".join("%s %s" % (escape(n), fmt(q, 1 if q % 1 else 0)) for n, q in parts if q > EPS)
             if melt.balance_state == "none":
                 verdict = "Stalba og'irligi kiritilmagan."
@@ -268,11 +329,15 @@ class CrafFoundryMelt(models.Model):
                 verdict = ("Chiqim kirimdan %s kg ko'p. Sabab: pechda oldingi plavkadan metall qolgan, "
                            "tortishda xato yoki shixta to'liq yozilmagan. Izoh yozing." % fmt(-melt.burn_loss_qty, 1))
             elif melt.balance_state == "ok":
-                verdict = "Me'yorda (≤ %s%%)." % fmt(UGAR_OK)
+                verdict = "Me'yorda (≤ %s%%)." % fmt(ugar_ok)
             elif melt.balance_state == "warn":
-                verdict = "Угар yuqori (%s–%s%%)." % (fmt(UGAR_OK), fmt(UGAR_MAX))
+                verdict = "Угар yuqori (%s–%s%%)." % (fmt(ugar_ok), fmt(ugar_max))
             else:
-                verdict = "Угар %s%% dan yuqori — izoh yozing." % fmt(UGAR_MAX)
+                verdict = "Угар %s%% dan yuqori — izoh yozing." % fmt(ugar_max)
+            if melt.billet_gross > EPS:
+                verdict += " Brutto %s kg − Ст-отход %s − qirindi %s = sof %s kg." % (
+                    fmt(melt.billet_gross, 1), fmt(melt.cut_waste_qty, 1), fmt(melt.chip_qty, 1),
+                    fmt(melt.billet_qty, 1))
             melt.balance_html = Markup(
                 '<div class="alert alert-{css} mb-0 py-2 o_craf_melt_balance">'
                 '<div class="d-flex flex-wrap gap-3 align-items-baseline">'
@@ -389,20 +454,29 @@ class CrafFoundryMelt(models.Model):
         lines = self.line_ids - zero
         if not lines.filtered("is_metal"):
             raise UserError("Shixta (metall) miqdorlarini kiriting.")
+        if self.billet_gross > EPS and self.billet_qty <= EPS:
+            raise UserError("Sof stalba 0: brutto (%s kg) Сталба отход + qirindidan katta bo'lishi kerak." %
+                            fmt(self.billet_gross, 1))
         if self.billet_qty <= EPS:
             raise UserError("Chiqqan stalba og'irligini (kg) kiriting.")
-        if self.balance_state == "bad" and not (self.balance_note or "").strip():
+        ugar_ok, ugar_max = self._craf_ugar_limits()
+        cfg = self.env["craf.litey.settings"].get()
+        need_note = self.balance_state == "bad" or (cfg.require_note_warn and self.balance_state == "warn")
+        if need_note and not (self.balance_note or "").strip():
             raise UserError(
                 "Угар %s kg (%s%%) — me'yordan tashqarida (0–%s%%).\n\n"
                 "Sababini 'Balans izohi' maydoniga yozing (masalan: pechda oldingi plavkadan metall qolgan, "
                 "tortishda xato) yoki raqamlarni tekshiring." % (
-                    fmt(self.burn_loss_qty, 1), fmt(self.burn_loss_pct, 2), fmt(UGAR_MAX)))
+                    fmt(self.burn_loss_qty, 1), fmt(self.burn_loss_pct, 2), fmt(ugar_max)))
         outputs = [
             (self.slag_product_id, self.slag_qty, self.waste_location_id, "Шлак"),
             (self.cut_waste_product_id, self.cut_waste_qty, self.reuse_location_id or self.location_src_id,
              "Сталба отход"),
             (self.foundry_waste_product_id, self.foundry_waste_qty, self.reuse_location_id or self.location_src_id,
              "Литейка отход"),
+            (self.chip_product_id, self.chip_qty,
+             (self.reuse_location_id or self.location_src_id) if cfg.chip_to_reuse else self.waste_location_id,
+             "Qirindi"),
         ]
         for product, qty, _loc, label in outputs:
             if qty > EPS and not product:
@@ -430,12 +504,15 @@ class CrafFoundryMelt(models.Model):
         summary = [
             Markup("<b>Plavka tasdiqlandi</b> — %s") % mo.name,
             "Shixta: metall %s kg (jami %s kg)" % (fmt(self.charge_metal, 1), fmt(self.charge_total, 1)),
-            "Stalba: %s kg%s → %s" % (
+            "Stalba: %s%s kg%s → %s" % (
+                "brutto %s − ст-отход %s − qirindi %s = sof " % (
+                    fmt(self.billet_gross, 1), fmt(self.cut_waste_qty, 1), fmt(self.chip_qty, 1))
+                if self.billet_gross > EPS else "",
                 fmt(self.billet_qty, 1),
                 " (%s m)" % fmt(self.billet_length, 2) if self.billet_length else "",
                 self.location_dest_id.name),
-            "Otxod: Сталба %s kg, Литейка %s kg → %s; Шлак %s kg → %s" % (
-                fmt(self.cut_waste_qty, 1), fmt(self.foundry_waste_qty, 1),
+            "Otxod: Сталба %s kg, qirindi %s kg, Литейка %s kg → %s; Шлак %s kg → %s" % (
+                fmt(self.cut_waste_qty, 1), fmt(self.chip_qty, 1), fmt(self.foundry_waste_qty, 1),
                 (self.reuse_location_id or self.location_src_id).name, fmt(self.slag_qty, 1),
                 self.waste_location_id.name),
             "Угар: %s kg (%s%%)" % (fmt(self.burn_loss_qty, 1), fmt(self.burn_loss_pct, 2)),
@@ -447,3 +524,33 @@ class CrafFoundryMelt(models.Model):
         if self.balance_note:
             summary.append("Izoh: %s" % self.balance_note)
         self._craf_post_summary(summary)
+
+    # ---------------------------------------------------------------- namuna retsept (sozlamadan)
+    def action_load_recipe(self):
+        cfg = self.env["craf.litey.settings"].get()
+        if not cfg.recipe_line_ids:
+            return super().action_load_recipe()
+        base = cfg.recipe_base_qty or 1000.0
+        for melt in self:
+            if melt.state != "draft":
+                continue
+            plan = melt.plan_qty or cfg.plan_qty
+            if plan <= 0:
+                raise UserError("Reja stalba miqdorini kiriting.")
+            factor = plan / base
+            existing = {l.product_id: l for l in melt.line_ids}
+            cmds = []
+            for rl in cfg.recipe_line_ids:
+                qty = round(rl.qty * factor, 1)
+                vals = {"qty_plan": qty}
+                if cfg.recipe_fill_mode == "both":
+                    vals.update({"qty": qty, "qty_text": False})
+                line = existing.get(rl.product_id)
+                if line:
+                    cmds.append(Command.update(line.id, vals))
+                else:
+                    vals.update({"product_id": rl.product_id.id, "sequence": rl.product_id.craf_melt_seq or rl.sequence,
+                                 "is_metal": not rl.product_id.craf_not_metal})
+                    cmds.append(Command.create(vals))
+            melt.write({"plan_qty": plan, "line_ids": cmds})
+        return True

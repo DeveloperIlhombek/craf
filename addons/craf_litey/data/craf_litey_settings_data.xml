@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Stalba boshi va oxirini kesishda chiqadigan qirindi: Liteykaga qaytib, qayta eritiladi -->
+        <record id="pf_20" model="product.template">
+            <field name="name">Сталба Қириндиси</field>
+            <field name="default_code">PF-20</field>
+            <field name="categ_id" ref="craf_nomenklatura.categ_semi"/>
+            <field name="type">consu</field>
+            <field name="is_storable" eval="True"/>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="sale_ok" eval="False"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="craf_name_1c">Сталба Қириндиси</field>
+            <field name="craf_litey_name">Сталба қириндиси</field>
+            <field name="craf_litey_seq">135</field>
+            <field name="craf_melt_seq">55</field>
+        </record>
+
+        <record id="shift_day" model="craf.litey.shift">
+            <field name="name">Kunduzgi smena</field>
+            <field name="sequence">1</field>
+            <field name="time_from">8.0</field>
+            <field name="time_to">20.0</field>
+        </record>
+        <record id="shift_night" model="craf.litey.shift">
+            <field name="name">Tungi smena</field>
+            <field name="sequence">2</field>
+            <field name="time_from">20.0</field>
+            <field name="time_to">8.0</field>
+        </record>
+    </data>
+</odoo>

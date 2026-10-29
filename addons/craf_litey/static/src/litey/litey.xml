@@ -441,7 +441,7 @@
                 <tbody>
                     <tr t-foreach="d.melts" t-as="m" t-key="m.id" role="button" t-on-click="() => this.openMeltRow(m)" t-att-class="{ 'cl-is-draft': m.state === 'draft' }">
                         <td class="cl-sticky text-nowrap">
-                            <b t-esc="m.date_label"/> <span class="cl-muted"><t t-esc="m.pech"/><t t-if="m.day_no">, <t t-esc="m.day_no"/>-plavka</t></span>
+                            <b t-esc="m.date_label"/> <span class="cl-muted"><t t-esc="m.pech"/><t t-if="m.day_no">, <t t-esc="m.day_no"/></t></span>
                             <div class="cl-muted small"><t t-esc="m.name"/><t t-if="m.state === 'draft'">, qoralama</t></div>
                         </td>
                         <td t-foreach="d.metal_cols" t-as="c" t-key="c.product_id" class="text-end" t-att-title="meltText(m, c)">

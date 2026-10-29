@@ -29,10 +29,15 @@
                 <attribute name="string">Pech</attribute>
             </xpath>
             <xpath expr="//field[@name='shift']" position="before">
-                <field name="day_no" readonly="state != 'draft'"/>
+                <field name="shift_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+            </xpath>
+            <xpath expr="//field[@name='shift']" position="attributes">
+                <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//field[@name='billet_product_id']/.." position="before">
                 <group name="litey_output" string="Chiqdi">
+                    <field name="billet_gross" readonly="state != 'draft'" class="fw-bold"/>
+                    <field name="chip_qty" readonly="state != 'draft'"/>
                     <field name="billet_length" readonly="state != 'draft'"/>
                     <field name="billet_count" readonly="state != 'draft'"/>
                     <field name="billet_kg_per_m" invisible="not billet_kg_per_m"/>
@@ -40,13 +45,15 @@
                 </group>
             </xpath>
             <xpath expr="//group[@name='litey_output']" position="inside">
+                <xpath expr="//field[@name='billet_gross']" position="move"/>
                 <xpath expr="//field[@name='billet_qty']" position="move"/>
                 <xpath expr="//field[@name='cut_waste_qty']" position="move"/>
                 <xpath expr="//field[@name='slag_qty']" position="move"/>
             </xpath>
             <xpath expr="//group[@name='litey_output']/field[@name='billet_qty']" position="attributes">
-                <attribute name="string">Stalba og'irligi, kg</attribute>
-                <attribute name="class">fw-bold</attribute>
+                <attribute name="string">Stalba sof, kg</attribute>
+                <attribute name="readonly">state != 'draft' or billet_gross</attribute>
+                <attribute name="force_save">1</attribute>
             </xpath>
             <xpath expr="//group[@name='litey_output']/field[@name='billet_qty']" position="after">
                 <xpath expr="//field[@name='billet_length']" position="move"/>
@@ -57,6 +64,7 @@
                 <attribute name="string">Сталба отход, kg</attribute>
             </xpath>
             <xpath expr="//group[@name='litey_output']/field[@name='cut_waste_qty']" position="after">
+                <xpath expr="//field[@name='chip_qty']" position="move"/>
                 <xpath expr="//field[@name='foundry_waste_qty']" position="move"/>
             </xpath>
 
@@ -72,6 +80,8 @@
                         <field name="sequence" widget="handle"/>
                         <field name="product_id" options="{'no_create': True}" context="{'display_default_code': False}"
                                domain="[('is_storable', '=', True), ('craf_section_id', '=', False), ('craf_not_metal', '=', False)]"/>
+                        <field name="qty_plan" string="Reja" optional="show" readonly="1" force_save="1"
+                               column_invisible="parent.state != 'draft'"/>
                         <field name="qty_text" placeholder="993+600+351"/>
                         <field name="bags" optional="hide" readonly="not pkg_kg and not bags"/>
                         <field name="pkg_kg" column_invisible="1"/>
@@ -171,6 +181,7 @@
             </xpath>
             <xpath expr="//field[@name='slag_product_id']" position="after">
                 <field name="foundry_waste_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                <field name="chip_product_id" readonly="state != 'draft'" options="{'no_create': True}"/>
             </xpath>
             <xpath expr="//field[@name='balance_text']" position="attributes">
                 <attribute name="invisible">1</attribute>
@@ -192,13 +203,17 @@
                 <attribute name="decoration-danger">balance_state == 'bad'</attribute>
             </xpath>
             <field name="equipment_id" position="after">
-                <field name="day_no" string="№" optional="show"/>
+                <field name="shift_id" optional="show"/>
+            </field>
+            <field name="shift" position="attributes">
+                <attribute name="column_invisible">1</attribute>
             </field>
             <field name="billet_qty" position="after">
                 <field name="billet_length" optional="hide"/>
             </field>
             <field name="slag_qty" position="before">
                 <field name="foundry_waste_qty" sum="Jami" optional="show"/>
+                <field name="chip_qty" sum="Jami" optional="show"/>
             </field>
             <field name="burn_loss_pct" position="after">
                 <field name="balance_state" widget="badge" optional="show" string="Balans"
@@ -224,8 +239,8 @@
         <field name="model">craf.foundry.melt</field>
         <field name="inherit_id" ref="craf_foundry.craf_foundry_melt_view_kanban"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='shift']" position="after">
-                <t t-if="record.day_no.raw_value"> · <field name="day_no"/>-plavka</t>
+            <xpath expr="//field[@name='shift']" position="replace">
+                <field name="shift_id"/>
             </xpath>
         </field>
     </record>
