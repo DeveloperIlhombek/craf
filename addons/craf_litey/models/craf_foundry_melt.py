@@ -109,7 +109,6 @@ class CrafFoundryMelt(models.Model):
 
     shift_id = fields.Many2one(
         "craf.litey.shift", string="Smena", tracking=True, index=True,
-        default=lambda self: self.env["craf.litey.shift"]._craf_current(),
         help="Smenalar: Liteyka → Sozlamalar → Smenalar")
     billet_gross = fields.Float(
         "Stalba og'irligi (brutto), kg", digits=(16, 1), tracking=True,
@@ -121,8 +120,7 @@ class CrafFoundryMelt(models.Model):
     chip_qty = fields.Float("Qirindi, kg", digits=(16, 1), aggregator="sum",
                             help="Stalbaning boshi va oxirini kesishda chiqqan qirindi")
     chip_product_id = fields.Many2one(
-        "product.product", string="Qirindi (mahsulot)",
-        default=lambda self: self.env["craf.litey.settings"].get().chip_product_id)
+        "product.product", string="Qirindi (mahsulot)")
     billet_length = fields.Float("Stalba uzunligi, m", digits=(16, 2), help="Daftarda: Ст-узун")
     billet_count = fields.Integer("Stalba soni, dona")
     billet_kg_per_m = fields.Float("1 m stalba, kg", compute="_compute_billet_kg_per_m", digits=(16, 2))
@@ -179,6 +177,10 @@ class CrafFoundryMelt(models.Model):
                              ("chip_product_id", cfg.chip_product_id.id)):
             if fname in fields_list and value and not self.env.context.get("default_" + fname):
                 res[fname] = value
+        if "shift_id" in fields_list and not res.get("shift_id"):
+            shift = self.env["craf.litey.shift"]._craf_current()
+            if shift:
+                res["shift_id"] = shift.id
         if "employee_id" in fields_list and not res.get("employee_id") and res.get("shift_id"):
             emp = self.env["craf.litey.shift"].browse(res["shift_id"]).employee_id
             if emp:
