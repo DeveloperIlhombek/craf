@@ -8,6 +8,7 @@ on:
     paths:
       - "addons/**"
       - "deploy/**"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 concurrency:
@@ -16,23 +17,48 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: SSH kalitini tayyorlash
         env:
           KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST_RAW: ${{ secrets.DEPLOY_HOST }}
         run: |
+          set -u
           if [ -z "$KEY" ] || [ -z "$KNOWN" ]; then
             echo "::error::DEPLOY_SSH_KEY yoki DEPLOY_KNOWN_HOSTS secret kiritilmagan"; exit 1
           fi
+          # Host: bo'shliq, qator ko'chishi, "root@" va ":22" olib tashlanadi
+          HOST=$(printf '%s' "${HOST_RAW:-13.140.177.217}" | tr -d '[:space:]' | sed 's/^.*@//; s/:22$//')
+          [ -n "$HOST" ] || HOST=13.140.177.217
+          echo "HOST=$HOST" >> "$GITHUB_ENV"
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
-          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+          # Kalit: Windows CR va bo'sh qatorlarni tozalash
+          printf '%s\n' "$KEY" | tr -d '\r' | sed '/^[[:space:]]*$/d' > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          if ! ssh-keygen -y -f ~/.ssh/deploy > /tmp/pub 2>/tmp/err; then
+            echo "::error::DEPLOY_SSH_KEY noto'g'ri yoki to'liq nusxalanmagan: $(head -1 /tmp/err)"; exit 1
+          fi
+          echo "::notice::Deploy kalit izi: $(ssh-keygen -lf /tmp/pub | awk '{print $2}')"
+          # known_hosts: CR, '#' izohlar va bo'sh qatorlarni tozalash; qatorga bo'linib qolgan bo'lsa birlashtirish
+          printf '%s\n' "$KNOWN" | tr -d '\r' | grep -v '^[[:space:]]*#' | sed '/^[[:space:]]*$/d' \
+            | awk '/^[^ ]+ (ssh-|ecdsa-)/{if(l)print l; l=$0; next}{l=l $0}END{if(l)print l}' > ~/.ssh/known_hosts
+          if ! ssh-keygen -lf ~/.ssh/known_hosts > /tmp/kh 2>/tmp/err; then
+            echo "::error::DEPLOY_KNOWN_HOSTS o'qilmadi: $(head -1 /tmp/err)"; exit 1
+          fi
+          echo "::notice::known_hosts: $(tr '\n' ' ' < /tmp/kh)"
+          if ! ssh-keygen -F "$HOST" -f ~/.ssh/known_hosts >/dev/null; then
+            echo "::error::DEPLOY_KNOWN_HOSTS da '$HOST' uchun yozuv yo'q (qator boshidagi manzil DEPLOY_HOST bilan bir xil bo'lishi kerak)"; exit 1
+          fi
+          # Server hozir ko'rsatayotgan kalit (taqqoslash uchun, faqat izi)
+          if ssh-keyscan -T 10 -t ed25519 "$HOST" 2>/dev/null > /tmp/live && [ -s /tmp/live ]; then
+            echo "::notice::Server hozirgi ed25519 izi: $(ssh-keygen -lf /tmp/live | awk '{print $2}')"
+          else
+            echo "::warning::ssh-keyscan $HOST javob bermadi"
+          fi
       - name: Serverni yangilash
-        env:
-          HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           # Server tomonda kalit faqat gh-deploy.sh ni ishga tushiradi (command=), shuning uchun buyruq yuborilmaydi.
-          ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=30 "root@${HOST:-13.140.177.217}"
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 \
+              -o HostKeyAlgorithms=ssh-ed25519 "root@$HOST"
