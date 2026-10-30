@@ -1,197 +1,80 @@
+// Mobile-first: asosiy uslub telefon uchun, 576px dan kattalashadi.
 .o_craf_dash {
     background-color: $o-webclient-background-color;
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 
-    .o_craf_refetch .o_craf_card {
-        opacity: 0.55;
-        transition: opacity 0.15s;
-    }
+    h2 { font-size: 1.35rem; }
+    .o_craf_refetch .o_craf_card { opacity: 0.55; transition: opacity 0.15s; }
     .o_craf_card {
         background-color: $o-view-background-color;
         border: 1px solid rgba(11, 11, 11, 0.1);
         border-radius: 8px;
-        padding: 16px;
+        padding: 12px;
     }
-    .o_craf_card_title {
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    .o_craf_label {
-        color: #52514e;
-        font-size: 0.85rem;
-        margin-bottom: 4px;
-    }
+    .o_craf_card_title { font-weight: 600; font-size: 1rem; }
+    .o_craf_label { color: #52514e; font-size: 0.85rem; margin-bottom: 4px; }
     .o_craf_hero_value {
-        font-size: 52px;
-        font-weight: 600;
-        line-height: 1.1;
-        color: #0b0b0b;
-        .o_craf_unit {
-            font-size: 22px;
-            font-weight: 500;
-            color: #52514e;
-        }
+        font-size: 44px; font-weight: 600; line-height: 1.1; color: #0b0b0b;
+        .o_craf_unit { font-size: 22px; font-weight: 500; color: #52514e; }
     }
-    .o_craf_value {
-        font-size: 26px;
-        font-weight: 600;
-        color: #0b0b0b;
-        line-height: 1.2;
-    }
-    .o_craf_sub {
-        color: #52514e;
-        font-size: 0.85rem;
-        margin-top: 2px;
-    }
+    .o_craf_value { font-size: 22px; font-weight: 600; color: #0b0b0b; line-height: 1.2; }
+    .o_craf_sub { color: #52514e; font-size: 0.85rem; margin-top: 2px; }
     .o_craf_status {
-        margin-top: 10px;
-        font-size: 0.85rem;
-        color: #0b0b0b;
-        .fa {
-            margin-right: 4px;
-        }
-        &.o_craf_st_good .fa {
-            color: #0ca30c;
-        }
-        &.o_craf_st_warn .fa {
-            color: #d97f00;
-        }
-        &.o_craf_st_none .fa {
-            color: #898781;
-        }
+        margin-top: 10px; font-size: 0.85rem; color: #0b0b0b;
+        .fa { margin-right: 4px; }
+        &.o_craf_st_good .fa { color: #0ca30c; }
+        &.o_craf_st_warn .fa { color: #d97f00; }
+        &.o_craf_st_none .fa { color: #898781; }
     }
-    .o_craf_swatch {
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-        display: inline-block;
-    }
-    .o_craf_linekey {
-        width: 14px;
-        height: 2px;
-        border-radius: 1px;
-        display: inline-block;
-    }
-    .o_craf_legend {
-        font-size: 0.85rem;
-        color: #0b0b0b;
-    }
-    .o_craf_chart svg {
-        display: block;
-    }
-    .o_craf_norm {
-        color: #52514e;
-        font-size: 0.8rem;
-        margin-top: 2px;
-        padding-left: 20px;
-    }
-    .o_craf_grid {
-        stroke: #e1e0d9;
-        stroke-width: 1;
-    }
-    .o_craf_base {
-        stroke: #c3c2b7;
-        stroke-width: 1;
-    }
-    .o_craf_axis {
-        fill: #898781;
-        font-size: 11px;
-        font-variant-numeric: tabular-nums;
-    }
-    .o_craf_hover_band {
-        fill: #f0efec;
-    }
+    .o_craf_swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+    .o_craf_linekey { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
+    .o_craf_legend { font-size: 0.85rem; color: #0b0b0b; }
+    .o_craf_chart svg { display: block; max-width: 100%; }
+    .o_craf_norm { color: #52514e; font-size: 0.8rem; margin-top: 2px; padding-left: 20px; }
+    .o_craf_grid { stroke: #e1e0d9; stroke-width: 1; }
+    .o_craf_base { stroke: #c3c2b7; stroke-width: 1; }
+    .o_craf_axis { fill: #898781; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .o_craf_hover_band { fill: #f0efec; }
     .o_craf_tooltip {
-        position: absolute;
-        top: 8px;
-        background: #ffffff;
-        border: 1px solid rgba(11, 11, 11, 0.12);
-        border-radius: 6px;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-        padding: 8px 10px;
-        font-size: 0.85rem;
-        pointer-events: none;
-        white-space: nowrap;
-        z-index: 2;
+        position: absolute; top: 8px; background: #ffffff;
+        border: 1px solid rgba(11, 11, 11, 0.12); border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08); padding: 8px 10px;
+        font-size: 0.85rem; pointer-events: none; white-space: nowrap; z-index: 2;
     }
     .o_craf_empty {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: none;
+        position: absolute; inset: 0; display: flex; align-items: center;
+        justify-content: center; pointer-events: none;
     }
     .o_craf_table {
         font-size: 0.875rem;
-        td,
-        th {
-            font-variant-numeric: tabular-nums;
-        }
+        td, th { font-variant-numeric: tabular-nums; }
     }
     .o_craf_zone_row {
         display: grid;
-        grid-template-columns: minmax(110px, 32%) 1fr auto;
-        align-items: center;
-        gap: 10px;
-        padding: 5px 4px;
-        border-radius: 4px;
-        cursor: pointer;
-        &:hover {
-            background: #f0efec;
-        }
+        grid-template-columns: minmax(84px, 34%) 1fr auto;
+        align-items: center; gap: 8px;
+        padding: 8px 4px; // barmoq uchun balandroq
+        border-radius: 4px; cursor: pointer;
+        &:hover { background: #f0efec; }
     }
-    .o_craf_track {
-        height: 14px;
-    }
-    .o_craf_bar {
-        height: 14px;
-        background: #2a78d6;
-        border-radius: 0 4px 4px 0;
-    }
-    .o_craf_zone_val {
-        min-width: 110px;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-    }
+    .o_craf_track { height: 14px; }
+    .o_craf_bar { height: 14px; background: #2a78d6; border-radius: 0 4px 4px 0; }
+    .o_craf_zone_val { min-width: 0; font-size: 0.85rem; text-align: right; font-variant-numeric: tabular-nums; }
     .o_craf_draft_row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 4px;
-        border-bottom: 1px solid #e1e0d9;
-        cursor: pointer;
-        &:hover {
-            background: #f0efec;
-        }
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 4px; border-bottom: 1px solid #e1e0d9; cursor: pointer;
+        &:hover { background: #f0efec; }
     }
+    .o_craf_prod_name { max-width: 58vw; }
 
-    .o_craf_prod_name {
-        max-width: 280px;
-    }
-    @media (max-width: 575.98px) {
-        .o_craf_card {
-            padding: 12px;
-        }
-        .o_craf_hero_value {
-            font-size: 44px;
-        }
-        .o_craf_value {
-            font-size: 22px;
-        }
-        .o_craf_zone_row {
-            grid-template-columns: minmax(84px, 34%) 1fr auto;
-            gap: 8px;
-        }
-        .o_craf_zone_val {
-            min-width: 0;
-            font-size: 0.85rem;
-        }
-        .o_craf_prod_name {
-            max-width: 58vw;
-        }
-        h2 {
-            font-size: 1.35rem;
-        }
+    @media (min-width: 576px) {
+        h2 { font-size: 1.75rem; }
+        .o_craf_card { padding: 16px; }
+        .o_craf_hero_value { font-size: 52px; }
+        .o_craf_value { font-size: 26px; }
+        .o_craf_zone_row { grid-template-columns: minmax(110px, 32%) 1fr auto; gap: 10px; padding: 5px 4px; }
+        .o_craf_zone_val { min-width: 110px; font-size: inherit; }
+        .o_craf_draft_row { padding: 8px 4px; }
+        .o_craf_prod_name { max-width: 280px; }
     }
 }

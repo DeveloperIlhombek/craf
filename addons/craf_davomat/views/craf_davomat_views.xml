@@ -54,10 +54,29 @@
             </form>
         </field>
     </record>
+        <!-- Telefon uchun kartochka ko'rinishi (mobile-first) -->
+    <record id="craf_davomat_device_view_kanban" model="ir.ui.view">
+        <field name="name">craf.davomat.device.kanban.mobile</field>
+        <field name="model">craf.davomat.device</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <templates><t t-name="card">
+                    <div class="d-flex align-items-center gap-2">
+                        <field name="name" class="fw-bold text-truncate"/>
+                        <field name="active" widget="boolean_toggle" class="ms-auto"/>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 text-muted small"><field name="place"/> <field name="last_seen"/></div>
+                    <div class="d-flex flex-wrap gap-3 mt-1"></div>
+                </t></templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="action_craf_davomat_device" model="ir.actions.act_window">
         <field name="name">Davomat terminallari</field>
         <field name="res_model">craf.davomat.device</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
     </record>
 
     <!-- yozuvlar jurnali -->
@@ -97,10 +116,29 @@
             </search>
         </field>
     </record>
+        <!-- Telefon uchun kartochka ko'rinishi (mobile-first) -->
+    <record id="craf_davomat_log_view_kanban" model="ir.ui.view">
+        <field name="name">craf.davomat.log.kanban.mobile</field>
+        <field name="model">craf.davomat.log</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" create="0">
+                <templates><t t-name="card">
+                    <div class="d-flex align-items-center gap-2">
+                        <field name="name" class="fw-bold text-truncate"/>
+                        <field name="result" widget="badge" class="ms-auto" decoration-success="result == 'done'" decoration-danger="result in ('unknown', 'error')"/>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 text-muted small"><field name="event_time"/> <field name="device_id"/> <field name="action"/></div>
+                    <div class="d-flex flex-wrap gap-3 mt-1"></div>
+                </t></templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="action_craf_davomat_log" model="ir.actions.act_window">
         <field name="name">Terminal yozuvlari</field>
         <field name="res_model">craf.davomat.log</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,kanban</field>
     </record>
 
     <!-- ish jadvallari -->

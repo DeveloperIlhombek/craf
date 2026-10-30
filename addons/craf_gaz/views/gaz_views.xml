@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_gaz_type_list" model="ir.ui.view">
+        <field name="name">craf.gaz.type.list</field><field name="model">craf.gaz.type</field>
+        <field name="arch" type="xml"><list editable="bottom">
+            <field name="sequence" widget="handle"/><field name="name"/><field name="code"/>
+            <field name="color" widget="color"/><field name="unit"/><field name="note" optional="hide"/>
+        </list></field>
+    </record>
+    <record id="view_gaz_ballon_list" model="ir.ui.view">
+        <field name="name">craf.gaz.ballon.list</field><field name="model">craf.gaz.ballon</field>
+        <field name="arch" type="xml"><list decoration-danger="state == 'empty'" decoration-warning="state == 'low'">
+            <field name="name"/><field name="type_id"/><field name="location_id" optional="hide"/>
+            <field name="qty"/><field name="capacity"/><field name="percent" widget="progressbar"/>
+            <field name="state" widget="badge"/>
+        </list></field>
+    </record>
+    <record id="view_gaz_ballon_form" model="ir.ui.view">
+        <field name="name">craf.gaz.ballon.form</field><field name="model">craf.gaz.ballon</field>
+        <field name="arch" type="xml"><form><sheet>
+            <group><group><field name="name"/><field name="type_id"/><field name="location_id"/></group>
+            <group><field name="capacity"/><field name="qty"/><field name="percent" widget="progressbar"/><field name="state"/></group></group>
+            <field name="note" placeholder="Izoh"/>
+            <field name="move_ids" readonly="1"><list>
+                <field name="date"/><field name="kind"/><field name="qty"/><field name="qty_after"/>
+                <field name="user_id" optional="hide"/><field name="note" optional="hide"/></list></field>
+        </sheet></form></field>
+    </record>
+    <record id="view_gaz_move_list" model="ir.ui.view">
+        <field name="name">craf.gaz.move.list</field><field name="model">craf.gaz.move</field>
+        <field name="arch" type="xml"><list create="0">
+            <field name="date"/><field name="ballon_id"/><field name="type_id"/><field name="kind"/>
+            <field name="qty" sum="Jami"/><field name="qty_before" optional="hide"/><field name="qty_after"/>
+            <field name="user_id" optional="show"/><field name="note" optional="hide"/>
+        </list></field>
+    </record>
+
+    <!-- Telefon uchun kartochkalar (mobile_view_mode=kanban) -->
+    <record id="view_gaz_ballon_kanban" model="ir.ui.view">
+        <field name="name">craf.gaz.ballon.kanban</field><field name="model">craf.gaz.ballon</field>
+        <field name="arch" type="xml"><kanban class="o_kanban_mobile">
+            <field name="color"/><field name="state"/>
+            <templates><t t-name="card">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-block" style="width:12px;height:12px" t-attf-style="background: #{record.color.raw_value or '#94a3b8'}"/>
+                    <field name="name" class="fw-bold fs-5"/>
+                    <field name="type_id" class="text-muted"/>
+                    <field name="state" widget="badge" class="ms-auto"
+                           decoration-danger="state == 'empty'" decoration-warning="state == 'low'" decoration-success="state == 'ok'"/>
+                </div>
+                <div class="d-flex gap-1 mt-1"><field name="qty"/> / <field name="capacity"/> <field name="unit"/></div>
+                <field name="percent" widget="progressbar"/>
+                <field name="location_id" class="text-muted small"/>
+            </t></templates>
+        </kanban></field>
+    </record>
+    <record id="view_gaz_move_kanban" model="ir.ui.view">
+        <field name="name">craf.gaz.move.kanban</field><field name="model">craf.gaz.move</field>
+        <field name="arch" type="xml"><kanban class="o_kanban_mobile" create="0">
+            <field name="kind"/>
+            <templates><t t-name="card">
+                <div class="d-flex align-items-center gap-2">
+                    <field name="ballon_id" class="fw-bold"/>
+                    <field name="kind" widget="badge" decoration-success="kind == 'fill'" decoration-danger="kind == 'use'"/>
+                    <field name="qty" class="ms-auto fw-bold"/>
+                </div>
+                <div class="d-flex gap-2 text-muted small mt-1">
+                    <field name="date"/><field name="user_id"/>
+                </div>
+                <field name="note" class="small"/>
+            </t></templates>
+        </kanban></field>
+    </record>
+    <record id="view_gaz_type_kanban" model="ir.ui.view">
+        <field name="name">craf.gaz.type.kanban</field><field name="model">craf.gaz.type</field>
+        <field name="arch" type="xml"><kanban class="o_kanban_mobile">
+            <field name="color"/>
+            <templates><t t-name="card">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-block" style="width:14px;height:14px" t-attf-style="background: #{record.color.raw_value or '#94a3b8'}"/>
+                    <field name="name" class="fw-bold fs-5"/><field name="code" class="text-muted"/>
+                    <field name="unit" class="ms-auto"/>
+                </div>
+            </t></templates>
+        </kanban></field>
+    </record>
+    <record id="view_gaz_type_form" model="ir.ui.view">
+        <field name="name">craf.gaz.type.form</field><field name="model">craf.gaz.type</field>
+        <field name="arch" type="xml"><form><sheet><group>
+            <field name="name"/><field name="code"/><field name="color" widget="color"/><field name="unit"/><field name="note"/>
+        </group></sheet></form></field>
+    </record>
+
+    <record id="action_craf_gaz" model="ir.actions.client">
+        <field name="name">Gaz ballonlari</field><field name="tag">craf_gaz_dashboard</field>
+    </record>
+    <record id="action_gaz_type" model="ir.actions.act_window">
+        <field name="name">Gaz turlari</field><field name="res_model">craf.gaz.type</field><field name="view_mode">list,kanban,form</field><field name="mobile_view_mode">kanban</field>
+    </record>
+    <record id="action_gaz_ballon" model="ir.actions.act_window">
+        <field name="name">Ballonlar ro'yxati</field><field name="res_model">craf.gaz.ballon</field><field name="view_mode">list,kanban,form</field><field name="mobile_view_mode">kanban</field>
+    </record>
+    <record id="action_gaz_move" model="ir.actions.act_window">
+        <field name="name">Gaz harakati</field><field name="res_model">craf.gaz.move</field>
+        <field name="view_mode">list,kanban,pivot</field><field name="mobile_view_mode">kanban</field>
+    </record>
+
+    <menuitem id="menu_gaz_root" name="Gazlar" parent="stock.menu_stock_root" sequence="4"
+              groups="stock.group_stock_user"/>
+    <menuitem id="menu_gaz_dash" name="Gaz ballonlari" parent="menu_gaz_root" action="action_craf_gaz" sequence="1"/>
+    <menuitem id="menu_gaz_ballon" name="Ballonlar ro'yxati" parent="menu_gaz_root" action="action_gaz_ballon" sequence="2"/>
+    <menuitem id="menu_gaz_move" name="Gaz harakati" parent="menu_gaz_root" action="action_gaz_move" sequence="3"/>
+    <menuitem id="menu_gaz_type" name="Gaz turlari" parent="menu_gaz_root" action="action_gaz_type" sequence="4"/>
+</odoo>

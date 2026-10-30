@@ -1,150 +1,61 @@
+// Mobile-first: telefonda zonalar ro'yxat-kartochka, panel to'liq kenglikda;
+// 768px dan xarita suriladigan, 1200px dan xarita + yon panel yonma-yon.
 .o_craf_xarita {
     background-color: $o-webclient-background-color;
 
+    h2 { font-size: 1.35rem; }
     .o_craf_map,
-    .o_craf_panel {
-        background-color: $o-view-background-color;
-    }
-    .o_craf_map {
-        min-width: 640px;
-    }
-    .o_craf_panel {
-        flex: 0 0 380px;
-        max-width: 100%;
-    }
-    .o_craf_dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    svg {
-        user-select: none;
-    }
-    .o_craf_wall {
-        fill: none;
-        stroke: #cbd5e1;
-        stroke-width: 2;
-        stroke-dasharray: 10 8;
-    }
-    .o_craf_wall_label {
-        fill: #94a3b8;
-        font-size: 14px;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-    }
-    .o_craf_flow {
-        stroke: #64748b;
-        stroke-width: 2;
-    }
-    .o_craf_arrow_head {
-        fill: #64748b;
-    }
-    .o_craf_flow_label {
-        fill: #64748b;
-        font-size: 12px;
-        font-style: italic;
-    }
+    .o_craf_panel { background-color: $o-view-background-color; }
+    .o_craf_map { min-width: 0; }
+    .o_craf_panel { flex: 1 1 100%; max-width: 100%; }
+    .o_craf_dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    svg { user-select: none; }
+    .o_craf_wall { fill: none; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 10 8; }
+    .o_craf_wall_label { fill: #94a3b8; font-size: 14px; font-weight: 700; letter-spacing: 0.12em; }
+    .o_craf_flow { stroke: #64748b; stroke-width: 2; }
+    .o_craf_arrow_head { fill: #64748b; }
+    .o_craf_flow_label { fill: #64748b; font-size: 12px; font-style: italic; }
     .o_craf_zone {
         cursor: pointer;
-        .o_craf_zone_rect {
-            stroke-width: 2;
-            transition: stroke-width 0.15s;
-        }
-        &:hover .o_craf_zone_rect {
-            stroke-width: 3;
-        }
-        &.o_selected .o_craf_zone_rect {
-            stroke-width: 4;
-        }
+        .o_craf_zone_rect { stroke-width: 2; transition: stroke-width 0.15s; }
+        &:hover .o_craf_zone_rect { stroke-width: 3; }
+        &.o_selected .o_craf_zone_rect { stroke-width: 4; }
     }
-    .o_craf_zone_title {
-        fill: $o-main-text-color;
-        font-size: 18px;
-        font-weight: 700;
-    }
-    .o_craf_zone_big {
-        font-size: 28px;
-        font-weight: 700;
-    }
-    .o_craf_zone_line {
-        fill: $o-main-text-color;
-        opacity: 0.75;
-        font-size: 14px;
-    }
-    .o_craf_bar_bg {
-        fill: #e2e8f0;
-    }
-    .o_craf_stat {
-        border-radius: 8px;
-        padding: 8px 4px;
-        background-color: $o-webclient-background-color;
-    }
-    .o_craf_stat_v {
-        font-size: 20px;
-        font-weight: 700;
-    }
-    .o_craf_table tr {
-        cursor: pointer;
-    }
-    .o_craf_name {
-        max-width: 210px;
-    }
+    .o_craf_zone_title { fill: $o-main-text-color; font-size: 18px; font-weight: 700; }
+    .o_craf_zone_big { font-size: 28px; font-weight: 700; }
+    .o_craf_zone_line { fill: $o-main-text-color; opacity: 0.75; font-size: 14px; }
+    .o_craf_bar_bg { fill: #e2e8f0; }
+    .o_craf_stat { border-radius: 8px; padding: 8px 4px; background-color: $o-webclient-background-color; }
+    .o_craf_stat_v { font-size: 20px; font-weight: 700; }
+    .o_craf_table tr { cursor: pointer; }
+    .o_craf_table td { padding-top: 8px; padding-bottom: 8px; }
+    .o_craf_name { max-width: 52vw; }
 
     .o_craf_mzone {
         background-color: $o-view-background-color;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-left-width: 5px;
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        &.o_selected {
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
-        }
+        border: 1px solid rgba(0, 0, 0, 0.1); border-left-width: 5px; border-radius: 8px;
+        padding: 10px 12px; margin-bottom: 8px; cursor: pointer;
+        &.o_selected { box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35); }
     }
-    .o_craf_mzone_kg {
-        font-size: 20px;
-        font-weight: 700;
-    }
+    .o_craf_mzone_kg { font-size: 20px; font-weight: 700; }
     .o_craf_mbar {
-        height: 6px;
-        border-radius: 3px;
-        background: #e2e8f0;
-        margin-top: 8px;
-        overflow: hidden;
-        > div {
-            height: 100%;
-            border-radius: 3px;
-        }
+        height: 6px; border-radius: 3px; background: #e2e8f0; margin-top: 8px; overflow: hidden;
+        > div { height: 100%; border-radius: 3px; }
     }
     .o_craf_map_scroll {
         overflow-x: auto;
-        svg {
-            min-width: 640px;
-        }
+        -webkit-overflow-scrolling: touch;
+        svg { min-width: 640px; }
     }
-    .min-w-0 {
-        min-width: 0;
-    }
-    @media (max-width: 767.98px) {
-        .o_craf_map {
-            min-width: 0;
-        }
-        .o_craf_panel {
-            flex: 1 1 100%;
-        }
-        .o_craf_name {
-            max-width: 52vw;
-        }
-        h2 {
-            font-size: 1.35rem;
-        }
-    }
+    .min-w-0 { min-width: 0; }
 
-    @media (min-width: 768px) and (max-width: 1199.98px) {
-        .o_craf_panel {
-            flex: 1 1 100%;
-        }
+    @media (min-width: 768px) {
+        h2 { font-size: 1.75rem; }
+        .o_craf_map { min-width: 640px; }
+        .o_craf_name { max-width: 210px; }
+        .o_craf_table td { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    }
+    @media (min-width: 1200px) {
+        .o_craf_panel { flex: 0 0 380px; }
     }
 }

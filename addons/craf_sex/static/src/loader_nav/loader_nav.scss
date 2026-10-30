@@ -1,4 +1,4 @@
-// Yuklovchi: telefondagi pastki panel
+// Telefondagi pastki panel: yuklovchi bandlari yoki ochiq ilova bo'limlari
 .o_craf_loader_nav {
     position: fixed;
     left: 0;
@@ -83,8 +83,88 @@
         .o_action_manager {
             padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
         }
+    }
+    // Sotuv varaqlari faqat yuklovchida pastki panelda takrorlanadi
+    body.o_craf_bottom_nav.o_craf_loader_bar {
         .o_craf_sotuv .cs-tabs {
             display: none;
+        }
+    }
+}
+
+// ---- ichki bo'limlar / «Ko'proq» varag'i (pastdan chiqadi) ----
+.o_craf_nav_backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1038;
+    background: rgba(15, 23, 42, 0.35);
+}
+.o_craf_nav_sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    z-index: 1039;
+    max-height: 65vh;
+    overflow-y: auto;
+    padding: 6px 8px 10px;
+    background: $o-view-background-color;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12);
+    animation: o_craf_sheet_in 0.18s ease-out;
+
+    .o_craf_nav_sheet_handle {
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: $border-color;
+        margin: 4px auto 8px;
+    }
+    .o_craf_nav_sheet_title {
+        font-weight: 700;
+        font-size: 15px;
+        padding: 0 8px 6px;
+    }
+    .o_craf_nav_sheet_group {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $text-muted;
+        padding: 10px 8px 2px;
+    }
+    .o_craf_nav_sheet_item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 48px;
+        padding: 8px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: $o-main-text-color;
+        font-size: 15px;
+        text-align: left;
+        .fa-fw { color: $o-action; font-size: 17px; }
+        &:active, &:hover { background: rgba($o-action, 0.08); }
+        &.o_craf_nav_sub { padding-left: 16px; }
+    }
+}
+@keyframes o_craf_sheet_in {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+}
+
+// Sahifalarning pastga yopishgan tugmalari pastki panel ustida tursin
+@include media-breakpoint-down(md) {
+    body.o_craf_bottom_nav {
+        .cl-fab {
+            bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+        }
+        .pl-savebar,
+        .sx-pickbar {
+            bottom: calc(72px + env(safe-area-inset-bottom, 0px));
         }
     }
 }

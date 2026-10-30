@@ -1,0 +1,127 @@
+// Mobile-first: asosiy uslub telefon uchun, kattaroq ekranlar min-width bilan.
+.o_craf_gaz {
+    --gz-bg: #f6f8fb;
+    --gz-card: #fff;
+    --gz-muted: #64748b;
+    --gz-line: #e2e8f0;
+    padding: 10px 10px 80px;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--gz-bg);
+
+    .btn { min-height: 40px; }
+    .gz-muted { color: var(--gz-muted); font-size: 12px; }
+    .gz-red { color: #dc2626; font-weight: 600; }
+    .gz-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gc, #94a3b8); display: inline-block; flex: none; }
+
+    // ---- sarlavha ----
+    .gz-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;
+        h2 { margin: 0; font-size: 20px; }
+        .gz-actions { display: flex; gap: 6px; }
+        .gz-actions .btn { padding: 6px 10px; font-size: 13px; }
+    }
+
+    // ---- gaz turlari: telefonda gorizontal suriladigan lenta ----
+    .gz-types { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
+        margin: 0 -10px 12px; padding: 2px 10px 6px; scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; } }
+    .gz-type { flex: 0 0 72%; scroll-snap-align: start; background: var(--gz-card); border: 2px solid transparent;
+        border-radius: 12px; padding: 10px 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        &.active { border-color: var(--gc, #334155); }
+        &.gz-all { flex-basis: 34%; display: flex; flex-direction: column; justify-content: center; }
+        .gz-type-top { display: flex; align-items: center; gap: 6px; small { color: var(--gz-muted); } }
+        .gz-edit { margin-left: auto; color: #94a3b8; cursor: pointer; padding: 4px 8px; margin-right: -8px; }
+        .gz-type-num { font-size: 20px; font-weight: 700; margin: 4px 0; white-space: nowrap;
+            small { font-size: 12px; font-weight: 400; color: var(--gz-muted); } }
+        .gz-bar { height: 6px; border-radius: 3px; background: var(--gz-line); overflow: hidden;
+            i { display: block; height: 100%; background: var(--gc); opacity: .7; } }
+        .gz-type-foot { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--gz-muted); margin-top: 6px; }
+    }
+
+    // ---- ballonlar ----
+    .gz-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .gz-card { background: var(--gz-card); border-radius: 14px; padding: 10px; display: flex; gap: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06); border-top: 4px solid var(--gc);
+        &.gz-empty { background: #fff7f7; }
+        &.gz-low .gz-qty { color: #d97706; }
+    }
+    .gz-add { align-items: center; justify-content: center; flex-direction: column; color: var(--gz-muted); cursor: pointer;
+        border: 2px dashed #cbd5e1; min-height: 90px; box-shadow: none;
+        span { font-size: 30px; line-height: 1; } }
+
+    .gz-svgwrap { position: relative; width: 70px; flex: none; cursor: pointer; }
+    .gz-svg { width: 70px; height: 140px; display: block; }
+    .gz-glass { fill: rgba(255,255,255,.15); stroke: #94a3b8; stroke-width: 2; }
+    .gz-shine { fill: rgba(255,255,255,.55); }
+    .gz-valve { fill: #94a3b8; }
+    .gz-gas { transition: y .6s ease, height .6s ease; }
+    .gz-pct { font-size: 20px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+    .gz-empty-tag { position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
+        background: #dc2626; color: #fff; font-weight: 800; font-size: 12px; letter-spacing: 1px;
+        padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 6px rgba(220,38,38,.4); white-space: nowrap; }
+
+    .gz-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+        .gz-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 15px; }
+        .gz-chip { font-size: 11px; padding: 1px 8px; border-radius: 10px; color: #fff; background: var(--gc); }
+        .gz-qty { font-size: 18px; font-weight: 700; }
+        .gz-btns { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr 44px; gap: 6px; padding-top: 8px;
+            .btn { padding: 6px 4px; font-size: 13px; white-space: nowrap; } }
+    }
+
+    // ---- harakatlar ----
+    h4 { font-size: 16px; }
+    .gz-moves { background: var(--gz-card); border-radius: 12px; padding: 2px 10px; }
+    .gz-move { display: grid; grid-template-columns: 10px auto auto 1fr 32px; align-items: center; gap: 4px 8px;
+        padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;
+        &:last-child { border-bottom: 0; }
+        > .gz-muted:not(.gz-grow) { justify-self: end; }
+        .gz-grow { grid-column: 2 / 5; grid-row: 2; }
+        .gz-x { grid-column: 5; grid-row: 1 / 3; text-align: center; color: #cbd5e1; cursor: pointer; padding: 8px 0;
+            &:hover { color: #dc2626; } } }
+    .gz-kind { font-size: 11px; padding: 1px 6px; border-radius: 6px; background: #f1f5f9; }
+    .gz-k-fill { background: #dcfce7; color: #166534; }
+    .gz-k-use { background: #fee2e2; color: #991b1b; }
+
+    // ---- oyna: telefonda pastdan chiqadigan varaq ----
+    .gz-modal { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 1050;
+        display: flex; align-items: flex-end; justify-content: center; }
+    .gz-dialog { background: #fff; width: 100%; max-height: 92vh; overflow-y: auto;
+        border-radius: 16px 16px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+        h4 { font-size: 18px; }
+        label { display: block; margin-bottom: 10px; font-size: 13px; color: #475569; }
+        .form-control, .form-select { min-height: 44px; font-size: 16px; } // iOS zoom bo'lmasligi uchun
+        .gz-dbtns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap;
+            .btn { flex: 1 1 auto; min-height: 44px; } }
+        .gz-quick { margin: -4px 0 10px; }
+    }
+    .gz-colors { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: -4px 0 10px;
+        i { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 3px solid transparent;
+            &.on { border-color: #0f172a; } }
+        input { width: 40px; height: 34px; padding: 0; border: 0; } }
+
+    // ---------- planshet ----------
+    @media (min-width: 576px) {
+        padding: 14px 14px 40px;
+        .gz-head h2 { font-size: 24px; }
+        .gz-head .gz-actions .btn { padding: 6px 14px; font-size: 14px; }
+        .gz-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            overflow: visible; margin: 0 0 14px; padding: 0; }
+        .gz-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .gz-add { min-height: 180px; }
+        .gz-svgwrap, .gz-svg { width: 84px; }
+        .gz-svg { height: 168px; }
+        .gz-move { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0;
+            .gz-grow { flex: 1; } .gz-x { padding: 0 4px; } }
+        .gz-modal { align-items: center; padding: 16px; }
+        .gz-dialog { max-width: 440px; border-radius: 14px; padding: 18px;
+            .form-control, .form-select { min-height: 38px; font-size: 14px; }
+            .gz-dbtns .btn { flex: 0 0 auto; min-height: 38px; } }
+    }
+
+    // ---------- kompyuter ----------
+    @media (min-width: 992px) {
+        padding: 16px;
+        .gz-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    }
+}

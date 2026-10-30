@@ -73,10 +73,29 @@
         </field>
     </record>
 
+        <!-- Telefon uchun kartochka ko'rinishi (mobile-first) -->
+    <record id="craf_profile_section_view_kanban" model="ir.ui.view">
+        <field name="name">craf.profile.section.kanban.mobile</field>
+        <field name="model">craf.profile.section</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <templates><t t-name="card">
+                    <div class="d-flex align-items-center gap-2">
+                        <field name="name" class="fw-bold text-truncate"/>
+                        <field name="die_code" class="ms-auto text-muted small"/>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 text-muted small"><field name="profile_type"/> <field name="series"/> <field name="alias"/></div>
+                    <div class="d-flex flex-wrap gap-3 mt-1"><span><span class="text-muted small">kg/m: </span><field name="kg_per_m" class="fw-bold"/></span> <span><span class="text-muted small">Mahsulot: </span><field name="product_count" class="fw-bold"/></span></div>
+                </t></templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="action_craf_profile_section" model="ir.actions.act_window">
         <field name="name">Kesimlar</field>
         <field name="res_model">craf.profile.section</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Birinchi profil kesimini qo'shing</p>
             <p>Kesim = tur + seriya (masalan T Бал). Har bir kesimga kg/m kiritilsa, kalkulyator ishlaydi.</p>

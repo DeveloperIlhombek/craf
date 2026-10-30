@@ -1,19 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="craf_sex.LoaderNav">
-        <nav t-if="visible" class="o_craf_loader_nav" aria-label="Yuklovchi menyusi">
-            <t t-foreach="items" t-as="item" t-key="item.key">
-                <button type="button" class="o_craf_loader_nav_item"
-                        t-att-class="{ active: state.active === item.key }"
-                        t-att-aria-current="state.active === item.key ? 'page' : undefined"
-                        t-on-click="() => this.open(item)">
-                    <span class="o_craf_loader_nav_icon">
-                        <i t-att-class="'fa ' + item.icon"/>
-                        <span t-if="state.counts[item.key]" class="o_craf_loader_nav_badge" t-esc="state.counts[item.key]"/>
-                    </span>
-                    <span class="o_craf_loader_nav_label" t-esc="item.label"/>
-                </button>
-            </t>
-        </nav>
+        <t t-if="visible">
+            <!-- ichki bo'limlar / «Ko'proq» varag'i -->
+            <div t-if="state.sheet" class="o_craf_nav_backdrop" t-on-click="closeSheet"/>
+            <div t-if="state.sheet" class="o_craf_nav_sheet" role="dialog" t-att-aria-label="state.sheet.title">
+                <div class="o_craf_nav_sheet_handle"/>
+                <div class="o_craf_nav_sheet_title" t-esc="state.sheet.title"/>
+                <t t-foreach="state.sheet.items" t-as="it" t-key="it.key">
+                    <t t-if="it.children and it.children.length">
+                        <div class="o_craf_nav_sheet_group" t-esc="it.label"/>
+                        <button t-if="it.action_id" type="button" class="o_craf_nav_sheet_item" t-on-click="() => this.open({ ...it, children: [] })">
+                            <i t-att-class="'fa fa-fw ' + it.icon"/><span t-esc="it.label"/>
+                        </button>
+                        <t t-foreach="it.children" t-as="c" t-key="c.key">
+                            <button type="button" class="o_craf_nav_sheet_item o_craf_nav_sub" t-on-click="() => this.open(c)">
+                                <i t-att-class="'fa fa-fw ' + c.icon"/><span t-esc="c.label"/>
+                                <i t-if="c.children and c.children.length" class="fa fa-angle-right ms-auto"/>
+                            </button>
+                        </t>
+                    </t>
+                    <button t-else="" type="button" class="o_craf_nav_sheet_item" t-on-click="() => this.open(it)">
+                        <i t-att-class="'fa fa-fw ' + it.icon"/><span t-esc="it.label"/>
+                    </button>
+                </t>
+            </div>
+
+            <nav class="o_craf_loader_nav" t-att-aria-label="isLoader ? 'Yuklovchi menyusi' : 'Bo\'limlar'">
+                <t t-foreach="state.items" t-as="item" t-key="item.key">
+                    <button type="button" class="o_craf_loader_nav_item"
+                            t-att-class="{ active: isActive(item) }"
+                            t-att-aria-current="state.active === item.key ? 'page' : undefined"
+                            t-on-click="() => this.open(item)">
+                        <span class="o_craf_loader_nav_icon">
+                            <i t-att-class="'fa ' + item.icon"/>
+                            <span t-if="state.counts[item.key]" class="o_craf_loader_nav_badge" t-esc="state.counts[item.key]"/>
+                        </span>
+                        <span class="o_craf_loader_nav_label" t-esc="item.label"/>
+                    </button>
+                </t>
+            </nav>
+        </t>
     </t>
 </templates>

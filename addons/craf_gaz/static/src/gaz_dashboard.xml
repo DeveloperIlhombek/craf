@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="craf_gaz.Dashboard">
+<div class="o_craf_gaz">
+    <div class="gz-head">
+        <h2>Gaz ballonlari</h2>
+        <div class="gz-actions">
+            <button class="btn btn-primary" t-on-click="newBallon">+ Ballon</button>
+            <button class="btn btn-secondary" t-on-click="newType">+ Gaz turi</button>
+        </div>
+    </div>
+
+    <!-- Gaz turlari: umumiy holat -->
+    <div class="gz-types">
+        <div t-attf-class="gz-type gz-all #{state.filter ? '' : 'active'}" t-on-click="() => state.filter = 0">
+            <b>Hammasi</b><span><t t-esc="state.data.ballons.length"/> ballon</span>
+        </div>
+        <t t-foreach="state.data.types" t-as="t" t-key="t.id">
+            <div t-attf-class="gz-type #{state.filter === t.id ? 'active' : ''}"
+                 t-attf-style="--gc: #{t.color}" t-on-click="() => state.filter = t.id">
+                <div class="gz-type-top">
+                    <span class="gz-dot"/>
+                    <b t-esc="t.name"/><small t-esc="t.code"/>
+                    <a class="gz-edit" title="Tahrirlash" t-on-click.stop="() => this.editType(t)">✎</a>
+                </div>
+                <div class="gz-type-num">
+                    <t t-esc="fmt(t.qty)"/> <small>/ <t t-esc="fmt(t.capacity)"/> <t t-esc="t.unit_label"/></small>
+                </div>
+                <div class="gz-bar"><i t-attf-style="width: #{typePercent(t)}%"/></div>
+                <div class="gz-type-foot">
+                    <span><t t-esc="t.count"/> ballon</span>
+                    <span t-if="t.empty" class="gz-red"><t t-esc="t.empty"/> bo'sh</span>
+                    <span>30 kun sarf: <t t-esc="fmt(t.used_30)"/></span>
+                </div>
+            </div>
+        </t>
+    </div>
+
+    <!-- Ballonlar -->
+    <div class="gz-grid">
+        <t t-foreach="ballons" t-as="b" t-key="b.id">
+            <div t-attf-class="gz-card gz-#{b.state}" t-attf-style="--gc: #{b.color}">
+                <div class="gz-svgwrap" t-on-click="() => this.editBallon(b)">
+                    <svg viewBox="0 0 120 240" class="gz-svg">
+                        <defs>
+                            <linearGradient t-att-id="gid(b) + 'g'" x1="0" x2="1">
+                                <stop offset="0" t-att-stop-color="b.color" stop-opacity="0.55"/>
+                                <stop offset="0.45" t-att-stop-color="b.color" stop-opacity="0.28"/>
+                                <stop offset="1" t-att-stop-color="b.color" stop-opacity="0.6"/>
+                            </linearGradient>
+                            <clipPath t-att-id="gid(b) + 'c'">
+                                <rect x="22" y="38" width="76" height="186" rx="30"/>
+                            </clipPath>
+                        </defs>
+                        <!-- ventil -->
+                        <rect x="50" y="6" width="20" height="10" rx="2" class="gz-valve"/>
+                        <rect x="44" y="16" width="32" height="8" rx="3" class="gz-valve"/>
+                        <rect x="54" y="24" width="12" height="12" class="gz-valve"/>
+                        <!-- gaz -->
+                        <g t-att-clip-path="'url(#' + gid(b) + 'c)'">
+                            <rect x="22" t-att-y="fillY(b)" width="76" t-att-height="fillH(b) + 10"
+                                  t-att-fill="'url(#' + gid(b) + 'g)'" class="gz-gas"/>
+                            <rect t-if="b.percent > 0" x="22" t-att-y="fillY(b)" width="76" height="2"
+                                  t-att-fill="b.color" opacity="0.8"/>
+                        </g>
+                        <!-- shaffof ballon -->
+                        <rect x="22" y="38" width="76" height="186" rx="30" class="gz-glass"/>
+                        <rect x="30" y="56" width="8" height="140" rx="4" class="gz-shine"/>
+                        <!-- rang halqasi -->
+                        <rect x="22" y="44" width="76" height="8" t-att-fill="b.color" opacity="0.9"/>
+                        <text x="60" y="140" class="gz-pct" t-att-fill="b.percent > 0 ? b.color : '#94a3b8'">
+                            <t t-esc="Math.round(b.percent)"/>%
+                        </text>
+                    </svg>
+                    <div t-if="b.state === 'empty'" class="gz-empty-tag">BO'SH</div>
+                </div>
+                <div class="gz-info">
+                    <div class="gz-name"><b t-esc="b.name"/> <span class="gz-chip" t-esc="b.type_name"/></div>
+                    <div class="gz-qty"><t t-esc="fmt(b.qty)"/> / <t t-esc="fmt(b.capacity)"/> <t t-esc="b.unit"/></div>
+                    <div class="gz-muted">Kerak (to'lishi uchun): <b><t t-esc="fmt(b.capacity - b.qty)"/> <t t-esc="b.unit"/></b></div>
+                    <div class="gz-muted" t-if="b.location">📍 <t t-esc="b.location"/></div>
+                    <div class="gz-muted">30 kun sarf: <t t-esc="fmt(b.used_30)"/> <t t-esc="b.unit"/></div>
+                    <div class="gz-btns">
+                        <button class="btn btn-sm btn-outline-danger" t-att-disabled="b.state === 'empty'"
+                                t-on-click="() => this.move(b, 'use')">− Sarf</button>
+                        <button class="btn btn-sm btn-outline-success" t-on-click="() => this.move(b, 'fill')">+ To'ldirish</button>
+                        <button class="btn btn-sm btn-light" title="Sanash" t-on-click="() => this.move(b, 'adjust')">⚖</button>
+                    </div>
+                </div>
+            </div>
+        </t>
+        <div class="gz-card gz-add" t-on-click="newBallon"><span>+</span>Yangi ballon</div>
+    </div>
+
+    <!-- Oxirgi harakatlar -->
+    <h4 class="mt-4">Oxirgi harakatlar</h4>
+    <div class="gz-moves">
+        <div t-if="!state.data.moves.length" class="gz-muted">Hali harakat yo'q.</div>
+        <t t-foreach="state.data.moves" t-as="m" t-key="m.id">
+            <div class="gz-move" t-attf-style="--gc: #{m.color}">
+                <span class="gz-dot"/>
+                <b t-esc="m.ballon"/>
+                <span t-attf-class="gz-kind gz-k-#{m.kind}" t-esc="KIND[m.kind]"/>
+                <span><t t-esc="m.kind === 'use' ? '−' : (m.kind === 'fill' ? '+' : '=')"/><t t-esc="fmt(m.qty)"/> <t t-esc="m.unit"/></span>
+                <span class="gz-muted">→ <t t-esc="fmt(m.after)"/></span>
+                <span class="gz-muted gz-grow"><t t-esc="m.date.slice(0, 16)"/> · <t t-esc="m.user"/> <t t-if="m.note">· <t t-esc="m.note"/></t></span>
+                <a class="gz-x" title="Bekor qilish (faqat oxirgisi)" t-on-click="() => this.remove('move', m.id, 'Harakat')">✕</a>
+            </div>
+        </t>
+    </div>
+
+    <!-- Oyna (CRUD) -->
+    <div t-if="state.modal" class="gz-modal" t-on-click.self="close">
+        <div class="gz-dialog">
+            <t t-if="state.modal === 'ballon'">
+                <h4 t-esc="state.form.id ? 'Ballon: ' + state.form.name : 'Yangi ballon'"/>
+                <label>Ballon raqami<input class="form-control" t-model="state.form.name" placeholder="N-02"/></label>
+                <label>Gaz
+                    <select class="form-select" t-model.number="state.form.type_id">
+                        <t t-foreach="state.data.types" t-as="t" t-key="t.id"><option t-att-value="t.id" t-esc="t.name"/></t>
+                    </select>
+                </label>
+                <label>Sig'imi<input type="number" step="0.01" class="form-control" t-model.number="state.form.capacity"/></label>
+                <label t-if="!state.form.id">Hozirgi qoldiq<input type="number" step="0.01" class="form-control" t-model.number="state.form.qty"/></label>
+                <label>Joyi
+                    <select class="form-select" t-model.number="state.form.location_id">
+                        <option value="0">—</option>
+                        <t t-foreach="state.data.locations" t-as="l" t-key="l.id"><option t-att-value="l.id" t-esc="l.name"/></t>
+                    </select>
+                </label>
+                <label>Izoh<textarea class="form-control" t-model="state.form.note"/></label>
+                <div class="gz-dbtns">
+                    <button t-if="state.form.id" class="btn btn-outline-danger me-auto"
+                            t-on-click="() => this.remove('ballon', state.form.id, state.form.name)">O'chirish</button>
+                    <button class="btn btn-light" t-on-click="close">Bekor</button>
+                    <button class="btn btn-primary" t-att-disabled="state.busy" t-on-click="save">Saqlash</button>
+                </div>
+            </t>
+            <t t-if="state.modal === 'type'">
+                <h4 t-esc="state.form.id ? 'Gaz: ' + state.form.name : 'Yangi gaz turi'"/>
+                <label>Nomi<input class="form-control" t-model="state.form.name" placeholder="Kislorod"/></label>
+                <label>Formula<input class="form-control" t-model="state.form.code" placeholder="O₂"/></label>
+                <label>O'lchov
+                    <select class="form-select" t-model="state.form.unit">
+                        <option value="m3">m³</option><option value="kg">kg</option><option value="l">litr</option>
+                    </select>
+                </label>
+                <label>Rang</label>
+                <div class="gz-colors">
+                    <t t-foreach="PALETTE" t-as="c" t-key="c">
+                        <i t-attf-class="#{state.form.color === c ? 'on' : ''}" t-attf-style="background: #{c}"
+                           t-on-click="() => state.form.color = c"/>
+                    </t>
+                    <input type="color" t-model="state.form.color"/>
+                </div>
+                <label>Izoh<textarea class="form-control" t-model="state.form.note"/></label>
+                <div class="gz-dbtns">
+                    <button t-if="state.form.id" class="btn btn-outline-danger me-auto"
+                            t-on-click="() => this.remove('type', state.form.id, state.form.name)">O'chirish</button>
+                    <button class="btn btn-light" t-on-click="close">Bekor</button>
+                    <button class="btn btn-primary" t-att-disabled="state.busy" t-on-click="save">Saqlash</button>
+                </div>
+            </t>
+            <t t-if="state.modal === 'move'">
+                <h4><t t-esc="KIND[state.form.kind]"/> · <t t-esc="state.form.ballon.name"/></h4>
+                <div class="gz-muted mb-2">
+                    Hozir: <b><t t-esc="fmt(state.form.ballon.qty)"/></b> / <t t-esc="fmt(state.form.ballon.capacity)"/> <t t-esc="state.form.ballon.unit"/>
+                </div>
+                <label><t t-esc="state.form.kind === 'adjust' ? 'Sanalgan qoldiq' : 'Miqdor'"/> (<t t-esc="state.form.ballon.unit"/>)
+                    <input type="number" step="0.01" class="form-control form-control-lg" t-model.number="state.form.qty"/>
+                </label>
+                <div class="gz-quick" t-if="state.form.kind === 'use'">
+                    <button class="btn btn-sm btn-light" t-on-click="() => state.form.qty = state.form.ballon.qty">Hammasi (bo'shatish)</button>
+                </div>
+                <label>Izoh<input class="form-control" t-model="state.form.note" placeholder="Qayerga ishlatildi / kimdan keldi"/></label>
+                <div class="gz-dbtns">
+                    <button class="btn btn-light" t-on-click="close">Bekor</button>
+                    <button class="btn btn-primary" t-att-disabled="state.busy" t-on-click="save">Saqlash</button>
+                </div>
+            </t>
+        </div>
+    </div>
+</div>
+</t>
+</templates>

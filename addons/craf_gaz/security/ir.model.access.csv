@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gaz_type_user,gaz type,model_craf_gaz_type,stock.group_stock_user,1,1,1,1
+access_gaz_ballon_user,gaz ballon,model_craf_gaz_ballon,stock.group_stock_user,1,1,1,1
+access_gaz_move_user,gaz move,model_craf_gaz_move,stock.group_stock_user,1,1,1,1

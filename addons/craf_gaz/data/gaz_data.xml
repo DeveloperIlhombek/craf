@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="gaz_azot" model="craf.gaz.type">
+        <field name="name">Azot</field><field name="code">N₂</field>
+        <field name="color">#3B82F6</field><field name="unit">m3</field><field name="sequence">1</field>
+    </record>
+    <record id="gaz_ammiak" model="craf.gaz.type">
+        <field name="name">Ammiak</field><field name="code">NH₃</field>
+        <field name="color">#F59E0B</field><field name="unit">kg</field><field name="sequence">2</field>
+    </record>
+    <record id="gaz_argon" model="craf.gaz.type">
+        <field name="name">Argon</field><field name="code">Ar</field>
+        <field name="color">#8B5CF6</field><field name="unit">m3</field><field name="sequence">3</field>
+    </record>
+</odoo>

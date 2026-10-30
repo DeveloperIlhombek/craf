@@ -1,18 +1,13 @@
+// Mobile-first: telefonda deyarli butun ekran, katta ekranda 75vh.
 .o_craf_print {
-    .modal-body {
-        display: flex;
-        min-height: 0;
-    }
+    .modal-body { display: flex; min-height: 0; }
     .o_craf_print_frame {
         width: 100%;
-        height: 75vh;
+        height: calc(100vh - 140px);
         border: 0;
         background: #525659;
     }
 }
-
-@include media-breakpoint-down(md) {
-    .o_craf_print .o_craf_print_frame {
-        height: calc(100vh - 140px);
-    }
+@include media-breakpoint-up(lg) {
+    .o_craf_print .o_craf_print_frame { height: 75vh; }
 }

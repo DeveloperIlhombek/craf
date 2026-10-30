@@ -1,6 +1,6 @@
 {
     "name": "Craf: sexlar (Press, Kimyo, Bo'yash) va rollar",
-    "version": "19.0.1.8.0",
+    "version": "19.0.1.9.0",
     "summary": "Press, kimyoviy ishlov, bo'yash va qadoqlash — telefon uchun sahifa; direktor, omborchi, sex ishchisi rollari",
     "description": """
 Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
