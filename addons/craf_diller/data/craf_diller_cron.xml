@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_craf_diller_send" model="ir.cron">
+        <field name="name">Craf diller: Telegram xabarlari</field>
+        <field name="model_id" ref="model_craf_diller_notice"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_send()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+    <record id="ir_cron_craf_diller_news" model="ir.cron">
+        <field name="name">Craf diller: yangi mahsulot va narx</field>
+        <field name="model_id" ref="model_craf_diller_notice"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_news()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+    <record id="ir_cron_craf_diller_debt" model="ir.cron">
+        <field name="name">Craf diller: haftalik qarz eslatmasi</field>
+        <field name="model_id" ref="model_craf_diller_notice"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_debt()</field>
+        <field name="interval_number">7</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

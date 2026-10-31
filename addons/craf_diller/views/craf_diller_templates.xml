@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="head">
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+        <meta name="theme-color" content="#1f3a5f"/>
+        <meta name="robots" content="noindex"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <title>CRAF Diller</title>
+        <link rel="manifest" href="/diller/manifest.webmanifest"/>
+        <link rel="apple-touch-icon" href="/diller/icon/192.png"/>
+        <t t-call-assets="craf_diller.assets" t-js="false"/>
+    </template>
+
+    <template id="app">&lt;!DOCTYPE html&gt;
+        <html lang="uz">
+            <head>
+                <t t-call="craf_diller.head"/>
+                <script>var odoo = {debug: ""};</script>
+                <t t-call-assets="craf_diller.assets" t-css="false"/>
+            </head>
+            <body class="d-body">
+                <div id="diller-app"><div class="d-splash">Yuklanmoqda…</div></div>
+            </body>
+        </html>
+    </template>
+
+    <template id="auth">&lt;!DOCTYPE html&gt;
+        <html lang="uz">
+            <head><t t-call="craf_diller.head"/></head>
+            <body class="d-body">
+                <main class="d-auth">
+                    <img src="/diller/icon/192.png" alt="CRAF" class="d-auth-logo"/>
+                    <h1>Diller portali</h1>
+                    <p t-if="error" class="d-error" t-esc="error"/>
+                    <form t-if="mode == 'login'" method="post" action="/diller/login">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <label for="login">Telefon</label>
+                        <input id="login" name="login" type="tel" autocomplete="username" required="required"
+                               placeholder="+998 90 123 45 67" t-att-value="login"/>
+                        <label for="password">Parol</label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required="required"/>
+                        <button type="submit" class="d-btn d-primary">Kirish</button>
+                    </form>
+                    <form t-if="mode == 'invite'" method="post" t-attf-action="/diller/taklif/#{token}">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <p><b t-esc="name"/>, parol o'rnating. Keyin telefon raqamingiz (<t t-esc="phone"/>) va shu parol bilan kirasiz.</p>
+                        <label for="password">Yangi parol</label>
+                        <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required="required"/>
+                        <label for="password2">Parolni takrorlang</label>
+                        <input id="password2" name="password2" type="password" autocomplete="new-password" minlength="8" required="required"/>
+                        <button type="submit" class="d-btn d-primary">Saqlash va kirish</button>
+                    </form>
+                </main>
+            </body>
+        </html>
+    </template>
+</odoo>

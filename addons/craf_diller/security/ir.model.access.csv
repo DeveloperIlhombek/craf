@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_diller_return_seller,craf.diller.return seller,model_craf_diller_return,craf_sotuv.group_craf_seller,1,1,0,0
+access_craf_diller_return_line_seller,craf.diller.return.line seller,model_craf_diller_return_line,craf_sotuv.group_craf_seller,1,0,0,0
+access_craf_diller_notice_seller,craf.diller.notice seller,model_craf_diller_notice,craf_sotuv.group_craf_seller,1,0,0,0
+access_craf_diller_login_wizard,craf.diller.login.wizard manager,model_craf_diller_login_wizard,group_craf_diller_manager,1,1,1,1

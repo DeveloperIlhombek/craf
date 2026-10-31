@@ -18,6 +18,10 @@ class CrafPulController(http.Controller):
         Pul = request.env["craf.pul"]
         Pul._need()
         d = Pul.partner_detail(int(partner_id), kind, date_from or False, date_to or False)
+        return self._craf_akt_xlsx(d)
+
+    def _craf_akt_xlsx(self, d):
+        """partner_detail natijasidan Excel javobi (diller portali ham ishlatadi)."""
         cur = d["currency"]["symbol"]
         company = request.env.company
         out = io.BytesIO()

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_craf_diller_login_wizard" model="ir.ui.view">
+        <field name="name">craf.diller.login.wizard.form</field>
+        <field name="model">craf.diller.login.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="done" invisible="1"/>
+                <group invisible="done">
+                    <field name="partner_id" readonly="1" options="{'no_open': True}"/>
+                    <field name="name"/>
+                    <field name="phone" placeholder="+998 90 123 45 67" required="not done"/>
+                </group>
+                <div invisible="not done">
+                    <p><b><field name="name" readonly="1" nolabel="1"/></b>: shu havolani yuboring. U 7 kun amal qiladi, diller parolini o'zi o'rnatadi.</p>
+                    <field name="url" widget="CopyClipboardChar"/>
+                </div>
+                <footer>
+                    <button name="action_create" type="object" string="Login yaratish" class="btn-primary" invisible="done"/>
+                    <button special="cancel" string="Yopish" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

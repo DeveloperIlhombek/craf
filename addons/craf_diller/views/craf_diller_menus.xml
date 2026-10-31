@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_craf_diller_orders" name="Diller buyurtmalari" parent="sale.sale_order_menu"
+              action="action_craf_diller_orders" sequence="2" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_diller_returns" name="Qaytarish so'rovlari" parent="sale.sale_order_menu"
+              action="action_craf_diller_returns" sequence="3" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_dillers" name="Dillerlar" parent="sale.sale_order_menu"
+              action="action_craf_dillers" sequence="4" groups="craf_sotuv.group_craf_seller"/>
+    <menuitem id="menu_craf_diller_notices" name="Dillerlarga xabarlar" parent="sale.sale_order_menu"
+              action="action_craf_diller_notices" sequence="5" groups="craf_sotuv.group_craf_seller"/>
+</odoo>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_craf_diller" model="ir.ui.view">
+        <field name="name">res.partner.form.craf.diller</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Diller" name="craf_diller" invisible="parent_id" groups="craf_sotuv.group_craf_seller">
+                    <group>
+                        <group string="Portal">
+                            <field name="craf_is_diller" groups="craf_diller.group_craf_diller_manager"/>
+                            <field name="craf_diller_blocked" invisible="not craf_is_diller"
+                                   groups="craf_diller.group_craf_diller_manager"/>
+                            <field name="craf_auto_confirm" invisible="not craf_is_diller"
+                                   groups="craf_diller.group_craf_diller_manager"/>
+                            <field name="user_id" string="Mas'ul menejer" invisible="not craf_is_diller"/>
+                        </group>
+                        <group string="Narx va qarz" invisible="not craf_is_diller">
+                            <field name="property_product_pricelist" string="Narx turi"
+                                   groups="craf_diller.group_craf_diller_manager"/>
+                            <field name="craf_credit_limit" groups="craf_diller.group_craf_diller_manager"/>
+                            <field name="craf_debt"/>
+                            <field name="craf_sale_30"/>
+                            <field name="craf_last_order"/>
+                        </group>
+                    </group>
+                    <div invisible="not craf_is_diller" groups="craf_diller.group_craf_diller_manager">
+                        <group>
+                            <field name="craf_diller_login" invisible="not craf_diller_login"/>
+                        </group>
+                        <button name="action_craf_login_wizard" type="object" string="Login yaratish" class="btn-primary"
+                                icon="fa-user-plus" invisible="craf_diller_login"/>
+                        <button name="action_craf_login_link" type="object" string="Yangi kirish havolasi" icon="fa-link"
+                                invisible="not craf_diller_login"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_craf_diller_list" model="ir.ui.view">
+        <field name="name">res.partner.list.craf.diller</field>
+        <field name="model">res.partner</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="craf_diller_blocked" default_order="craf_last_order desc">
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="user_id" string="Menejer" optional="show"/>
+                <field name="property_product_pricelist" string="Narx turi" optional="show"/>
+                <field name="craf_credit_limit"/>
+                <field name="craf_debt"/>
+                <field name="craf_sale_30"/>
+                <field name="craf_last_order"/>
+                <field name="craf_auto_confirm" optional="hide"/>
+                <field name="craf_diller_blocked" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_craf_diller_search" model="ir.ui.view">
+        <field name="name">res.partner.search.craf.diller</field>
+        <field name="model">res.partner</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="inactive30" string="30 kundan beri olmagan"
+                        domain="['|', ('craf_last_order', '=', False), ('craf_last_order', '&lt;', (context_today() - relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="blocked" string="Bloklangan" domain="[('craf_diller_blocked', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_dillers" model="ir.actions.act_window">
+        <field name="name">Dillerlar</field>
+        <field name="res_model">res.partner</field>
+        <field name="path">craf-dillerlar</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('craf_is_diller', '=', True)]</field>
+        <field name="context">{'default_craf_is_diller': True, 'default_is_company': True, 'default_customer_rank': 1}</field>
+        <field name="search_view_id" ref="view_craf_diller_search"/>
+    </record>
+    <record id="action_craf_dillers_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_craf_diller_list"/>
+        <field name="act_window_id" ref="action_craf_dillers"/>
+    </record>
+</odoo>
