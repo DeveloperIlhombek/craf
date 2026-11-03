@@ -29,7 +29,7 @@ PAGES = {
         "get_data", "doc_detail", "doc_action", "basket_save", "basket_delete",
         "press_load", "press_options", "press_save", "chem_load", "chem_options", "chem_save",
         "paint_load", "paint_options", "paint_save", "nav_counts",
-        "issue_options", "issue_save"]),
+        "issue_options", "issue_save", "mat_issue_options", "mat_issue_save"]),
 }
 
 

@@ -132,6 +132,11 @@ class CrafSex(models.AbstractModel):
                            "note": "Stiker sarfi bo'yalgan profil uzunligi va tomoni bo'yicha avtomatik hisoblanadi."})
         return groups
 
+    def _own_employee(self):
+        """Shaxsiy ilovali xodim (kimyo, bo'yash) — mas'ul o'zi (sahifada tanlanmaydi)."""
+        user = self.env.user
+        return (user.employee_id.id or False) if user._craf_own_app() else False
+
     def _employees(self):
         return [{"id": e.id, "name": e.name, "job": e.job_title or ""}
                 for e in self.env["hr.employee"].sudo().search([], order="name")]
@@ -163,10 +168,10 @@ class CrafSex(models.AbstractModel):
         Model = self._model(stage)
         docs = Model.search([("date", ">=", dfrom), ("date", "<=", dto)], order="date desc, id desc")
         drafts = Model.search([("state", "=", "draft")], order="date desc, id desc")
+        issue_kind = {"kimyo": "kislota", "boyash": "boyash"}.get(stage)
         issues = self.env["craf.chem.issue"].search(
-            [("kind", "=", "kislota"), ("date", ">=", dfrom), ("date", "<=", dto), ("state", "=", "done")],
-            order="date desc, id desc") \
-            if stage == "kimyo" else self.env["craf.chem.issue"]
+            [("kind", "=", issue_kind), ("date", ">=", dfrom), ("date", "<=", dto), ("state", "=", "done")],
+            order="date desc, id desc") if issue_kind else self.env["craf.chem.issue"]
         stages = []
         for key, label, model, _loc in STAGES:
             if own and key != own:
@@ -434,7 +439,7 @@ class CrafSex(models.AbstractModel):
             "equipment_id": int(vals["equipment_id"]) if vals.get("equipment_id") else False,
             "section_id": section.id,
             "shift": vals.get("shift") or "1",
-            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
+            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else self._own_employee(),
             "billet_qty": self._num(vals.get("billet_text"), "Quyma sarfi"),
             "rest_qty": self._num(vals.get("rest_text"), "Press qoldig'i (питак)"),
             "scrap_qty": self._num(vals.get("scrap_text"), "Brak"),
@@ -580,7 +585,7 @@ class CrafSex(models.AbstractModel):
         header = {
             "date": vals.get("date") or fields.Date.context_today(self),
             "shift": vals.get("shift") or "1",
-            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
+            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else self._own_employee(),
             "equipment_id": int(vals["equipment_id"]) if vals.get("equipment_id") else False,
             "note": (vals.get("note") or "").strip() or False,
             "load_ids": [Command.set(loads.ids)],
@@ -602,7 +607,8 @@ class CrafSex(models.AbstractModel):
         return {
             "id": rec.id, "name": rec.name, "date_label": rec.date.strftime("%d.%m.%Y"),
             "who": rec.employee_id.sudo().name or "", "total": _q(rec.qty_total, 2),
-            "lines": [{"name": l.product_id.name, "qty": _q(l.qty, 2)} for l in rec.line_ids if l.qty > EPS],
+            "lines": [{"name": l.product_id.name, "qty": _q(l.qty, 2), "uom": self._uom_label(l.product_id)}
+                      for l in rec.line_ids if l.qty > EPS],
             "note": rec.note or "",
         }
 
@@ -622,22 +628,46 @@ class CrafSex(models.AbstractModel):
         }
 
     @api.model
+    def mat_issue_options(self):
+        """Bo'yash materiallari sarfi: bo'yoqlar, salofan va lenta — zavoddagi qoldig'i bilan."""
+        Issue = self.env["craf.chem.issue"]
+        rows = []
+        for p in Issue._craf_chem_products("boyash"):
+            group = "pack" if p.default_code in ("QM-01", "QM-02") else "paint"
+            rows.append({"id": p.id, "name": p.name, "code": p.default_code or "", "uom": self._uom_label(p),
+                         "avail": round(p.qty_available, 2), "group": group})
+        return {
+            "today": fields.Date.to_string(fields.Date.context_today(self)),
+            "chems": rows,
+            "employees": self._employees(),
+            "my_employee": self.env.user.employee_id.id or False,
+        }
+
+    @api.model
+    def mat_issue_save(self, vals):
+        """Ombordan olingan bo'yash materiallari: yoziladi va shu zahoti sarfga yechiladi."""
+        return self._issue_save("boyash", vals)
+
+    @api.model
     def issue_save(self, vals):
         """Ombordan olingan kislota: yoziladi va shu zahoti ombordan sarfga yechiladi."""
+        return self._issue_save("kislota", vals)
+
+    def _issue_save(self, kind, vals):
         Issue = self.env["craf.chem.issue"]
         lines = []
-        for c in Issue._craf_chem_products():
+        for c in Issue._craf_chem_products(kind):
             qty = self._num((vals.get("qty") or {}).get(str(c.id)), c.name)
             if qty > EPS:
                 lines.append(Command.create({"product_id": c.id, "qty": qty}))
         if not lines:
-            raise UserError("Olingan kislota miqdorini yozing (kg).")
+            raise UserError("Olingan miqdorni yozing.")
         date = vals.get("date") or fields.Date.context_today(self)
         moment = self._H._moment(date)
         rec = Issue.create({
-            "kind": "kislota",
+            "kind": kind,
             "date": date,
-            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
+            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else self._own_employee(),
             "note": (vals.get("note") or "").strip() or False,
             "line_ids": lines,
         })
@@ -756,7 +786,7 @@ class CrafSex(models.AbstractModel):
             "date": vals.get("date") or fields.Date.context_today(self),
             "shift": vals.get("shift") or "1",
             "color_id": color.id,
-            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
+            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else self._own_employee(),
             "equipment_id": int(vals["equipment_id"]) if vals.get("equipment_id") else False,
             "note": (vals.get("note") or "").strip() or False,
             "load_ids": [Command.set(loads.ids)],
@@ -773,16 +803,22 @@ class CrafSex(models.AbstractModel):
         for line in lines:
             # qadoqlangan berilsa va kirdi berilmasa — kirdi = qadoqlandi + brak
             commands.append(Command.create(line))
-        rec.write({"line_ids": commands, "powder_qty": powder})
+        own_issue = self.env.user._craf_own_app() == "boyash"
+        rec.write({"line_ids": commands, "powder_qty": 0.0 if own_issue else powder})
         # qadoqlash materiallari: yozilmagan bo'lsa — me'yor × qadoqlangan pachka
         norm = self.env["craf.mrp.norm"]._get_norm(self.env.company)
         packs = sum(rec.line_ids.mapped("out_packs"))
         film = self._num(vals.get("film_text"), "Plyonka")
         tape = self._num(vals.get("tape_text"), "Lenta")
-        rec.write({
-            "film_qty": film if (vals.get("film_text") or "").strip() else round(packs * norm.film_kg_per_pack, 2),
-            "tape_qty": tape if (vals.get("tape_text") or "").strip() else round(packs * norm.tape_m_per_pack, 1),
-        })
+        if own_issue:
+            # bo'yash xodimi bo'yoq, salofan va lentani ombordan olganda yozadi (Materiallar → sarf) — smenada yechilmaydi;
+            # stiker — avtomatik (profil uzunligi va tomoni bo'yicha)
+            rec.write({"film_qty": 0.0, "tape_qty": 0.0})
+        else:
+            rec.write({
+                "film_qty": film if (vals.get("film_text") or "").strip() else round(packs * norm.film_kg_per_pack, 2),
+                "tape_qty": tape if (vals.get("tape_text") or "").strip() else round(packs * norm.tape_m_per_pack, 1),
+            })
         for line in rec.line_ids:
             if line.pcs_packed and not line.pcs_in:
                 line.write({"pcs_in": line.pcs_packed + (line.pcs_defect or 0), "pcs_in_auto": True})

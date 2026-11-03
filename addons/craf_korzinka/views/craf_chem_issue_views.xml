@@ -76,6 +76,7 @@
                 <field name="line_ids" string="Kislota" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
                 <filter name="kislota" string="Kislota" domain="[('kind', '=', 'kislota')]"/>
                 <filter name="soda" string="Kaustik soda" domain="[('kind', '=', 'soda')]"/>
+                <filter name="boyash" string="Bo'yash materiallari" domain="[('kind', '=', 'boyash')]"/>
                 <separator/>
                 <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
                 <separator/>

@@ -243,6 +243,17 @@ $sx-tap: 44px;
             font-size: 1rem;
         }
     }
+    .sx-owner {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 38px;
+        font-weight: 600;
+        > .fa {
+            color: $sx-muted;
+        }
+    }
+
     // bo'yash: sexdagi profil qatori va materiallar holati
     .sx-semi {
         width: 100%;

@@ -14,7 +14,7 @@ const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 const BOLIM_STAGES = { press: ["press"], boyash: ["kimyo", "boyash"] };
 const BOLIM_TITLE = { press: "Press", boyash: "Bo'yash va qadoqlash" };
 // modal emas, alohida sahifada ochiladigan formalar (telefonda pastki panel bilan to'qnashmaydi)
-const PAGE_SHEETS = new Set(["chem", "doc", "issue", "paint"]);
+const PAGE_SHEETS = new Set(["chem", "doc", "issue", "paint", "matissue"]);
 const STAGE_MODEL = { press: "craf.extrusion.shift", kimyo: "craf.chem.treatment", boyash: "craf.paint.batch" };
 
 function addDays(iso, n) {
@@ -334,6 +334,9 @@ export class CrafSex extends Component {
         if (this.state.stage === "kimyo" && this.state.tab === "kislota") {
             return this.openIssue();
         }
+        if (this.state.stage === "boyash" && this.state.tab === "material") {
+            return this.openMatIssue();
+        }
         if (this.state.stage === "press") {
             return this.openPress();
         }
@@ -531,6 +534,45 @@ export class CrafSex extends Component {
             this.openSheet({ type: "chem", o, f, loads });
         });
     }
+    // ---------------------------------------------------------------- BO'YASH MATERIALLARI (ombordan olish)
+    async openMatIssue() {
+        await this.run(async () => {
+            const o = await this.orm.call(API, "mat_issue_options", []);
+            const f = { date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
+            this.openSheet({ type: "matissue", o, f });
+        });
+    }
+    get matGroups() {
+        return [{ key: "paint", title: "Bo'yoqlar (kukun)" }, { key: "pack", title: "Salofan va lenta" }];
+    }
+    matGroup(s, group) {
+        return s.o.chems.filter((c) => c.group === group);
+    }
+    saveMatIssue() {
+        const s = this.state.sheet;
+        const picked = s.o.chems.filter((c) => toNum(s.f.qty[c.id]) > 0);
+        if (!picked.length) {
+            s.error = "Olingan miqdorni yozing.";
+            return;
+        }
+        const over = picked.filter((c) => toNum(s.f.qty[c.id]) > c.avail);
+        if (over.length) {
+            s.error = over.map((c) => `${c.name}: zavodda ${this.num(c.avail, 2)} ${c.uom}, yozildi ${this.num(toNum(s.f.qty[c.id]), 2)}`).join("\n");
+            return;
+        }
+        const lines = picked.map((c) => `${c.name} — ${this.num(toNum(s.f.qty[c.id]), 2)} ${c.uom}`);
+        this.confirm("Material olindi", `${lines.join("; ")}. Ombordan sarfga yechiladi.`, "Saqlash", () =>
+            this.run(async () => {
+                const res = await this.orm.call(API, "mat_issue_save", [
+                    { ...s.f, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false },
+                ]);
+                this.notification.add(`${res.name}: sarf yozildi`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
+    }
+
     // ---------------------------------------------------------------- KISLOTA (ombordan olish)
     async openIssue() {
         await this.run(async () => {
@@ -712,6 +754,10 @@ export class CrafSex extends Component {
             avail: semi ? semi.avail : 0,
         };
     }
+    employeeName(opts, id) {
+        const e = (opts.employees || []).find((x) => x.id === Number(id));
+        return e ? e.name : "—";
+    }
     paintTotals(s) {
         let area = 0;
         let ok = 0;
@@ -790,9 +836,12 @@ export class CrafSex extends Component {
                 await this.refresh();
             });
         if (confirm) {
+            const own = this.state.data.roles.own;
             this.confirm("Bo'yashni tasdiqlash",
-                `${t.color ? t.color.name : ""}: bo'yaldi ${this.num(t.ok, 0)} dona, brak ${this.num(t.defect, 0)} dona, kukun ${this.num(t.powder, 2)} kg. ` +
-                    "Bo'yalgan profil darhol Tayyor mahsulot omboriga o'tadi (sotishga tayyor); bo'yoq, salofan, lenta va stiker sarfi yechiladi.", "Tasdiqlash", doSave);
+                `${t.color ? t.color.name : ""}: bo'yaldi ${this.num(t.ok, 0)} dona, brak ${this.num(t.defect, 0)} dona` +
+                    (own ? ". " : `, kukun ${this.num(t.powder, 2)} kg. `) +
+                    "Bo'yalgan profil darhol Tayyor mahsulot omboriga o'tadi (sotishga tayyor)" +
+                    (own ? "; stiker sarfi avtomatik yechiladi." : "."), "Tasdiqlash", doSave);
         } else {
             doSave();
         }

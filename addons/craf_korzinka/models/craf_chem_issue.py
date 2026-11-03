@@ -1,5 +1,5 @@
-"""Kislota / kaustik soda olish: xodim ombordan qancha kimyoviy modda olib ketganini bir marta yozadi
-(kislota — kimyo xodimi, kaustik soda — matritsa xodimi, qoliplarni tozalash uchun).
+"""Kislota / kaustik soda / bo'yash materiallari olish: xodim ombordan qancha olib ketganini bir marta yozadi
+(kislota — kimyo xodimi, kaustik soda — matritsa xodimi, bo'yoq, salofan va lenta — bo'yash xodimi).
 
 Kimyo sarfi har bir kimyoviy ishlovda kuzatilmaydi (2026-11-03 qarori) — olib ketilgan miqdor shu zahoti
 sarf hisoblanadi: Xom-ashyo omboridan ishlab chiqarishga (sarfga) yechiladi.
@@ -12,13 +12,16 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
 
 CHEM_CODES = ("XA-03", "XA-04", "XA-05")
-ISSUE_KINDS = [("kislota", "Kislota"), ("soda", "Kaustik soda")]
+ISSUE_KINDS = [("kislota", "Kislota"), ("soda", "Kaustik soda"), ("boyash", "Bo'yash materiallari")]
 KIND_CODES = {"kislota": CHEM_CODES, "soda": ("XA-10",)}
+# bo'yash: rang kartochkalaridagi kukun bo'yoqlar + rangsiz kukunlar, salofan (plyonka) va lenta; stiker — avtomatik
+PAINT_CODES = ("XA-01", "XA-11", "XA-12")
+PACK_CODES = ("QM-01", "QM-02")
 
 
 class CrafChemIssue(models.Model):
     _name = "craf.chem.issue"
-    _description = "Ombordan olingan kimyo (kislota, kaustik soda)"
+    _description = "Ombordan olingan material (kislota, kaustik soda, bo'yash materiallari)"
     _inherit = ["craf.production.mixin"]
     _order = "date desc, id desc"
 
@@ -36,41 +39,65 @@ class CrafChemIssue(models.Model):
         for rec in self:
             lines = rec.line_ids.filtered(lambda l: l.qty > EPS)
             rec.qty_total = sum(lines.mapped("qty"))
-            rec.content = ", ".join("%s %s kg" % (l.product_id.name, fmt(l.qty, 2)) for l in lines) or False
+            rec.content = ", ".join("%s %s %s" % (l.product_id.name, fmt(l.qty, 2), l.product_id.uom_id.name)
+                                    for l in lines) or False
 
     @api.model
     def _craf_chem_products(self, kind="kislota"):
-        products = self.env["product.product"]
+        Product = self.env["product.product"]
+        if kind == "boyash":
+            colors = self.env["craf.color"].search([("is_painted", "=", True), ("paint_tmpl_id", "!=", False)])
+            paints = colors.paint_tmpl_id.product_variant_ids | Product.search([("default_code", "in", PAINT_CODES)])
+            return paints.sorted("name") | Product.search([("default_code", "in", PACK_CODES)], order="default_code")
+        products = Product
         for code in KIND_CODES.get(kind, CHEM_CODES):
             products |= self._craf_product(code)
         return products
+
+    def _craf_take_plan(self, product, qty):
+        """[(joy, miqdor)] — avval «Sarf qayerdan» joyidan, yetmasa boshqa ichki joylardan (ko'pi birinchi)."""
+        Quant = self.env["stock.quant"]
+        by_loc = {}
+        for quant in Quant.search([("product_id", "=", product.id), ("location_id.usage", "=", "internal"),
+                                   ("quantity", ">", 0), ("company_id", "in", [self.company_id.id, False])]):
+            by_loc[quant.location_id] = by_loc.get(quant.location_id, 0.0) + quant.quantity
+        plan, left = [], qty
+        for loc, avail in sorted(by_loc.items(), key=lambda kv: (kv[0] != self.location_src_id, -kv[1])):
+            take = min(left, avail)
+            if take > EPS:
+                plan.append((loc, take))
+                left -= take
+            if left <= EPS:
+                break
+        if left > EPS:
+            raise UserError("%s: zavodda yetarli emas — kerak %s, bor %s %s." % (
+                product.display_name, fmt(qty, 2), fmt(qty - left, 2), product.uom_id.name))
+        return plan
 
     def _craf_action_done(self):
         self.ensure_one()
         lines = self.line_ids.filtered(lambda l: l.qty > EPS)
         if not lines:
             raise UserError("Olingan miqdorni yozing.")
-        needs = {}
-        for line in lines:
-            needs[line.product_id] = needs.get(line.product_id, 0.0) + line.qty
-        self._craf_check_available(self.location_src_id, needs)
+        plans = {line: self._craf_take_plan(line.product_id, line.qty) for line in lines}  # avval hammasi tekshiriladi
         for line in lines:
             dest = line.product_id.with_company(self.company_id).property_stock_production
-            move = self.env["stock.move"].create({
-                "product_id": line.product_id.id,
-                "product_uom_qty": line.qty,
-                "product_uom": line.product_id.uom_id.id,
-                "location_id": self.location_src_id.id,
-                "location_dest_id": dest.id,
-                "origin": self.name,
-                "company_id": self.company_id.id,
-            })
-            move._action_confirm()
-            move._action_assign()
-            move.quantity = line.qty
-            move.picked = True
-            move._action_done()
-            line.move_id = move
+            for loc, qty in plans[line]:
+                move = self.env["stock.move"].create({
+                    "product_id": line.product_id.id,
+                    "product_uom_qty": qty,
+                    "product_uom": line.product_id.uom_id.id,
+                    "location_id": loc.id,
+                    "location_dest_id": dest.id,
+                    "origin": self.name,
+                    "company_id": self.company_id.id,
+                })
+                move._action_confirm()
+                move._action_assign()
+                move.quantity = qty
+                move.picked = True
+                move._action_done()
+                line.move_id = line.move_id or move
         self._craf_post_summary([
             Markup("<b>%s olindi</b> — %s") % (dict(ISSUE_KINDS)[self.kind], self.location_src_id.name),
             self.content or "—",

@@ -127,6 +127,13 @@ class CrafKunlikHisobot(models.AbstractModel):
                 self._add(used, d.powder_product_id, d.powder_qty)
                 for line in d.chem_line_ids:
                     self._add(used, line.product_id, line.qty)
+            # bo'yoq, salofan, lenta — ombordan olingan kuni (Materiallar → sarf)
+            day = self.env.context.get("craf_day")
+            if day:
+                for issue in self.env["craf.chem.issue"].search(
+                        [("kind", "=", "boyash"), ("date", "=", day), ("state", "=", "done")]):
+                    for line in issue.line_ids:
+                        self._add(used, line.product_id, line.qty)
             pcs_in = sum(done.mapped("pcs_in"))
             if pcs_in:
                 extra.append("Brak: %.2f%%" % (sum(done.mapped("pcs_defect")) / pcs_in * 100))

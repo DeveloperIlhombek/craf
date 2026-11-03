@@ -95,6 +95,35 @@
         <p class="cl-note">Kislota har ishlovda emas — ombordan olib ketilganda bir marta yoziladi va ombordan sarfga yechiladi.</p>
     </t>
 
+    <!-- BO'YASH MATERIALLARI: ombordan olingan bo'yoq, salofan, lenta -->
+    <t t-name="craf_sex.SheetMatIssue">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="'Material olindi'"/>
+            <t t-set="sub" t-value="&quot;Ombordan olib ketilgan bo'yoq, salofan, lenta&quot;"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
+                <div class="cl-field">
+                    <span>Kim oldi</span>
+                    <div class="sx-owner"><i class="fa fa-user-circle-o"/> <t t-esc="employeeName(s.o, f.employee_id)"/></div>
+                </div>
+            </div>
+            <t t-foreach="matGroups" t-as="grp" t-key="grp.key">
+                <h3 class="cl-lines-head" t-esc="grp.title"/>
+                <div class="sx-direct" t-foreach="matGroup(s, grp.key)" t-as="c" t-key="c.id">
+                    <span><t t-esc="c.name"/><small class="d-block cl-muted"><t t-esc="c.code"/> · zavodda <t t-esc="num(c.avail, 2)"/> <t t-esc="c.uom"/></small></span>
+                    <input type="text" inputmode="decimal" class="form-control" placeholder="0" t-model="f.qty[c.id]" t-att-aria-label="c.name + ', ' + c.uom"/>
+                </div>
+            </t>
+            <label class="cl-field mt-3"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveMatIssue" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
     <t t-name="craf_sex.SheetIssue">
         <t t-set="f" t-value="s.f"/>
         <t t-call="craf_sex.Head">
@@ -133,6 +162,7 @@
             <t t-elif="s.type === 'doc'" t-call="craf_sex.SheetDoc"/>
             <t t-elif="s.type === 'issue'" t-call="craf_sex.SheetIssue"/>
             <t t-elif="s.type === 'paint'" t-call="craf_sex.SheetPaint"/>
+            <t t-elif="s.type === 'matissue'" t-call="craf_sex.SheetMatIssue"/>
             <div class="cl-sheet-error" t-if="s.error" role="alert">
                 <i class="fa fa-exclamation-circle"/>
                 <div class="cl-sheet-error-text" t-esc="s.error"/>
@@ -266,7 +296,26 @@
 
     <!-- BO'YASH: materiallar (faqat ko'rish; sarf bo'yash hujjatidan avtomatik yechiladi) -->
     <t t-name="craf_sex.TabMaterial">
-        <p class="cl-note">Materiallar qoldig'i — faqat ko'rish uchun. Sarf bo'yash smenasi tasdiqlanganda avtomatik yechiladi.</p>
+        <div class="sx-h-row">
+            <h2 class="sx-h">Ombordan olingan <span class="cl-muted" t-esc="d.issues.length"/></h2>
+            <button class="btn btn-link cl-link" t-on-click="openMatIssue"><i class="fa fa-plus"/> Sarf yozish</button>
+        </div>
+        <div class="cl-empty sx-empty-card" t-if="!d.issues.length">
+            <i class="fa fa-cubes"/>
+            <div>Bu davrda material olinmagan.</div>
+            <button class="btn btn-primary mt-2" t-on-click="openMatIssue"><i class="fa fa-plus"/> Sarf yozish</button>
+        </div>
+        <div class="cl-list" t-else="">
+            <div class="cl-doc" t-foreach="d.issues" t-as="i" t-key="i.id">
+                <span class="cl-doc-icon cl-k-kirim"><i class="fa fa-cubes"/></span>
+                <span class="cl-doc-main">
+                    <span class="cl-doc-name"><t t-esc="i.name"/></span>
+                    <span class="cl-doc-sub"><t t-esc="i.date_label"/><t t-if="i.who"> · <t t-esc="i.who"/></t></span>
+                    <span class="cl-doc-sub" t-foreach="i.lines" t-as="l" t-key="l_index"><t t-esc="l.name"/> — <b t-esc="l.qty"/> <t t-esc="l.uom"/></span>
+                </span>
+            </div>
+        </div>
+        <p class="cl-note">Bo'yoq, salofan va lenta ombordan olib ketilganda bir marta yoziladi va o'sha zahoti sarfga yechiladi. Stiker sarfi bo'yash smenasidan avtomatik. Pastda — qoldiqlar (faqat ko'rish).</p>
         <section class="sx-mat-group" t-foreach="d.materials" t-as="g" t-key="g.key">
             <h2 class="sx-h"><i t-att-class="'fa ' + g.icon"/> <t t-esc="g.title"/> <span class="cl-muted" t-esc="g.rows.length"/></h2>
             <p class="cl-hint" t-if="g.note" t-esc="g.note"/>
@@ -389,7 +438,12 @@
             </div>
         </div>
         <div class="cl-field-row">
-            <label class="cl-field">
+            <!-- shaxsiy ilovali xodim (kimyo, bo'yash): mas'ul — account egasi, tanlanmaydi -->
+            <div class="cl-field" t-if="state.data.roles.own">
+                <span>Mas'ul</span>
+                <div class="sx-owner"><i class="fa fa-user-circle-o"/> <t t-esc="employeeName(opts, f.employee_id)"/></div>
+            </div>
+            <label class="cl-field" t-else="">
                 <span>Mas'ul</span>
                 <select class="form-select" t-model="f.employee_id">
                     <option value="">—</option>
@@ -648,6 +702,7 @@
                 </select>
                 <button class="btn btn-outline-secondary" t-on-click="addPaintLine" t-att-disabled="!s.addSemi"><i class="fa fa-plus"/></button>
             </div>
+            <t t-if="!state.data.roles.own">
             <h3 class="cl-lines-head">Kukun <span class="cl-muted">— me'yor <t t-esc="num(pt.powderNorm, 2)"/> kg (<t t-esc="num(pt.area, 1)"/> m²)</span></h3>
             <div class="cl-field-row">
                 <label class="cl-field" t-if="pt.color and pt.color.pkg_kg"><span><t t-esc="pt.color.pkg_name"/> (<t t-esc="num(pt.color.pkg_kg, 1)"/> kg)</span><input type="text" inputmode="decimal" class="form-control" t-model="f.powder_bags" placeholder="0"/></label>
@@ -662,11 +717,15 @@
                     </label>
                 </div>
             </t>
+            </t>
+            <p class="cl-hint" t-else="">Bo'yoq, salofan va lenta — «Materiallar» bo'limida, ombordan olinganda yoziladi. Stiker sarfi avtomatik hisoblanadi.</p>
             <div class="sx-preview">
                 <div class="cl-kv"><span>Bo'yaldi</span><b><t t-esc="num(pt.ok, 0)"/> dona · <t t-esc="num(pt.kg, 0)"/> kg</b></div>
                 <div class="cl-kv"><span>Brak</span><b><t t-esc="num(pt.defect, 0)"/> dona</b></div>
-                <div class="cl-kv cl-kv-total"><span>Kukun</span><b><t t-esc="num(pt.powder, 2)"/> kg</b></div>
-                <div class="cl-kv" t-foreach="s.o.pack_materials || []" t-as="m" t-key="m.key"><span t-esc="m.name"/><b><t t-esc="num(pt.mats[m.key].qty, 2)"/> <t t-esc="m.uom"/></b></div>
+                <t t-if="!state.data.roles.own">
+                    <div class="cl-kv cl-kv-total"><span>Kukun</span><b><t t-esc="num(pt.powder, 2)"/> kg</b></div>
+                    <div class="cl-kv" t-foreach="s.o.pack_materials || []" t-as="m" t-key="m.key"><span t-esc="m.name"/><b><t t-esc="num(pt.mats[m.key].qty, 2)"/> <t t-esc="m.uom"/></b></div>
+                </t>
             </div>
             <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
         </div>
