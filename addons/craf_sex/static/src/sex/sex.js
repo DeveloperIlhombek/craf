@@ -72,6 +72,9 @@ export class CrafSex extends Component {
         onWillStart(async () => {
             const ctx = (this.props.action && this.props.action.context) || {};
             let stage = ctx.craf_stage || null;
+            if (["ish", "hujjat", "qoldiq"].includes(ctx.craf_tab)) {
+                this.state.tab = ctx.craf_tab; // telefondagi pastki paneldan
+            }
             if (!stage) {
                 try {
                     stage = window.localStorage.getItem(STAGE_KEY);
@@ -161,6 +164,9 @@ export class CrafSex extends Component {
         return `${dm(from)} – ${dm(to)}`;
     }
     get pageTitle() {
+        if (this.state.data && this.state.data.roles.own) {
+            return this.stageTitle;
+        }
         return this.bolim ? BOLIM_TITLE[this.bolim] : "Sexlar";
     }
     get visibleStages() {
@@ -480,10 +486,19 @@ export class CrafSex extends Component {
                 }
                 f.pick = Object.fromEntries(f.load_ids.map((i) => [i, true]));
             } else {
-                f = { id: false, date: o.today, shift: "1", employee_id: false, equipment_id: (o.equipment[0] || {}).id || false,
+                f = { id: false, date: o.today, shift: "1", employee_id: o.my_employee || false, equipment_id: (o.equipment[0] || {}).id || false,
                       chem: {}, note: "", pick: { ...this.state.pick } };
                 if (!Object.keys(f.pick).length) {
                     f.pick = Object.fromEntries(loads.map((l) => [l.id, true]));
+                }
+            }
+            // har korzinka × profil uchun: yaroqsiz va 6 → 5 m kesilgan dona
+            const defects = f.defects || {};
+            f.defects = {};
+            for (const l of loads) {
+                for (const p of l.products) {
+                    const k = `${l.id}_${p.id}`;
+                    f.defects[k] = { brak: (defects[k] && defects[k].brak) || "", cut: (defects[k] && defects[k].cut) || "" };
                 }
             }
             this.openSheet({ type: "chem", o, f, loads });
@@ -499,6 +514,29 @@ export class CrafSex extends Component {
             s.f.pick[load.id] = true;
         }
     }
+    defectRow(s, load, product) {
+        return s.f.defects[`${load.id}_${product.id}`] || { brak: "", cut: "" };
+    }
+    defectLeft(product, row) {
+        return product.qty - toInt(row.brak) - toInt(row.cut);
+    }
+    chemDefects(s) {
+        const rows = [];
+        for (const l of this.sheetPicked(s)) {
+            for (const p of l.products) {
+                const row = this.defectRow(s, l, p);
+                const brak = toInt(row.brak);
+                const cut = p.length === 6 ? toInt(row.cut) : 0;
+                if (brak || cut) {
+                    if (brak + cut > p.qty) {
+                        throw new Error(`${l.basket}: ${p.name} — ichida ${p.qty} dona, yozildi ${brak + cut}.`);
+                    }
+                    rows.push({ load_id: l.id, product_id: p.id, brak, cut });
+                }
+            }
+        }
+        return rows;
+    }
     chemArea(s) {
         return this.sheetPicked(s).reduce((a, l) => a + l.area, 0);
     }
@@ -512,21 +550,32 @@ export class CrafSex extends Component {
             s.error = "Ishlov berilgan korzinkalarni belgilang.";
             return;
         }
+        let defects;
+        try {
+            defects = this.chemDefects(s);
+        } catch (e) {
+            s.error = e.message;
+            return;
+        }
         const doSave = () =>
             this.run(async () => {
                 const res = await this.orm.call(API, "chem_save", [
-                    { ...s.f, load_ids: ids, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false,
+                    { ...s.f, defects, load_ids: ids, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false,
                       equipment_id: s.f.equipment_id ? Number(s.f.equipment_id) : false },
                     Boolean(confirm),
                 ]);
-                this.notification.add(confirm ? `${res.name} tasdiqlandi — korzinkalar bo'yashga o'tdi` : `${res.name} saqlandi`, { type: "success" });
+                this.notification.add(confirm ? `${res.name} tasdiqlandi — korzinkalar bo'yashga tayyor` : `${res.name} saqlandi`, { type: "success" });
                 this.state.pick = {};
                 this.closeSheet();
                 await this.refresh();
             });
         if (confirm) {
+            const brak = defects.reduce((a, r) => a + r.brak, 0);
+            const cut = defects.reduce((a, r) => a + r.cut, 0);
             this.confirm("Kimyoviy ishlovni tasdiqlash",
-                `${ids.length} ta korzinka bo'yash sexiga o'tadi, kimyo Kimyoviy ishlov joyidan yechiladi.`, "Tasdiqlash", doSave);
+                `${ids.length} ta korzinka bo'yashga tayyor bo'ladi` +
+                    (brak || cut ? `; yaroqsiz ${brak} dona, 6 → 5 m kesildi ${cut} dona — Liteykaga yoziladi` : "") +
+                    ". Kimyo qoldiqdan yechiladi.", "Tasdiqlash", doSave);
         } else {
             doSave();
         }

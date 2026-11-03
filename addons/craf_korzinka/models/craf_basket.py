@@ -3,11 +3,12 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
-# Korzinka aylanishi: press yuklaydi → bo'yash va qadoqlash bo'limida («press»/«kimyo» — eski kimyoviy ishlov holati)
+# Korzinka aylanishi: press yuklaydi → bo'yash va qadoqlash bo'limida («press» — kimyoga kutmoqda, «kimyo» — kimyoviy
+# ishlovdan o'tgan, bo'yashga tayyor)
 # → korzinka press varag'ida qayta yozilganda oldingi yuk «Qaytdi» bo'ladi (profillar bo'yashdan o'tgan).
 LOAD_STATES = [
     ("press", "Bo'yashda"),
-    ("kimyo", "Bo'yashda"),
+    ("kimyo", "Kimyodan o'tdi"),
     ("boyash", "Qaytdi"),
 ]
 ACTIVE = ("press", "kimyo")

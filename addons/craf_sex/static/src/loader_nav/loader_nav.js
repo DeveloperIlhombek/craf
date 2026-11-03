@@ -6,6 +6,7 @@ import { session } from "@web/session";
 /**
  * Telefondagi pastki panel (bottom bar).
  *  - Yuklovchi: maxsus bandlar (session.craf_loader_nav): Yuklash, Bugun, Qoldiq, Sanash, Yuk xati.
+ *  - Kimyo xodimi: kimyo sahifasining varaqlari (Korzinkalar, Hujjatlar, Qoldiq).
  *  - Boshqa barcha foydalanuvchilar: ochiq turgan ilovaning bo'limlari (menyudan avtomatik,
  *    ya'ni har kim faqat o'ziga ruxsat berilgan bo'limlarni ko'radi). 4 tadan ko'p bo'lsa —
  *    «Ko'proq» varag'i; ichki bo'limi bor band bosilsa — pastdan ro'yxat chiqadi.
@@ -52,18 +53,19 @@ export class CrafLoaderNav extends Component {
         this.ui = useState(useService("ui"));
         this.loaderItems = session.craf_loader_nav || [];
         this.isLoader = this.loaderItems.length > 0;
+        this.countsCall = session.craf_nav_counts || null; // [model, metod] — belgilardagi sonlar
         this.state = useState({ active: null, counts: {}, items: [], more: [], sheet: null });
         this._onUpdate = () => {
             this.rebuild();
             this.state.active = this.detect();
-            if (this.isLoader) {
+            if (this.countsCall) {
                 this.refreshCounts();
             }
         };
         onMounted(() => {
             this.env.bus.addEventListener("ACTION_MANAGER:UI-UPDATED", this._onUpdate);
             this.env.bus.addEventListener("MENUS:APP-CHANGED", this._onUpdate);
-            if (this.isLoader) {
+            if (this.countsCall) {
                 this._timer = setInterval(() => {
                     if (document.visibilityState === "visible") {
                         this.refreshCounts();
@@ -135,8 +137,9 @@ export class CrafLoaderNav extends Component {
             return null;
         }
         if (this.isLoader) {
-            if (action.tag === "craf_sotuv") {
-                return (action.context && action.context.craf_tab) || "load";
+            const tabbed = this.loaderItems.filter((it) => it.tab && (it.tag || "craf_sotuv") === action.tag);
+            if (tabbed.length) {
+                return (action.context && action.context.craf_tab) || tabbed[0].key;
             }
             const item = this.loaderItems.find(
                 (it) => it.action_id && (action.id === it.action_id || (it.res_model && action.res_model === it.res_model))
@@ -152,7 +155,7 @@ export class CrafLoaderNav extends Component {
 
     async refreshCounts() {
         try {
-            this.state.counts = await this.orm.silent.call("craf.sotuv", "loader_nav_counts", []);
+            this.state.counts = await this.orm.silent.call(this.countsCall[0], this.countsCall[1], []);
         } catch {
             // tarmoq uzilgan bo'lsa — eski son qoladi
         }
@@ -174,9 +177,9 @@ export class CrafLoaderNav extends Component {
             await this.action.doAction(
                 {
                     type: "ir.actions.client",
-                    tag: "craf_sotuv",
+                    tag: item.tag || "craf_sotuv",
                     name: item.label,
-                    context: { craf_tab: item.tab },
+                    context: { ...(item.context || {}), craf_tab: item.tab },
                     target: "current",
                 },
                 { clearBreadcrumbs: true }

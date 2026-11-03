@@ -24,18 +24,29 @@ class ResUsers(models.Model):
         return self.has_group("craf_sotuv.group_craf_loader") and not any(
             self.has_group(g) for g in self.CRAF_FULL_ROLES)
 
+    def _craf_is_kimyo_only(self):
+        """Kimyo xodimi: Sex ishchisi, «Ish joyi» — Kimyoviy ishlov, boshqa (kattaroq) roli yo'q.
+        Telefon uchun: faqat «Kimyo» ilovasi, pastki panel, bosh sahifa — kimyo sahifasi."""
+        self.ensure_one()
+        return (self.craf_work_stage == "kimyo" and self.has_group("craf_sex.group_craf_worker")
+                and not any(self.has_group(g) for g in ("base.group_system", "craf_sotuv.group_craf_seller",
+                                                        "craf_sex.group_craf_accountant", "stock.group_stock_manager")))
+
     def _craf_forced_home(self):
         """Qo'lda o'zgartirib bo'lmaydigan bosh sahifa: Administrator → Boshqaruv panellari,
-        faqat Yuklovchi → Yuklash (Sotuv sahifasi)."""
+        faqat Yuklovchi → Yuklash (Sotuv sahifasi), kimyo xodimi → Kimyoviy ishlov sahifasi."""
         forced = {
             "admin": self.env.ref("spreadsheet_dashboard.ir_actions_dashboard_action", raise_if_not_found=False),
             "loader": self.env.ref("craf_sotuv.action_craf_yuklash", raise_if_not_found=False),
+            "kimyo": self.env.ref("craf_sex.action_craf_sex_kimyo", raise_if_not_found=False),
         }
         for user in self.sudo().filtered(lambda u: not u.share):
             if user.has_group("base.group_system"):
                 action = forced["admin"]
             elif user._craf_is_loader_only():
                 action = forced["loader"]
+            elif user._craf_is_kimyo_only():
+                action = forced["kimyo"]
             else:
                 continue
             if action and user.action_id.id != action.id:  # action_id — ir.actions.actions, action — client
@@ -53,12 +64,12 @@ class ResUsers(models.Model):
         }
         actions = {k: self.env.ref(v, raise_if_not_found=False) for k, v in refs.items()}
         managed = {a.id for a in actions.values() if a}
-        for ref in ("craf_sotuv.action_craf_yuklash", "craf_sotuv.action_craf_sotuv"):
+        for ref in ("craf_sotuv.action_craf_yuklash", "craf_sotuv.action_craf_sotuv", "craf_sex.action_craf_sex_kimyo"):
             sale_action = self.env.ref(ref, raise_if_not_found=False)
             if sale_action:
                 managed.add(sale_action.id)
         for user in self.sudo():
-            if user.share or user.has_group("base.group_system") or (
+            if user.share or user.has_group("base.group_system") or user._craf_is_kimyo_only() or (
                     user.action_id and user.action_id.id not in managed):
                 continue
             if user.has_group("craf_sex.group_craf_director"):
@@ -92,4 +103,6 @@ class ResUsers(models.Model):
             self._craf_forced_home()
         elif "craf_work_stage" in vals or any(k.startswith(("group_ids", "sel_groups_", "in_group_")) for k in vals):
             self._craf_role_home()
+        if "craf_work_stage" in vals:
+            self.env.registry.clear_cache()  # menyu keshi «Ish joyi»ga ham bog'liq (ir_ui_menu.py)
         return res

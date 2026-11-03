@@ -86,7 +86,8 @@
     }
     // Sotuv varaqlari faqat yuklovchida pastki panelda takrorlanadi
     body.o_craf_bottom_nav.o_craf_loader_bar {
-        .o_craf_sotuv .cs-tabs {
+        .o_craf_sotuv .cs-tabs,
+        .o_craf_sex .cl-tabs {
             display: none;
         }
     }

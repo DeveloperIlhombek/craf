@@ -1,6 +1,6 @@
 {
     "name": "Craf Korzinka va kimyoviy ishlov",
-    "version": "19.0.1.3.0",
+    "version": "19.0.1.4.0",
     "summary": "Press chiqishi korzinkalar bo'yicha, kimyoviy ishlov bosqichi, stalba chiqindisi, omborga topshirish",
     "description": """
 Zavodning haqiqiy jarayoniga moslash:
@@ -10,8 +10,9 @@ Zavodning haqiqiy jarayoniga moslash:
 - Press varag'i: korzinka (o'z og'irligi), 1-2 profil 6 m / 5 m dona, kryuchok, palka, brutto → netto;
   profil brak va pitak otxod Liteykaga; quyma sarfi ixtiyoriy (Liteyka qoldig'i orqali)
 - Brak ajratish (bo'yashdan oldin): korzinkadan brak dona → kg Liteykaga, 6 m → 5 m kesilganlar
-- Kimyoviy ishlov — alohida bosqich: korzinkalar tanlanadi, kimyo sarfi (me'yor: maydon × kg/m²);
-  profillar "Kimyoviy ishlov" joyidan Bo'yash sexiga o'tadi
+- Kimyoviy ishlov — alohida bosqich: korzinkalar tanlanadi, ichidagi profillardan yaroqsiz (bo'yalmaydigan) va
+  6 m → 5 m kesilganlar (tasdiqda «Brak ajratish» bilan Liteykaga), kimyo sarfi (me'yor: maydon × kg/m²);
+  profillar Bo'yash sexida turadi
 - Bo'yash: korzinkalardan to'ldirish; tayyor mahsulotni bir tugmada omborga topshirish
 - Литейка: chiqqan quyma — stalba; kesilgan chiqindi (Сталба отход) alohida
 - Zavod xaritasida "Kimyoviy ishlov" bo'limi, BoM da "Kimyoviy ishlov" operatsiyasi

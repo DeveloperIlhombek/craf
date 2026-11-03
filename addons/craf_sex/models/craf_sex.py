@@ -77,7 +77,15 @@ class CrafSex(models.AbstractModel):
             "accountant": accountant,
             "manager": user.has_group("stock.group_stock_manager"),
             "stage": user.craf_work_stage or False,
+            # oddiy sex ishchisi (masalan, kimyo xodimi) faqat o'z sexini ko'radi; omborchi va direktor — hammasini
+            "own": user.craf_work_stage if user.craf_work_stage in STAGE and not accountant else False,
         }
+
+    @api.model
+    def nav_counts(self):
+        """Telefondagi pastki panel belgisi: kimyoga kutayotgan korzinkalar soni."""
+        return {"ish": self.env["craf.basket.load"].search_count(
+            [("state", "=", "press"), ("shift_state", "=", "done")])}
 
     def _employees(self):
         return [{"id": e.id, "name": e.name, "job": e.job_title or ""}
@@ -103,14 +111,17 @@ class CrafSex(models.AbstractModel):
     @api.model
     def get_data(self, stage=None, date_from=None, date_to=None):
         roles = self._roles()
-        if stage not in STAGE:
-            stage = roles["stage"] if roles["stage"] in STAGE else "press"
+        own = roles["own"]
+        if own or stage not in STAGE:
+            stage = own or (roles["stage"] if roles["stage"] in STAGE else "press")
         dfrom, dto = self._H._period(date_from, date_to)
         Model = self._model(stage)
         docs = Model.search([("date", ">=", dfrom), ("date", "<=", dto)], order="date desc, id desc")
         drafts = Model.search([("state", "=", "draft")], order="date desc, id desc")
         stages = []
         for key, label, model, _loc in STAGES:
+            if own and key != own:
+                continue
             stages.append({"key": key, "label": label,
                            "drafts": self.env[model].search_count([("state", "=", "draft")])})
         return {
@@ -155,7 +166,9 @@ class CrafSex(models.AbstractModel):
     def _card_kimyo(self, rec):
         return {
             "title": "%s ta korzinka" % rec.basket_count,
-            "sub": "%s dona · %s kg · %s m²" % (_q(rec.pcs_total), _q(rec.kg_total), _q(rec.area_total)),
+            "sub": "%s dona · %s kg · %s m²%s" % (
+                _q(rec.pcs_total), _q(rec.kg_total), _q(rec.area_total),
+                (" · yaroqsiz %s, kesildi %s" % (rec.brak_pcs, rec.cut_pcs)) if rec.brak_pcs or rec.cut_pcs else ""),
             "metric": "kimyo %s kg" % fmt(rec.chem_kg, 2) if rec.chem_kg else "",
             "loads": [self._load_info(l) for l in rec.load_ids] if rec.state == "draft" else [],
         }
@@ -450,6 +463,7 @@ class CrafSex(models.AbstractModel):
             "today": fields.Date.to_string(fields.Date.context_today(self)),
             "chems": self._chem_norms(),
             "employees": self._employees(),
+            "my_employee": self.env.user.employee_id.id or False,
             "equipment": self._equipment("kimyo"),
             "shifts": [{"key": k, "label": v} for k, v in SHIFTS],
         }
@@ -464,8 +478,40 @@ class CrafSex(models.AbstractModel):
             "shift": rec.shift, "employee_id": rec.employee_id.id or False, "equipment_id": rec.equipment_id.id or False,
             "load_ids": rec.load_ids.ids, "loads": [self._load_info(l) for l in rec.load_ids],
             "chem": {str(l.product_id.id): _q(l.qty, 2) for l in rec.chem_line_ids},
+            "defects": self._chem_defects_map(rec),
             "note": rec.note or "",
         }
+
+    def _chem_defects_map(self, rec):
+        """{"<yuk>_<profil>": {"brak": dona, "cut": dona}} — sahifadagi kiritish maydonlari uchun."""
+        res = {}
+        for line in rec.defect_line_ids:
+            row = res.setdefault("%s_%s" % (line.load_id.id, line.product_id.id), {"brak": "", "cut": ""})
+            row[line.kind] = (row[line.kind] or 0) + line.qty
+        return res
+
+    def _chem_defect_commands(self, loads, rows):
+        """Sahifadan: [{load_id, product_id, brak, cut}] → yaroqsiz / 6 → 5 m qatorlari (korzinkadagi dona bilan tekshiriladi)."""
+        commands = [Command.clear()]
+        for row in rows or []:
+            load = loads.filtered(lambda l, i=int(row.get("load_id") or 0): l.id == i)
+            if not load:
+                continue
+            product = self.env["product.product"].browse(int(row.get("product_id") or 0)).exists()
+            have = load._product_quantities().get(product, 0)
+            brak, cut = self._int(row.get("brak")), self._int(row.get("cut"))
+            if not product or not (brak or cut):
+                continue
+            if brak + cut > have:
+                raise UserError("%s: %s — korzinkada %s dona, yozildi %s." % (
+                    load.basket_id.name, product.name, have, brak + cut))
+            if cut and abs(product.craf_length_m - 6.0) > EPS:
+                raise UserError("«6 m → 5 m» faqat 6 metrlik profil uchun (%s)." % product.name)
+            for kind, qty in (("brak", brak), ("cut", cut)):
+                if qty:
+                    commands.append(Command.create({"load_id": load.id, "product_id": product.id,
+                                                    "kind": kind, "qty": qty}))
+        return commands
 
     @api.model
     def chem_save(self, vals, confirm=False):
@@ -502,7 +548,8 @@ class CrafSex(models.AbstractModel):
             norm_qty = round(area * c["per_m2"], 2)
             qty = norm_qty if text in (None, "") else self._num(text, c["name"])
             lines.append(Command.create({"product_id": c["id"], "qty_norm": norm_qty, "qty": qty}))
-        rec.write({"chem_line_ids": lines})
+        rec.write({"chem_line_ids": lines,
+                   "defect_line_ids": self._chem_defect_commands(rec.load_ids, vals.get("defects"))})
         if confirm:
             self._confirm(rec)
         return {"id": rec.id, "name": rec.name, "state": rec.state}
@@ -657,7 +704,7 @@ class CrafSex(models.AbstractModel):
             return rec.billet_product_id | rec.rest_product_id | rec.scrap_product_id | rec.line_ids.product_id \
                 | rec.basket_load_ids.product_6_id | rec.basket_load_ids.product_5_id                 | rec.basket_load_ids.extra_line_ids.product_6_id | rec.basket_load_ids.extra_line_ids.product_5_id
         if rec._name == "craf.chem.treatment":
-            return rec.chem_line_ids.product_id | rec.load_ids.product_6_id | rec.load_ids.product_5_id                 | rec.load_ids.extra_line_ids.product_6_id | rec.load_ids.extra_line_ids.product_5_id
+            return rec.chem_line_ids.product_id | rec.defect_line_ids.product_id                 | self.env["craf.production.mixin"]._craf_product("PF-07")                 | rec.load_ids.product_6_id | rec.load_ids.product_5_id                 | rec.load_ids.extra_line_ids.product_6_id | rec.load_ids.extra_line_ids.product_5_id
         return rec.line_ids.semi_product_id | rec.line_ids.product_id | rec.powder_product_id | rec.scrap_product_id \
             | rec.film_product_id | rec.tape_product_id
 
@@ -777,8 +824,15 @@ class CrafSex(models.AbstractModel):
             for load in rec.load_ids:
                 lines.append({"name": "%s · %s" % (load.basket_id.name, load.content), "qty": "%s dona" % load.pcs_total,
                               "note": "%s kg · %s m²" % (_q(load.net_kg or load.kg_theory, 1), _q(load.area_m2, 1))})
-            outputs = [("%s" % l.product_id.name, "%s kg (me'yor %s)" % (fmt(l.qty, 2), fmt(l.qty_norm, 2)))
-                       for l in rec.chem_line_ids]
+            kinds = {"brak": "yaroqsiz", "cut": "6 → 5 m kesildi"}
+            for line in rec.defect_line_ids:
+                lines.append({"name": "%s · %s" % (line.load_id.basket_id.name, line.product_id.name),
+                              "qty": "%s dona" % line.qty, "note": "%s, %s kg Liteykaga" % (kinds[line.kind], _q(line.kg, 1))})
+            if rec.sort_id:
+                meta.append(("Brak ajratish", rec.sort_id.name))
+            outputs = [("Yaroqsiz", "%s dona" % rec.brak_pcs), ("6 → 5 m kesildi", "%s dona" % rec.cut_pcs)]
+            outputs += [("%s" % l.product_id.name, "%s kg (me'yor %s)" % (fmt(l.qty, 2), fmt(l.qty_norm, 2)))
+                        for l in rec.chem_line_ids]
             outputs.append(("Maydon", "%s m²" % _q(rec.area_total, 1)))
         else:
             meta.append(("Rang", rec.color_id.name))

@@ -1,6 +1,6 @@
 {
     "name": "Craf: sexlar (Press, Kimyo, Bo'yash) va rollar",
-    "version": "19.0.1.9.0",
+    "version": "19.0.1.11.0",
     "summary": "Press, kimyoviy ishlov, bo'yash va qadoqlash — telefon uchun sahifa; direktor, omborchi, sex ishchisi rollari",
     "description": """
 Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
@@ -8,7 +8,9 @@ Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
 - Press: smenani ochish (press, matritsa, smena, mas'ul), korzinkani to'ldirish (6 m / 5 m dona,
   tortilgan og'irlik → netto), korzinkasiz chiqish (sotiladigan bo'yalmagan profil), quyma sarfi,
   press qoldig'i (питак) va brak; chiqish %, farq, kg/soat; tasdiqlash
-- Kimyoviy ishlov: kutayotgan korzinkalarni belgilash, kimyo sarfi me'yordan, tasdiqlash
+- Kimyoviy ishlov: kutayotgan korzinkalarni belgilash, har korzinkadagi profillar bo'yicha yaroqsiz va
+  6 m → 5 m kesilgan dona (Liteykaga), kimyo sarfi me'yordan, tasdiqlash. Kimyo xodimi (Sex ishchisi,
+  Ish joyi — Kimyo) telefon uchun: faqat «Kimyo» ilovasi, pastki panel (Korzinkalar, Hujjatlar, Qoldiq)
 - Bo'yash va qadoqlash: rang, tayyor korzinkalar, kirdi / brak / pachka + dona, kukun (o'ram yoki kg),
   tasdiqlash, omborga topshirish, pachka yorliqlari
 - Har sexda: korzinkalar holati, sexdagi qoldiq, davr hujjatlari, 1C belgisi (omborchi)

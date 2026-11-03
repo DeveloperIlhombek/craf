@@ -243,6 +243,45 @@ $sx-tap: 44px;
             font-size: 1rem;
         }
     }
+    // kimyo: korzinkadagi profillar bo'yicha yaroqsiz / 6 → 5 m
+    .sx-defect-basket {
+        border: 1px solid $sx-line;
+        border-radius: 10px;
+        padding: 6px 12px;
+        margin-bottom: 10px;
+    }
+    .sx-defect-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+    }
+    .sx-defect-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 76px 76px;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        border-top: 1px solid $sx-line;
+        > span:first-child {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        > input {
+            min-height: $sx-tap;
+            text-align: right;
+            font-size: 1rem;
+        }
+    }
+    .sx-defect-cols {
+        border-top: 0;
+        padding: 0;
+        font-size: 0.75rem;
+        color: $sx-muted;
+        > span {
+            text-align: center;
+        }
+    }
     .sx-preview {
         background-color: rgba(127, 127, 127, 0.07);
         border-radius: 10px;

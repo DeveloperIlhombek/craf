@@ -18,6 +18,17 @@
         <field name="path">craf-bolim-boyash</field>
         <field name="context">{'craf_bolim': 'boyash', 'craf_stage': 'boyash'}</field>
     </record>
+    <!-- kimyo xodimi: alohida «Kimyo» ilovasi (faqat u ko'radi — models/ir_ui_menu.py), telefonda pastki panel -->
+    <record id="action_craf_sex_kimyo" model="ir.actions.client">
+        <field name="name">Kimyoviy ishlov</field>
+        <field name="tag">craf_sex</field>
+        <field name="path">craf-kimyo-sahifa</field>
+        <field name="context">{'craf_stage': 'kimyo'}</field>
+    </record>
+    <menuitem id="menu_craf_kimyo_root" name="Kimyo" sequence="2"
+              web_icon="craf_sex,static/description/icon.png" groups="craf_sex.group_craf_worker"/>
+    <menuitem id="menu_craf_kimyo_page" name="Kimyoviy ishlov" parent="menu_craf_kimyo_root"
+              action="action_craf_sex_kimyo" sequence="1"/>
     <menuitem id="menu_craf_sex_press" name="Press sahifasi" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_sex_press" sequence="1"/>
     <menuitem id="menu_craf_sex_boyash" name="Bo'yash sahifasi" parent="craf_production.menu_craf_bolim_boyash"

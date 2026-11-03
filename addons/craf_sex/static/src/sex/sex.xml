@@ -324,12 +324,14 @@
     <t t-name="craf_sex.SheetMenu">
         <t t-call="craf_sex.Head"><t t-set="title" t-value="'Boshqa amallar'"/><t t-set="sub" t-value="''"/></t>
         <div class="cl-sheet-body cl-menu">
-            <button t-on-click="() => this.go('craf_hisobot.action_craf_kunlik')"><i class="fa fa-calendar-check-o"/> Kunlik hisobot (1C uchun)</button>
-            <button t-on-click="() => this.go('craf_litey.action_craf_litey')"><i class="fa fa-fire"/> Литейка</button>
-            <button t-on-click="() => this.go('craf_extrusion.action_craf_extrusion_shift')"><i class="fa fa-list"/> Press smenalari (ro'yxat)</button>
-            <button t-on-click="() => this.go('craf_korzinka.action_craf_chem_treatment')"><i class="fa fa-list"/> Kimyoviy ishlov (ro'yxat)</button>
-            <button t-on-click="() => this.go('craf_paint.action_craf_paint_batch')"><i class="fa fa-list"/> Bo'yash smenalari (ro'yxat)</button>
-            <button t-on-click="() => this.go('craf_korzinka.action_craf_basket')"><i class="fa fa-archive"/> Korzinkalar</button>
+            <t t-if="!state.data.roles.own">
+                <button t-on-click="() => this.go('craf_hisobot.action_craf_kunlik')"><i class="fa fa-calendar-check-o"/> Kunlik hisobot (1C uchun)</button>
+                <button t-on-click="() => this.go('craf_litey.action_craf_litey')"><i class="fa fa-fire"/> Литейка</button>
+                <button t-on-click="() => this.go('craf_extrusion.action_craf_extrusion_shift')"><i class="fa fa-list"/> Press smenalari (ro'yxat)</button>
+                <button t-on-click="() => this.go('craf_korzinka.action_craf_chem_treatment')"><i class="fa fa-list"/> Kimyoviy ishlov (ro'yxat)</button>
+                <button t-on-click="() => this.go('craf_paint.action_craf_paint_batch')"><i class="fa fa-list"/> Bo'yash smenalari (ro'yxat)</button>
+                <button t-on-click="() => this.go('craf_korzinka.action_craf_basket')"><i class="fa fa-archive"/> Korzinkalar</button>
+            </t>
             <button t-if="state.data.roles.manager" t-on-click="() => this.go('craf_mrp.action_craf_mrp_norm')"><i class="fa fa-sliders"/> Ishlab chiqarish me'yorlari</button>
             <button t-on-click="menuRefresh"><i class="fa fa-refresh"/> Yangilash</button>
         </div>
@@ -446,11 +448,11 @@
         <t t-set="equipmentLabel" t-value="'Vanna'"/>
         <t t-call="craf_sex.Head">
             <t t-set="title" t-value="f.id ? 'Kimyoviy ishlov ' + f.name : 'Kimyoviy ishlov'"/>
-            <t t-set="sub" t-value="&quot;Korzinkalar Bo'yash sexiga o'tadi, kimyo sarflanadi&quot;"/>
+            <t t-set="sub" t-value="&quot;Korzinka, yaroqsiz va kesilgan profillar, kimyo sarfi&quot;"/>
         </t>
         <div class="cl-sheet-body">
             <t t-call="craf_sex.CommonFields"/>
-            <h3 class="cl-lines-head">Korzinkalar <span class="cl-muted"><t t-esc="sheetPicked(s).length"/> / <t t-esc="s.loads.length"/></span></h3>
+            <h3 class="cl-lines-head">1. Qaysi korzinkalarga ishlov berildi <span class="cl-muted"><t t-esc="sheetPicked(s).length"/> / <t t-esc="s.loads.length"/></span></h3>
             <div class="cl-empty" t-if="!s.loads.length">Kutayotgan korzinka yo'q.</div>
             <div class="cl-list sx-mb" t-else="">
                 <button class="sx-load sx-pick" t-foreach="s.loads" t-as="l" t-key="l.id" t-att-class="{ picked: f.pick[l.id] }" t-on-click="() => this.toggleSheetPick(s, l)">
@@ -458,7 +460,26 @@
                     <t t-call="craf_sex.LoadRow"/>
                 </button>
             </div>
-            <h3 class="cl-lines-head">Kimyo sarfi <span class="cl-muted">— maydon <t t-esc="num(chemArea(s), 1)"/> m²</span></h3>
+            <t t-if="sheetPicked(s).length">
+                <h3 class="cl-lines-head">2. Korzinkadagi profillar <span class="cl-muted">— yaroqsiz (bo'yalmaydi) va 6 m → 5 m kesilgan, dona</span></h3>
+                <div class="sx-defect-basket" t-foreach="sheetPicked(s)" t-as="l" t-key="l.id">
+                    <div class="sx-defect-head"><span class="sx-basket" t-esc="l.basket"/> <span class="cl-muted small" t-esc="l.date_label"/></div>
+                    <div class="sx-defect-row sx-defect-cols">
+                        <span/>
+                        <span>Yaroqsiz</span>
+                        <span>6 → 5 m</span>
+                    </div>
+                    <div class="sx-defect-row" t-foreach="l.products" t-as="p" t-key="p.id">
+                        <t t-set="dk" t-value="defectRow(s, l, p)"/>
+                        <span><t t-esc="p.name"/><small class="d-block cl-muted">ichida <t t-esc="num(p.qty, 0)"/> dona<t t-if="dk.brak or dk.cut"> → bo'yashga <t t-esc="num(defectLeft(p, dk), 0)"/></t></small></span>
+                        <input type="text" inputmode="numeric" class="form-control" placeholder="0" t-model="dk.brak" t-att-aria-label="p.name + ' yaroqsiz, dona'"/>
+                        <input t-if="p.length === 6" type="text" inputmode="numeric" class="form-control" placeholder="0" t-model="dk.cut" t-att-aria-label="p.name + ' 6 m dan 5 m ga kesildi, dona'"/>
+                        <span t-else="" class="cl-muted text-center">—</span>
+                    </div>
+                </div>
+                <p class="cl-hint">Yaroqsizlar va kesilgan uchlari tasdiqlanganda Liteykaga (brak profil) yoziladi; kesilganlar 5 metrlik bo'lib bo'yashga o'tadi.</p>
+            </t>
+            <h3 class="cl-lines-head">3. Kimyo sarfi <span class="cl-muted">— maydon <t t-esc="num(chemArea(s), 1)"/> m²</span></h3>
             <div class="sx-direct" t-foreach="s.o.chems" t-as="c" t-key="c.id">
                 <span><t t-esc="c.name"/><small class="d-block cl-muted">me'yor <t t-esc="num(chemNorm(s, c), 2)"/> kg · bor <t t-esc="num(c.avail, 1)"/> kg</small></span>
                 <input type="text" inputmode="decimal" class="form-control" t-att-placeholder="num(chemNorm(s, c), 2)" t-model="f.chem[c.id]" t-att-aria-label="c.name + ' kg'"/>
