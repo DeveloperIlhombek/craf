@@ -8,7 +8,7 @@ $mx-bad: #c4314b;
     // 2-3 ta ko'rsatkich telefonda ham bir qatorga sig'adi (aylantirmasdan)
     .cl-kpis {
         grid-auto-flow: row;
-        grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important;
         overflow-x: visible;
     }
     .mx-toolbar {
@@ -110,10 +110,243 @@ $mx-bad: #c4314b;
         font-weight: 600;
         color: $mx-bad;
     }
+    // ko'rinish almashtirgich (kartochka / jadval)
+    .mx-view {
+        flex: 0 0 auto;
+        margin-left: auto;
+        > button {
+            min-height: 36px;
+            padding: 0 12px;
+            &.active {
+                background-color: $primary;
+                color: #fff;
+            }
+        }
+    }
+    .mx-view-label {
+        display: none;
+        @include media-breakpoint-up(sm) {
+            display: inline;
+        }
+    }
+    // kartochkalar: telefonda qatorda 2 ta, kattaroq ekranda ko'proq
+    .mx-cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        @include media-breakpoint-up(md) {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+    }
+    .mx-card {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 0;
+        text-align: left;
+        color: inherit;
+        background-color: $o-view-background-color;
+        border: 1px solid $mx-line;
+        border-radius: 12px;
+        overflow: hidden;
+        &:focus-visible {
+            outline: 2px solid $primary;
+            outline-offset: 1px;
+        }
+        &.mx-card-bad {
+            border-color: rgba(196, 49, 75, 0.45);
+        }
+    }
+    .mx-card-img {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 4 / 3;
+        background-color: rgba(127, 127, 127, 0.08);
+        color: rgba(127, 127, 127, 0.5);
+        font-size: 1.6rem;
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+    .mx-card-state {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        background-color: $o-view-background-color !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    }
+    .mx-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 10px 10px;
+        min-width: 0;
+    }
+    .mx-card-name {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+    .mx-card-meta {
+        font-size: 0.8rem;
+        color: $mx-muted;
+        overflow-wrap: anywhere;
+    }
+    .mx-card-note {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    // jadval: telefonda yonga aylantiriladi, sahifa o'zi toshmaydi
+    .mx-table-wrap {
+        overflow-x: auto;
+        border: 1px solid $mx-line;
+        border-radius: 12px;
+        background-color: $o-view-background-color;
+    }
+    .mx-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        th {
+            position: sticky;
+            top: 0;
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: $mx-muted;
+            text-align: left;
+            white-space: nowrap;
+            background-color: $o-view-background-color;
+            border-bottom: 1px solid $mx-line;
+        }
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid $mx-line;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        tbody tr {
+            cursor: pointer;
+            &:last-child td {
+                border-bottom: 0;
+            }
+            &:hover,
+            &:focus-visible {
+                background-color: rgba(127, 127, 127, 0.06);
+                outline: none;
+            }
+            &.mx-tr-bad td:first-child {
+                box-shadow: inset 3px 0 0 $mx-bad;
+            }
+        }
+        .mx-col-img {
+            width: 48px;
+            padding-right: 0;
+        }
+        .mx-col-note {
+            white-space: normal;
+            min-width: 140px;
+        }
+    }
+    .mx-thumb-sm {
+        width: 36px;
+        height: 36px;
+        margin-right: 0;
+    }
+    // rasm
+    .mx-thumb {
+        flex: 0 0 auto;
+        width: 44px;
+        height: 44px;
+        margin-right: 10px;
+        border-radius: 8px;
+        object-fit: cover;
+        background-color: rgba(127, 127, 127, 0.1);
+    }
+    .mx-thumb-empty {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(127, 127, 127, 0.55);
+    }
+    .mx-photo {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    .mx-photo-img {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 140px;
+        height: 140px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid $mx-line;
+        background-color: rgba(127, 127, 127, 0.06);
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+    .mx-photo-empty {
+        flex-direction: column;
+        gap: 4px;
+        color: $mx-muted;
+        font-size: 0.85rem;
+        > .fa {
+            font-size: 1.6rem;
+        }
+    }
+    .mx-photo-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        > .btn {
+            min-height: 44px;
+        }
+    }
     .mx-links {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         margin: 16px 0 8px;
+    }
+}
+
+// Gaz bo'limi: craf_gaz sahifasining (.o_craf_gaz) uslubi ishlatiladi — faqat ildiz xususiyatlari bu sahifaga moslanadi
+.o_craf_matritsa .o_craf_gaz.mx-gaz {
+    height: auto;
+    overflow: visible;
+    padding: 0;
+    background: transparent;
+    .gz-types {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .gz-card {
+        border: 1px solid rgba(127, 127, 127, 0.15);
+        border-top: 4px solid var(--gc);
+    }
+    .mx-gz-btns {
+        grid-template-columns: 1fr;
+        .btn {
+            min-height: 44px;
+            font-size: 14px;
+        }
+    }
+    .mx-gz-move {
+        grid-template-columns: 10px auto auto 1fr;
     }
 }

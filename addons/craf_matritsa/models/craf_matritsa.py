@@ -65,6 +65,9 @@ class CrafMatritsa(models.AbstractModel):
                 "id": m.id, "name": m.name, "section_id": m.section_id.id, "section": m.section_id.name,
                 "state": m.state, "note": m.note or "", "broken_note": m.broken_note or "",
                 "broken_date": m.broken_date.strftime("%d.%m.%Y") if m.broken_date else "",
+                # rasm: kichigi ro'yxatda, kattasi ko'rish uchun; unique — keshlangan eski rasm chiqmasin
+                "image": bool(m.image_128),
+                "unique": fields.Datetime.to_string(m.write_date).replace(" ", "").replace("-", "").replace(":", ""),
             })
             s = by_section.setdefault(m.section_id.id, {"id": m.section_id.id, "name": m.section_id.name,
                                                         "total": 0, "ok": 0, "broken": 0})
@@ -156,6 +159,11 @@ class CrafMatritsa(models.AbstractModel):
         if not name or not section:
             raise UserError("Matritsa raqami va profilini (kesim) tanlang.")
         data = {"name": name, "section_id": section, "note": (vals.get("note") or "").strip() or False}
+        # rasm: yangi yuklangan (base64, sahifada kichraytirilgan) yoki o'chirildi
+        if vals.get("image"):
+            data["image_1920"] = vals["image"]
+        elif vals.get("image_clear"):
+            data["image_1920"] = False
         rec = Matrix.browse(int(vals["id"])).exists() if vals.get("id") else Matrix
         if Matrix.search_count([("name", "=", name), ("id", "!=", rec.id or 0)]):
             raise UserError("«%s» raqamli matritsa allaqachon bor." % name)

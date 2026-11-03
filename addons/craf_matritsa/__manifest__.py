@@ -1,11 +1,12 @@
 {
     "name": "Craf: matritsa (qolip) xodimi",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.3.0",
     "summary": "Press: matritsalar (yaroqli / yaroqsiz), Ammiak va Azot ballonlari sarfi, kaustik soda — telefon sahifasi",
     "description": """
 Press bo'limining qolip (matritsa) mutaxassisi uchun — kimyo xodimi kabi, telefon birinchi:
 
-- Matritsalar: har biri raqami bilan, qaysi profil (kesim) uchun, holati yaroqli / yaroqsiz (sababi bilan);
+- Matritsalar: har biri raqami bilan, qaysi profil (kesim) uchun, rasmi (telefon kamerasidan), holati
+  yaroqli / yaroqsiz (sababi bilan);
   profil bo'yicha jami, yaroqli va yaroqsiz soni
 - Gaz: Ammiak va Azot ballonlari, qoldig'i; xodim faqat sarfni yozadi (to'ldirish — omborchida)
 - Kaustik soda: qoliplarni tozalash uchun ombordan olinganda bir marta yoziladi, darhol sarfga yechiladi

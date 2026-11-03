@@ -48,7 +48,10 @@ def craf_check_page(env, model_name):
         return
     title, groups, _methods = PAGES[model_name]
     user = env.user
-    if not any(user.has_group(g) for g in groups):
+    own = user._craf_own_app()
+    # shaxsiy ilovali xodim (masalan, matritsa) boshqa sahifalarga URL orqali ham kira olmaydi;
+    # kimyo xodimi — Sexlar sahifasining Kimyo bosqichida ishlaydi
+    if (own and not (model_name == "craf.sex" and own == "kimyo")) or not any(user.has_group(g) for g in groups):
         raise AccessError("«%s» sahifasiga ruxsatingiz yo'q. Rolingizni direktordan so'rang." % title)
 
 

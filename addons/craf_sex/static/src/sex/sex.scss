@@ -437,3 +437,29 @@ $sx-tap: 44px;
         bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     }
 }
+
+// telefon va planshetda ko'rsatkichlar yonga aylantirilmaydi: qatorda 3 tadan (6 ta — 2 qator)
+@include media-breakpoint-down(lg) {
+    .o_craf_litey.o_craf_sex .cl-kpis {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        overflow-x: visible;
+        .cl-kpi {
+            min-width: 0;
+            padding: 8px 10px;
+            &:nth-child(3n + 1) {
+                border-left: 0;
+            }
+            &:nth-child(n + 4) {
+                border-top: 1px solid rgba(127, 127, 127, 0.22);
+            }
+        }
+        .cl-kpi-label {
+            white-space: normal;
+            line-height: 1.2;
+        }
+        .cl-kpi-value {
+            font-size: 1.1rem;
+        }
+    }
+}

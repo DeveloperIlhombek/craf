@@ -8,6 +8,38 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_servic
 
 const API = "craf.matritsa";
 const TABS = ["matritsa", "gaz", "soda", "qoldiq"];
+const VIEW_KEY = "craf_matritsa_view"; // matritsalar ko'rinishi: card / table (shu telefonda eslab qolinadi)
+
+function savedView() {
+    try {
+        return window.localStorage.getItem(VIEW_KEY) === "table" ? "table" : "card";
+    } catch {
+        return "card";
+    }
+}
+
+// telefon rasmi katta (5-10 MB) — yuborishdan oldin kichraytiriladi (JPEG, eng uzun tomoni 1600 px)
+const IMAGE_MAX = 1600;
+function shrinkImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Rasmni o'qib bo'lmadi."));
+        reader.onload = () => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("Bu fayl rasm emas."));
+            img.onload = () => {
+                const k = Math.min(1, IMAGE_MAX / Math.max(img.width, img.height));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.round(img.width * k);
+                canvas.height = Math.round(img.height * k);
+                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL("image/jpeg", 0.85));
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 function toNum(v) {
     const n = parseFloat(String(v === undefined || v === null ? "" : v).replace(/\s/g, "").replace(",", "."));
@@ -28,6 +60,8 @@ export class CrafMatritsa extends Component {
             data: null,
             tab: TABS.includes(ctx.craf_tab) ? ctx.craf_tab : "matritsa",
             filter: "all", // matritsalar: all / ok / broken
+            view: savedView(), // card / table
+            gasFilter: 0, // gaz turi (0 — hammasi)
             q: "",
             sheet: null,
             busy: false,
@@ -76,14 +110,25 @@ export class CrafMatritsa extends Component {
     }
 
     // ================================================================ matritsalar
-    get matrixGroups() {
-        const d = this.state.data;
+    setView(view) {
+        this.state.view = view;
+        try {
+            window.localStorage.setItem(VIEW_KEY, view);
+        } catch {
+            // brauzer xotirasi yopiq bo'lsa — e'tiborsiz
+        }
+    }
+    get filteredMatrices() {
         const q = this.state.q.trim().toLowerCase();
-        const list = d.matrices.filter(
+        return this.state.data.matrices.filter(
             (m) =>
                 (this.state.filter === "all" || m.state === this.state.filter) &&
                 (!q || m.name.toLowerCase().includes(q) || (m.section || "").toLowerCase().includes(q))
         );
+    }
+    get matrixGroups() {
+        const d = this.state.data;
+        const list = this.filteredMatrices;
         return d.sections
             .map((s) => ({ ...s, items: list.filter((m) => m.section_id === s.id) }))
             .filter((s) => s.items.length);
@@ -156,8 +201,37 @@ export class CrafMatritsa extends Component {
             const f = m
                 ? { id: m.id, name: m.name, section_id: m.section_id, note: m.note, state: m.state, broken_note: "" }
                 : { id: false, name: "", section_id: "", note: "", state: "ok", broken_note: "" };
+            // rasm: preview — ko'rsatiladigan manzil (data: yoki /web/image), image — yangi yuklangan base64
+            f.preview = m && m.image ? this.imageUrl(m, "image_1920") : "";
+            f.image = "";
+            f.image_clear = false;
             this.openSheet({ type: "matrix", o, f, m });
         });
+    }
+    imageUrl(m, field = "image_128") {
+        return `/web/image/craf.matrix/${m.id}/${field}?unique=${m.unique}`;
+    }
+    async onImage(ev) {
+        const s = this.state.sheet;
+        const file = ev.target.files && ev.target.files[0];
+        ev.target.value = ""; // o'sha rasmni qayta tanlash mumkin bo'lsin
+        if (!file) {
+            return;
+        }
+        try {
+            const url = await shrinkImage(file);
+            s.f.preview = url;
+            s.f.image = url.split(",")[1];
+            s.f.image_clear = false;
+        } catch (e) {
+            s.error = this.errorText(e);
+        }
+    }
+    clearImage() {
+        const s = this.state.sheet;
+        s.f.preview = "";
+        s.f.image = "";
+        s.f.image_clear = true;
     }
     saveMatrix() {
         const s = this.state.sheet;
@@ -166,7 +240,8 @@ export class CrafMatritsa extends Component {
             return;
         }
         this.run(async () => {
-            const res = await this.orm.call(API, "matrix_save", [{ ...s.f, section_id: Number(s.f.section_id) }]);
+            const { preview, ...vals } = s.f; // preview — faqat ko'rsatish uchun
+            const res = await this.orm.call(API, "matrix_save", [{ ...vals, section_id: Number(s.f.section_id) }]);
             this.notification.add(`${res.name} saqlandi`, { type: "success" });
             this.closeSheet();
             await this.refresh();
@@ -186,6 +261,30 @@ export class CrafMatritsa extends Component {
         } else {
             go();
         }
+    }
+
+    // ---------------------------------------------------------------- gaz (craf_gaz sahifasidagi ko'rinish)
+    get gasBallons() {
+        return this.state.data.gas.flatMap((g) => g.ballons.map((b) => ({ ...b, g })));
+    }
+    get shownBallons() {
+        const f = this.state.gasFilter;
+        return f ? this.gasBallons.filter((b) => b.g.id === f) : this.gasBallons;
+    }
+    typePercent(g) {
+        return g.capacity ? Math.round((g.qty / g.capacity) * 100) : 0;
+    }
+    emptyCount(g) {
+        return g.ballons.filter((b) => b.state === "empty").length;
+    }
+    pct(b) {
+        return Math.round(b.percent);
+    }
+    fillY(b) {
+        return 218 - (180 * b.percent) / 100;
+    }
+    fillH(b) {
+        return (180 * b.percent) / 100;
     }
 
     // ---------------------------------------------------------------- gaz sarfi

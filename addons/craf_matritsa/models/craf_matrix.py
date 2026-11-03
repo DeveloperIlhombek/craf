@@ -16,6 +16,9 @@ class CrafMatrix(models.Model):
     broken_date = fields.Date("Yaroqsiz bo'lgan sana", copy=False)
     broken_note = fields.Char("Yaroqsizlik sababi", copy=False, tracking=True)
     note = fields.Char("Izoh")
+    image_1920 = fields.Image("Rasm", max_width=1920, max_height=1920)
+    image_512 = fields.Image("Rasm (o'rta)", related="image_1920", max_width=512, max_height=512, store=True)
+    image_128 = fields.Image("Rasm (kichik)", related="image_1920", max_width=128, max_height=128, store=True)
     active = fields.Boolean(default=True)
 
     _name_uniq = models.Constraint("unique(name)", "Bunday raqamli matritsa bor.")

@@ -52,6 +52,10 @@
                 <button t-att-class="{ active: state.filter === 'ok' }" t-on-click="() => state.filter = 'ok'">Yaroqli <span t-esc="d.kpi.ok"/></button>
                 <button class="cl-chip-warn" t-att-class="{ active: state.filter === 'broken' }" t-on-click="() => state.filter = 'broken'">Yaroqsiz <span t-esc="d.kpi.broken"/></button>
             </div>
+            <div class="cl-seg mx-view" role="group" aria-label="Ko'rinish">
+                <button t-att-class="{ active: state.view === 'card' }" t-att-aria-pressed="state.view === 'card' ? 'true' : 'false'" t-on-click="() => this.setView('card')" title="Kartochka"><i class="fa fa-th-large"/><span class="mx-view-label"> Kartochka</span></button>
+                <button t-att-class="{ active: state.view === 'table' }" t-att-aria-pressed="state.view === 'table' ? 'true' : 'false'" t-on-click="() => this.setView('table')" title="Jadval"><i class="fa fa-list"/><span class="mx-view-label"> Jadval</span></button>
+            </div>
         </div>
         <div class="cl-empty sx-empty-card" t-if="!d.matrices.length">
             <i class="fa fa-th"/>
@@ -59,6 +63,29 @@
             <button class="btn btn-primary mt-2" t-on-click="() => this.openMatrix()"><i class="fa fa-plus"/> Matritsa qo'shish</button>
         </div>
         <div class="cl-empty" t-elif="!matrixGroups.length">Topilmadi.</div>
+        <!-- JADVAL -->
+        <div class="mx-table-wrap" t-elif="state.view === 'table'">
+            <table class="mx-table">
+                <thead>
+                    <tr><th class="mx-col-img"><span class="visually-hidden">Rasm</span></th><th>Raqami</th><th>Profil</th><th>Holati</th><th class="mx-col-note">Sabab / izoh</th></tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="filteredMatrices" t-as="m" t-key="m.id" t-att-class="{ 'mx-tr-bad': m.state === 'broken' }" t-on-click="() => this.openMatrix(m)"
+                        tabindex="0" t-on-keydown="(ev) => ev.key === 'Enter' and this.openMatrix(m)">
+                        <td class="mx-col-img">
+                            <img t-if="m.image" class="mx-thumb mx-thumb-sm" t-att-src="imageUrl(m)" alt="" loading="lazy"/>
+                            <span t-else="" class="mx-thumb mx-thumb-sm mx-thumb-empty" aria-hidden="true"><i class="fa fa-camera"/></span>
+                        </td>
+                        <td class="fw-bold" t-esc="m.name"/>
+                        <td t-esc="m.section"/>
+                        <td><span class="mx-state" t-att-class="m.state === 'ok' ? 'mx-state-ok' : 'mx-state-bad'" t-esc="m.state === 'ok' ? 'Yaroqli' : 'Yaroqsiz'"/></td>
+                        <td class="mx-col-note cl-muted"><t t-if="m.state === 'broken'"><t t-esc="m.broken_date"/><t t-if="m.broken_note"> · <t t-esc="m.broken_note"/></t></t><t t-else="" t-esc="m.note"/></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- KARTOCHKA: profil bo'yicha guruh, telefonda qatorda 2 ta -->
+        <t t-else="">
         <section class="mx-group" t-foreach="matrixGroups" t-as="g" t-key="g.id">
             <div class="mx-group-head">
                 <span class="mx-group-name" t-esc="g.name"/>
@@ -68,58 +95,113 @@
                     <span class="mx-count mx-bad" t-if="g.broken"><t t-esc="g.broken"/> yaroqsiz</span>
                 </span>
             </div>
-            <div class="cl-list">
-                <button class="cl-mat mx-row" t-foreach="g.items" t-as="m" t-key="m.id" t-on-click="() => this.openMatrix(m)">
-                    <span class="cl-mat-main">
-                        <span class="cl-mat-name" t-esc="m.name"/>
-                        <span class="cl-mat-meta" t-if="m.state === 'broken'"><t t-esc="m.broken_date"/><t t-if="m.broken_note"> · <t t-esc="m.broken_note"/></t></span>
-                        <span class="cl-mat-meta" t-elif="m.note" t-esc="m.note"/>
+            <div class="mx-cards">
+                <button class="mx-card" t-foreach="g.items" t-as="m" t-key="m.id" t-att-class="{ 'mx-card-bad': m.state === 'broken' }" t-on-click="() => this.openMatrix(m)">
+                    <span class="mx-card-img">
+                        <img t-if="m.image" t-att-src="imageUrl(m, 'image_512')" alt="" loading="lazy"/>
+                        <i t-else="" class="fa fa-camera" aria-hidden="true"/>
+                        <span class="mx-state mx-card-state" t-att-class="m.state === 'ok' ? 'mx-state-ok' : 'mx-state-bad'" t-esc="m.state === 'ok' ? 'Yaroqli' : 'Yaroqsiz'"/>
                     </span>
-                    <span class="mx-state" t-att-class="m.state === 'ok' ? 'mx-state-ok' : 'mx-state-bad'" t-esc="m.state === 'ok' ? 'Yaroqli' : 'Yaroqsiz'"/>
+                    <span class="mx-card-body">
+                        <span class="mx-card-name" t-esc="m.name"/>
+                        <span class="mx-card-meta" t-esc="m.section"/>
+                        <span class="mx-card-meta mx-card-note" t-if="m.state === 'broken' and m.broken_note" t-esc="m.broken_note"/>
+                        <span class="mx-card-meta mx-card-note" t-elif="m.note" t-esc="m.note"/>
+                    </span>
                 </button>
             </div>
         </section>
+        </t>
     </t>
 
     <!-- GAZ -->
     <t t-name="craf_matritsa.TabGas">
-        <div class="cl-empty" t-if="!d.gas.length">Ammiak va Azot gaz turlari topilmadi.</div>
-        <section class="mx-gas" t-foreach="d.gas" t-as="g" t-key="g.id">
-            <div class="mx-gas-head">
-                <span class="mx-gas-dot" t-attf-style="background-color: {{ g.color }}"/>
-                <span class="mx-group-name"><t t-esc="g.name"/> <span class="cl-muted" t-esc="g.formula"/></span>
-                <span class="ms-auto mx-gas-total"><b t-esc="num(g.qty, 2)"/> / <t t-esc="num(g.capacity, 0)"/> <t t-esc="g.unit"/></span>
+        <!-- administrator «Gaz ballonlari» sahifasidagi ko'rinish (craf_gaz uslublari); xodim faqat sarf yozadi -->
+        <div class="o_craf_gaz mx-gaz">
+            <div class="cl-empty" t-if="!d.gas.length">Ammiak va Azot gaz turlari topilmadi.</div>
+            <div class="gz-types" t-else="">
+                <div t-attf-class="gz-type gz-all #{state.gasFilter ? '' : 'active'}" role="button" tabindex="0"
+                     t-on-click="() => state.gasFilter = 0">
+                    <b>Hammasi</b><span><t t-esc="gasBallons.length"/> ballon</span>
+                </div>
+                <t t-foreach="d.gas" t-as="g" t-key="g.id">
+                    <div t-attf-class="gz-type #{state.gasFilter === g.id ? 'active' : ''}" role="button" tabindex="0"
+                         t-attf-style="--gc: #{g.color}" t-on-click="() => state.gasFilter = g.id">
+                        <div class="gz-type-top"><span class="gz-dot"/><b t-esc="g.name"/><small t-esc="g.formula"/></div>
+                        <div class="gz-type-num"><t t-esc="num(g.qty, 2)"/> <small>/ <t t-esc="num(g.capacity, 2)"/> <t t-esc="g.unit"/></small></div>
+                        <div class="gz-bar"><i t-attf-style="width: #{typePercent(g)}%"/></div>
+                        <div class="gz-type-foot">
+                            <span><t t-esc="g.ballons.length"/> ballon</span>
+                            <span t-if="emptyCount(g)" class="gz-red"><t t-esc="emptyCount(g)"/> bo'sh</span>
+                            <span>30 kun sarf: <t t-esc="num(g.used_30, 2)"/></span>
+                        </div>
+                    </div>
+                </t>
             </div>
-            <div class="cl-muted small mb-1">30 kunda sarf: <t t-esc="num(g.used_30, 2)"/> <t t-esc="g.unit"/></div>
-            <div class="cl-empty" t-if="!g.ballons.length">Ballon yo'q.</div>
-            <div class="cl-list" t-else="">
-                <button class="cl-mat mx-ballon" t-foreach="g.ballons" t-as="b" t-key="b.id" t-on-click="() => this.openGas(g, b)">
-                    <span class="cl-mat-main">
-                        <span class="cl-mat-name"><t t-esc="b.name"/><span class="mx-low" t-if="b.state !== 'ok'" t-esc="b.state === 'empty' ? 'bo\'sh' : 'kam'"/></span>
-                        <span class="mx-bar" role="img" t-att-aria-label="b.percent + '%'"><span t-attf-style="width: {{ b.percent }}%; background-color: {{ g.color }}"/></span>
-                    </span>
-                    <span class="cl-mat-right">
-                        <span class="cl-qty"><t t-esc="num(b.qty, 2)"/><small> / <t t-esc="num(b.capacity, 0)"/> <t t-esc="g.unit"/></small></span>
-                        <span class="cl-flow cl-muted"><i class="fa fa-minus-circle"/> sarf yozish</span>
-                    </span>
-                </button>
+
+            <div class="gz-grid">
+                <t t-foreach="shownBallons" t-as="b" t-key="b.id">
+                    <div t-attf-class="gz-card gz-#{b.state}" t-attf-style="--gc: #{b.g.color}">
+                        <div class="gz-svgwrap" role="button" t-att-aria-label="b.name + ' — sarf yozish'"
+                             t-on-click="() => b.state !== 'empty' and this.openGas(b.g, b)">
+                            <svg viewBox="0 0 120 240" class="gz-svg" aria-hidden="true">
+                                <defs>
+                                    <linearGradient t-att-id="'mx' + b.id + 'g'" x1="0" x2="1">
+                                        <stop offset="0" t-att-stop-color="b.g.color" stop-opacity="0.55"/>
+                                        <stop offset="0.45" t-att-stop-color="b.g.color" stop-opacity="0.28"/>
+                                        <stop offset="1" t-att-stop-color="b.g.color" stop-opacity="0.6"/>
+                                    </linearGradient>
+                                    <clipPath t-att-id="'mx' + b.id + 'c'">
+                                        <rect x="22" y="38" width="76" height="186" rx="30"/>
+                                    </clipPath>
+                                </defs>
+                                <rect x="50" y="6" width="20" height="10" rx="2" class="gz-valve"/>
+                                <rect x="44" y="16" width="32" height="8" rx="3" class="gz-valve"/>
+                                <rect x="54" y="24" width="12" height="12" class="gz-valve"/>
+                                <g t-att-clip-path="'url(#mx' + b.id + 'c)'">
+                                    <rect x="22" t-att-y="fillY(b)" width="76" t-att-height="fillH(b) + 10"
+                                          t-att-fill="'url(#mx' + b.id + 'g)'" class="gz-gas"/>
+                                    <rect t-if="b.percent > 0" x="22" t-att-y="fillY(b)" width="76" height="2"
+                                          t-att-fill="b.g.color" opacity="0.8"/>
+                                </g>
+                                <rect x="22" y="38" width="76" height="186" rx="30" class="gz-glass"/>
+                                <rect x="30" y="56" width="8" height="140" rx="4" class="gz-shine"/>
+                                <rect x="22" y="44" width="76" height="8" t-att-fill="b.g.color" opacity="0.9"/>
+                                <text x="60" y="140" class="gz-pct" t-att-fill="b.percent > 0 ? b.g.color : '#94a3b8'"><t t-esc="pct(b)"/>%</text>
+                            </svg>
+                            <div t-if="b.state === 'empty'" class="gz-empty-tag">BO'SH</div>
+                        </div>
+                        <div class="gz-info">
+                            <div class="gz-name"><b t-esc="b.name"/> <span class="gz-chip" t-esc="b.g.name"/></div>
+                            <div class="gz-qty"><t t-esc="num(b.qty, 2)"/> / <t t-esc="num(b.capacity, 2)"/> <t t-esc="b.g.unit"/></div>
+                            <div class="gz-muted">Kerak (to'lishi uchun): <b><t t-esc="num(b.capacity - b.qty, 2)"/> <t t-esc="b.g.unit"/></b></div>
+                            <div class="gz-muted" t-if="b.location"><i class="fa fa-map-marker"/> <t t-esc="b.location"/></div>
+                            <div class="gz-muted">30 kun sarf: <t t-esc="num(b.used_30, 2)"/> <t t-esc="b.g.unit"/></div>
+                            <div class="gz-btns mx-gz-btns">
+                                <button class="btn btn-sm btn-outline-danger" t-att-disabled="b.state === 'empty'"
+                                        t-on-click="() => this.openGas(b.g, b)">− Sarf</button>
+                            </div>
+                        </div>
+                    </div>
+                </t>
             </div>
-        </section>
-        <h2 class="sx-h">Oxirgi sarflar</h2>
-        <div class="cl-empty" t-if="!d.gas_moves.length">Hali sarf yozilmagan.</div>
-        <div class="cl-list" t-else="">
-            <div class="cl-mat" t-foreach="d.gas_moves" t-as="mv" t-key="mv.id">
-                <span class="cl-mat-main">
-                    <span class="cl-mat-name"><span class="mx-gas-dot" t-attf-style="background-color: {{ mv.color }}"/> <t t-esc="mv.ballon"/> <span class="cl-muted" t-esc="mv.type"/></span>
-                    <span class="cl-mat-meta"><t t-esc="mv.date"/><t t-if="mv.who"> · <t t-esc="mv.who"/></t><t t-if="mv.note"> · <t t-esc="mv.note"/></t></span>
-                </span>
-                <span class="cl-mat-right">
-                    <span class="cl-qty">−<t t-esc="mv.qty"/><small> <t t-esc="mv.unit"/></small></span>
-                    <span class="cl-flow cl-muted">qoldi <t t-esc="mv.after"/></span>
-                </span>
+
+            <h4 class="mt-4">Oxirgi sarflar</h4>
+            <div class="gz-moves">
+                <div t-if="!d.gas_moves.length" class="gz-muted py-2">Hali sarf yozilmagan.</div>
+                <t t-foreach="d.gas_moves" t-as="mv" t-key="mv.id">
+                    <div class="gz-move mx-gz-move" t-attf-style="--gc: #{mv.color}">
+                        <span class="gz-dot"/>
+                        <b t-esc="mv.ballon"/>
+                        <span class="gz-kind gz-k-use">Sarf</span>
+                        <span>−<t t-esc="mv.qty"/> <t t-esc="mv.unit"/></span>
+                        <span class="gz-muted">→ <t t-esc="mv.after"/></span>
+                        <span class="gz-muted gz-grow"><t t-esc="mv.date"/><t t-if="mv.who"> · <t t-esc="mv.who"/></t><t t-if="mv.note"> · <t t-esc="mv.note"/></t></span>
+                    </div>
+                </t>
             </div>
+            <p class="cl-note mt-2">Ballon to'ldirish va yangi ballon qo'shishni omborchi yozadi.</p>
         </div>
-        <p class="cl-note">Ballon to'ldirish va yangi ballon qo'shishni omborchi yozadi.</p>
     </t>
 
     <!-- KAUSTIK SODA -->
@@ -223,6 +305,22 @@
                 </select>
             </label>
             <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+            <h3 class="cl-lines-head">Rasm</h3>
+            <div class="mx-photo">
+                <a t-if="f.preview and !f.image" t-att-href="f.preview" target="_blank" class="mx-photo-img" aria-label="Rasmni kattalashtirish">
+                    <img t-att-src="f.preview" alt="Matritsa rasmi"/>
+                </a>
+                <span t-elif="f.preview" class="mx-photo-img"><img t-att-src="f.preview" alt="Matritsa rasmi"/></span>
+                <span t-else="" class="mx-photo-img mx-photo-empty"><i class="fa fa-camera"/><span>Rasm yo'q</span></span>
+                <div class="mx-photo-actions">
+                    <label class="btn btn-outline-primary mb-0">
+                        <i class="fa fa-camera"/> <t t-esc="f.preview ? 'Almashtirish' : 'Rasm yuklash'"/>
+                        <input type="file" accept="image/*" class="d-none" t-on-change="onImage"/>
+                    </label>
+                    <button class="btn btn-link cl-danger-link" t-if="f.preview" t-on-click="clearImage">O'chirish</button>
+                </div>
+            </div>
+            <p class="cl-hint" t-if="f.image">Yangi rasm «Saqlash» bosilganda yoziladi.</p>
             <t t-if="f.id">
                 <h3 class="cl-lines-head">Holati</h3>
                 <div class="mx-state-box" t-if="s.m.state === 'broken'">
