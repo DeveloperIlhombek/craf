@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_matrix_view_list" model="ir.ui.view">
+        <field name="name">craf.matrix.list</field>
+        <field name="model">craf.matrix</field>
+        <field name="arch" type="xml">
+            <list string="Matritsalar" decoration-danger="state == 'broken'">
+                <field name="name"/>
+                <field name="section_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'ok'" decoration-danger="state == 'broken'"/>
+                <field name="broken_date" optional="show"/>
+                <field name="broken_note" optional="show"/>
+                <field name="note" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_matrix_view_form" model="ir.ui.view">
+        <field name="name">craf.matrix.form</field>
+        <field name="model">craf.matrix</field>
+        <field name="arch" type="xml">
+            <form string="Matritsa">
+                <header>
+                    <button name="action_mark_broken" type="object" string="Yaroqsiz" invisible="state == 'broken'"/>
+                    <button name="action_mark_ok" type="object" string="Yaroqli" class="btn-primary" invisible="state == 'ok'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted">Matritsa</span>
+                        <h1><field name="name" placeholder="Raqami"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="section_id" options="{'no_create': True}"/>
+                            <field name="note"/>
+                        </group>
+                        <group invisible="state != 'broken'">
+                            <field name="broken_date"/>
+                            <field name="broken_note"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_matrix_view_search" model="ir.ui.view">
+        <field name="name">craf.matrix.search</field>
+        <field name="model">craf.matrix</field>
+        <field name="arch" type="xml">
+            <search string="Matritsalar">
+                <field name="name"/>
+                <field name="section_id"/>
+                <filter name="ok" string="Yaroqli" domain="[('state', '=', 'ok')]"/>
+                <filter name="broken" string="Yaroqsiz" domain="[('state', '=', 'broken')]"/>
+                <separator/>
+                <filter name="archived" string="Arxivlangan" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_section" string="Profil" context="{'group_by': 'section_id'}"/>
+                    <filter name="group_state" string="Holati" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_matrix" model="ir.actions.act_window">
+        <field name="name">Matritsalar</field>
+        <field name="res_model">craf.matrix</field>
+        <field name="view_mode">list,form</field>
+        <field name="path">craf-matritsalar</field>
+        <field name="context">{'search_default_group_section': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Matritsalarni kiriting</p>
+            <p>Har matritsa raqami bilan: qaysi profil uchun, yaroqli yoki yaroqsiz.</p>
+        </field>
+    </record>
+
+    <record id="action_craf_soda_issue" model="ir.actions.act_window">
+        <field name="name">Kaustik soda olish</field>
+        <field name="res_model">craf.chem.issue</field>
+        <field name="view_mode">list,form</field>
+        <field name="path">craf-kaustik-soda</field>
+        <field name="domain">[('kind', '=', 'soda')]</field>
+        <field name="context">{'default_kind': 'soda'}</field>
+    </record>
+
+    <!-- matritsa xodimi sahifasi (telefon birinchi) -->
+    <record id="action_craf_matritsa" model="ir.actions.client">
+        <field name="name">Matritsa</field>
+        <field name="tag">craf_matritsa</field>
+        <field name="path">craf-matritsa</field>
+    </record>
+
+    <!-- matritsa xodimi: alohida «Matritsa» ilovasi (faqat u ko'radi — craf_sex/models/ir_ui_menu.py) -->
+    <menuitem id="menu_craf_matritsa_root" name="Matritsa" sequence="3"
+              web_icon="craf_matritsa,static/description/icon.png" groups="craf_sex.group_craf_worker"/>
+    <menuitem id="menu_craf_matritsa_page" name="Matritsa" parent="menu_craf_matritsa_root"
+              action="action_craf_matritsa" sequence="1"/>
+
+    <!-- Ishlab chiqarish → Press: omborchi va direktor uchun -->
+    <menuitem id="menu_craf_matritsa_press_page" name="Matritsa sahifasi" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_matritsa" sequence="2"/>
+    <menuitem id="menu_craf_matrix" name="Matritsalar" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_matrix" sequence="42"/>
+    <menuitem id="menu_craf_soda_issue" name="Kaustik soda olish" parent="craf_production.menu_craf_bolim_press"
+              action="action_craf_soda_issue" sequence="43"/>
+</odoo>

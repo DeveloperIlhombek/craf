@@ -119,7 +119,8 @@ class CrafSex(models.AbstractModel):
         docs = Model.search([("date", ">=", dfrom), ("date", "<=", dto)], order="date desc, id desc")
         drafts = Model.search([("state", "=", "draft")], order="date desc, id desc")
         issues = self.env["craf.chem.issue"].search(
-            [("date", ">=", dfrom), ("date", "<=", dto), ("state", "=", "done")], order="date desc, id desc") \
+            [("kind", "=", "kislota"), ("date", ">=", dfrom), ("date", "<=", dto), ("state", "=", "done")],
+            order="date desc, id desc") \
             if stage == "kimyo" else self.env["craf.chem.issue"]
         stages = []
         for key, label, model, _loc in STAGES:
@@ -588,6 +589,7 @@ class CrafSex(models.AbstractModel):
         date = vals.get("date") or fields.Date.context_today(self)
         moment = self._H._moment(date)
         rec = Issue.create({
+            "kind": "kislota",
             "date": date,
             "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
             "note": (vals.get("note") or "").strip() or False,

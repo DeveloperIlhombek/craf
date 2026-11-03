@@ -24,29 +24,50 @@ class ResUsers(models.Model):
         return self.has_group("craf_sotuv.group_craf_loader") and not any(
             self.has_group(g) for g in self.CRAF_FULL_ROLES)
 
-    def _craf_is_kimyo_only(self):
-        """Kimyo xodimi: Sex ishchisi, «Ish joyi» — Kimyoviy ishlov, boshqa (kattaroq) roli yo'q.
-        Telefon uchun: faqat «Kimyo» ilovasi, pastki panel, bosh sahifa — kimyo sahifasi."""
+    @api.model
+    def _craf_own_apps(self):
+        """Shaxsiy ilovali ish joylari (telefon uchun): {ish joyi: {menu, action, counts}}.
+        Shunday xodim faqat o'z ilovasini ko'radi, bosh sahifasi majburiy, telefonda pastki panel bor.
+        Boshqa modullar (masalan, craf_matritsa) o'z ish joyini qo'shadi."""
+        return {
+            "kimyo": {"menu": "craf_sex.menu_craf_kimyo_root", "action": "craf_sex.action_craf_sex_kimyo",
+                      "counts": ["craf.sex", "nav_counts"]},
+        }
+
+    def _craf_own_app(self):
+        """Ish joyi shaxsiy ilovali bo'lsa (Sex ishchisi, boshqa kattaroq roli yo'q) — uning kaliti, aks holda False."""
         self.ensure_one()
-        return (self.craf_work_stage == "kimyo" and self.has_group("craf_sex.group_craf_worker")
-                and not any(self.has_group(g) for g in ("base.group_system", "craf_sotuv.group_craf_seller",
-                                                        "craf_sex.group_craf_accountant", "stock.group_stock_manager")))
+        if self.craf_work_stage not in self._craf_own_apps() or not self.has_group("craf_sex.group_craf_worker"):
+            return False
+        bigger = ("base.group_system", "craf_sotuv.group_craf_seller", "craf_sex.group_craf_accountant",
+                  "stock.group_stock_manager")
+        return False if any(self.has_group(g) for g in bigger) else self.craf_work_stage
+
+    def _craf_own_nav(self, key):
+        """Pastki panel bandlari (shaxsiy ilova)."""
+        from .craf_loader_nav import kimyo_nav_items
+        return kimyo_nav_items(self.env) if key == "kimyo" else []
+
+    def _craf_is_kimyo_only(self):
+        """Kimyo xodimi: faqat «Kimyo» ilovasi, pastki panel, bosh sahifa — kimyo sahifasi."""
+        return self._craf_own_app() == "kimyo"
 
     def _craf_forced_home(self):
         """Qo'lda o'zgartirib bo'lmaydigan bosh sahifa: Administrator → Boshqaruv panellari,
-        faqat Yuklovchi → Yuklash (Sotuv sahifasi), kimyo xodimi → Kimyoviy ishlov sahifasi."""
+        faqat Yuklovchi → Yuklash (Sotuv sahifasi), shaxsiy ilovali xodim (kimyo, matritsa) → o'z sahifasi."""
         forced = {
             "admin": self.env.ref("spreadsheet_dashboard.ir_actions_dashboard_action", raise_if_not_found=False),
             "loader": self.env.ref("craf_sotuv.action_craf_yuklash", raise_if_not_found=False),
-            "kimyo": self.env.ref("craf_sex.action_craf_sex_kimyo", raise_if_not_found=False),
         }
+        apps = self._craf_own_apps()
         for user in self.sudo().filtered(lambda u: not u.share):
+            own = user._craf_own_app()
             if user.has_group("base.group_system"):
                 action = forced["admin"]
             elif user._craf_is_loader_only():
                 action = forced["loader"]
-            elif user._craf_is_kimyo_only():
-                action = forced["kimyo"]
+            elif own:
+                action = self.env.ref(apps[own]["action"], raise_if_not_found=False)
             else:
                 continue
             if action and user.action_id.id != action.id:  # action_id — ir.actions.actions, action — client
@@ -64,12 +85,14 @@ class ResUsers(models.Model):
         }
         actions = {k: self.env.ref(v, raise_if_not_found=False) for k, v in refs.items()}
         managed = {a.id for a in actions.values() if a}
-        for ref in ("craf_sotuv.action_craf_yuklash", "craf_sotuv.action_craf_sotuv", "craf_sex.action_craf_sex_kimyo"):
+        refs_managed = ["craf_sotuv.action_craf_yuklash", "craf_sotuv.action_craf_sotuv"]
+        refs_managed += [app["action"] for app in self._craf_own_apps().values()]
+        for ref in refs_managed:
             sale_action = self.env.ref(ref, raise_if_not_found=False)
             if sale_action:
                 managed.add(sale_action.id)
         for user in self.sudo():
-            if user.share or user.has_group("base.group_system") or user._craf_is_kimyo_only() or (
+            if user.share or user.has_group("base.group_system") or user._craf_own_app() or (
                     user.action_id and user.action_id.id not in managed):
                 continue
             if user.has_group("craf_sex.group_craf_director"):

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="craf_matritsa.Page">
+        <div class="o_action o_craf_litey o_craf_sex o_craf_matritsa" t-att-class="{ 'cl-busy': state.busy, 'sx-in-page': state.sheet }">
+            <t t-if="state.sheet" t-call="craf_matritsa.Sheet"/>
+            <t t-else="">
+                <header class="cl-top">
+                    <div class="cl-top-row">
+                        <h1 class="cl-title" t-esc="pageTitle"/>
+                        <div class="cl-top-actions" t-if="state.data">
+                            <button class="btn btn-primary cl-new-desk d-none d-lg-inline-flex" t-if="state.tab !== 'qoldiq'" t-on-click="newItem"><i class="fa fa-plus"/> <t t-esc="newLabel"/></button>
+                            <button class="cl-icon-btn" t-on-click="refresh" aria-label="Yangilash"><i class="fa fa-refresh"/></button>
+                        </div>
+                    </div>
+                    <nav class="cl-tabs" role="tablist">
+                        <button role="tab" t-att-class="{ active: state.tab === 'matritsa' }" t-on-click="() => this.setTab('matritsa')">Matritsalar</button>
+                        <button role="tab" t-att-class="{ active: state.tab === 'gaz' }" t-on-click="() => this.setTab('gaz')">Gaz</button>
+                        <button role="tab" t-att-class="{ active: state.tab === 'soda' }" t-on-click="() => this.setTab('soda')">Soda</button>
+                        <button role="tab" t-att-class="{ active: state.tab === 'qoldiq' }" t-on-click="() => this.setTab('qoldiq')">Qoldiq</button>
+                    </nav>
+                </header>
+                <main class="cl-body">
+                    <div class="cl-empty" t-if="!state.data"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+                    <t t-else="">
+                        <t t-set="d" t-value="state.data"/>
+                        <t t-if="state.tab === 'matritsa'" t-call="craf_matritsa.TabMatrix"/>
+                        <t t-if="state.tab === 'gaz'" t-call="craf_matritsa.TabGas"/>
+                        <t t-if="state.tab === 'soda'" t-call="craf_matritsa.TabSoda"/>
+                        <t t-if="state.tab === 'qoldiq'" t-call="craf_matritsa.TabStock"/>
+                    </t>
+                </main>
+                <button class="cl-fab d-lg-none" t-if="state.data and state.tab !== 'qoldiq'" t-on-click="newItem" t-att-aria-label="newLabel"><i class="fa fa-plus"/></button>
+            </t>
+        </div>
+    </t>
+
+    <!-- MATRITSALAR -->
+    <t t-name="craf_matritsa.TabMatrix">
+        <div class="cl-kpis" aria-label="Matritsalar soni">
+            <div class="cl-kpi"><span class="cl-kpi-label">Jami</span><span class="cl-kpi-value" t-esc="d.kpi.total"/></div>
+            <div class="cl-kpi"><span class="cl-kpi-label">Yaroqli</span><span class="cl-kpi-value cl-ok" t-esc="d.kpi.ok"/></div>
+            <div class="cl-kpi"><span class="cl-kpi-label">Yaroqsiz</span><span class="cl-kpi-value" t-att-class="{ 'cl-bad': d.kpi.broken }" t-esc="d.kpi.broken"/></div>
+        </div>
+        <div class="cl-toolbar mx-toolbar">
+            <div class="cl-search">
+                <i class="fa fa-search"/>
+                <input type="search" class="form-control" placeholder="Raqam yoki profil" t-model="state.q" aria-label="Matritsani qidirish"/>
+            </div>
+            <div class="cl-chips" role="group" aria-label="Holati">
+                <button t-att-class="{ active: state.filter === 'all' }" t-on-click="() => state.filter = 'all'">Hammasi <span t-esc="d.kpi.total"/></button>
+                <button t-att-class="{ active: state.filter === 'ok' }" t-on-click="() => state.filter = 'ok'">Yaroqli <span t-esc="d.kpi.ok"/></button>
+                <button class="cl-chip-warn" t-att-class="{ active: state.filter === 'broken' }" t-on-click="() => state.filter = 'broken'">Yaroqsiz <span t-esc="d.kpi.broken"/></button>
+            </div>
+        </div>
+        <div class="cl-empty sx-empty-card" t-if="!d.matrices.length">
+            <i class="fa fa-th"/>
+            <div>Hali matritsa kiritilmagan.</div>
+            <button class="btn btn-primary mt-2" t-on-click="() => this.openMatrix()"><i class="fa fa-plus"/> Matritsa qo'shish</button>
+        </div>
+        <div class="cl-empty" t-elif="!matrixGroups.length">Topilmadi.</div>
+        <section class="mx-group" t-foreach="matrixGroups" t-as="g" t-key="g.id">
+            <div class="mx-group-head">
+                <span class="mx-group-name" t-esc="g.name"/>
+                <span class="mx-counts">
+                    <span class="mx-count"><t t-esc="g.total"/> ta</span>
+                    <span class="mx-count mx-ok"><t t-esc="g.ok"/> yaroqli</span>
+                    <span class="mx-count mx-bad" t-if="g.broken"><t t-esc="g.broken"/> yaroqsiz</span>
+                </span>
+            </div>
+            <div class="cl-list">
+                <button class="cl-mat mx-row" t-foreach="g.items" t-as="m" t-key="m.id" t-on-click="() => this.openMatrix(m)">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name" t-esc="m.name"/>
+                        <span class="cl-mat-meta" t-if="m.state === 'broken'"><t t-esc="m.broken_date"/><t t-if="m.broken_note"> · <t t-esc="m.broken_note"/></t></span>
+                        <span class="cl-mat-meta" t-elif="m.note" t-esc="m.note"/>
+                    </span>
+                    <span class="mx-state" t-att-class="m.state === 'ok' ? 'mx-state-ok' : 'mx-state-bad'" t-esc="m.state === 'ok' ? 'Yaroqli' : 'Yaroqsiz'"/>
+                </button>
+            </div>
+        </section>
+    </t>
+
+    <!-- GAZ -->
+    <t t-name="craf_matritsa.TabGas">
+        <div class="cl-empty" t-if="!d.gas.length">Ammiak va Azot gaz turlari topilmadi.</div>
+        <section class="mx-gas" t-foreach="d.gas" t-as="g" t-key="g.id">
+            <div class="mx-gas-head">
+                <span class="mx-gas-dot" t-attf-style="background-color: {{ g.color }}"/>
+                <span class="mx-group-name"><t t-esc="g.name"/> <span class="cl-muted" t-esc="g.formula"/></span>
+                <span class="ms-auto mx-gas-total"><b t-esc="num(g.qty, 2)"/> / <t t-esc="num(g.capacity, 0)"/> <t t-esc="g.unit"/></span>
+            </div>
+            <div class="cl-muted small mb-1">30 kunda sarf: <t t-esc="num(g.used_30, 2)"/> <t t-esc="g.unit"/></div>
+            <div class="cl-empty" t-if="!g.ballons.length">Ballon yo'q.</div>
+            <div class="cl-list" t-else="">
+                <button class="cl-mat mx-ballon" t-foreach="g.ballons" t-as="b" t-key="b.id" t-on-click="() => this.openGas(g, b)">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name"><t t-esc="b.name"/><span class="mx-low" t-if="b.state !== 'ok'" t-esc="b.state === 'empty' ? 'bo\'sh' : 'kam'"/></span>
+                        <span class="mx-bar" role="img" t-att-aria-label="b.percent + '%'"><span t-attf-style="width: {{ b.percent }}%; background-color: {{ g.color }}"/></span>
+                    </span>
+                    <span class="cl-mat-right">
+                        <span class="cl-qty"><t t-esc="num(b.qty, 2)"/><small> / <t t-esc="num(b.capacity, 0)"/> <t t-esc="g.unit"/></small></span>
+                        <span class="cl-flow cl-muted"><i class="fa fa-minus-circle"/> sarf yozish</span>
+                    </span>
+                </button>
+            </div>
+        </section>
+        <h2 class="sx-h">Oxirgi sarflar</h2>
+        <div class="cl-empty" t-if="!d.gas_moves.length">Hali sarf yozilmagan.</div>
+        <div class="cl-list" t-else="">
+            <div class="cl-mat" t-foreach="d.gas_moves" t-as="mv" t-key="mv.id">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name"><span class="mx-gas-dot" t-attf-style="background-color: {{ mv.color }}"/> <t t-esc="mv.ballon"/> <span class="cl-muted" t-esc="mv.type"/></span>
+                    <span class="cl-mat-meta"><t t-esc="mv.date"/><t t-if="mv.who"> · <t t-esc="mv.who"/></t><t t-if="mv.note"> · <t t-esc="mv.note"/></t></span>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="cl-qty">−<t t-esc="mv.qty"/><small> <t t-esc="mv.unit"/></small></span>
+                    <span class="cl-flow cl-muted">qoldi <t t-esc="mv.after"/></span>
+                </span>
+            </div>
+        </div>
+        <p class="cl-note">Ballon to'ldirish va yangi ballon qo'shishni omborchi yozadi.</p>
+    </t>
+
+    <!-- KAUSTIK SODA -->
+    <t t-name="craf_matritsa.TabSoda">
+        <div class="cl-kpis">
+            <div class="cl-kpi" t-foreach="d.soda" t-as="c" t-key="c.id"><span class="cl-kpi-label">Omborda</span><span class="cl-kpi-value"><t t-esc="num(c.avail, 1)"/><small> <t t-esc="c.uom"/></small></span><span class="cl-kpi-sub" t-esc="d.soda_location"/></div>
+            <div class="cl-kpi"><span class="cl-kpi-label">Shu oy olindi</span><span class="cl-kpi-value"><t t-esc="d.soda_month"/><small> kg</small></span></div>
+        </div>
+        <div class="sx-h-row">
+            <h2 class="sx-h">Olingan kaustik soda <span class="cl-muted" t-esc="d.issues.length"/></h2>
+            <button class="btn btn-link cl-link" t-on-click="openSoda"><i class="fa fa-plus"/> Yozish</button>
+        </div>
+        <div class="cl-empty sx-empty-card" t-if="!d.issues.length">
+            <i class="fa fa-flask"/>
+            <div>Oxirgi 60 kunda soda olinmagan.</div>
+            <button class="btn btn-primary mt-2" t-on-click="openSoda"><i class="fa fa-plus"/> Soda olindi</button>
+        </div>
+        <div class="cl-list" t-else="">
+            <div class="cl-doc" t-foreach="d.issues" t-as="i" t-key="i.id">
+                <span class="cl-doc-icon cl-k-kochirish"><i class="fa fa-flask"/></span>
+                <span class="cl-doc-main">
+                    <span class="cl-doc-name"><t t-esc="i.total"/> kg <span class="cl-muted" t-esc="i.name"/></span>
+                    <span class="cl-doc-sub"><t t-esc="i.date_label"/><t t-if="i.who"> · <t t-esc="i.who"/></t><t t-if="i.note"> · <t t-esc="i.note"/></t></span>
+                </span>
+            </div>
+        </div>
+        <p class="cl-note">Kaustik soda ombordan olib ketilganda bir marta yoziladi va ombordan sarfga yechiladi.</p>
+    </t>
+
+    <!-- QOLDIQ -->
+    <t t-name="craf_matritsa.TabStock">
+        <h2 class="sx-h">Kaustik soda</h2>
+        <div class="cl-list">
+            <div class="cl-mat" t-foreach="d.soda" t-as="c" t-key="c.id">
+                <span class="cl-mat-main"><span class="cl-mat-name" t-esc="c.name"/><span class="cl-mat-meta"><t t-esc="c.code"/> · <t t-esc="d.soda_location"/></span></span>
+                <span class="cl-mat-right">
+                    <span class="cl-qty" t-att-class="{ 'cl-bad': c.avail &lt;= 0 }"><t t-esc="num(c.avail, 2)"/><small> <t t-esc="c.uom"/></small></span>
+                    <span class="cl-flow cl-muted" t-if="c.total !== c.avail">zavodda jami <t t-esc="num(c.total, 2)"/></span>
+                </span>
+            </div>
+        </div>
+        <h2 class="sx-h">Gaz</h2>
+        <div class="cl-list">
+            <div class="cl-mat" t-foreach="d.gas" t-as="g" t-key="g.id">
+                <span class="cl-mat-main"><span class="cl-mat-name"><span class="mx-gas-dot" t-attf-style="background-color: {{ g.color }}"/> <t t-esc="g.name"/></span><span class="cl-mat-meta"><t t-esc="g.ballons.length"/> ballon</span></span>
+                <span class="cl-mat-right"><span class="cl-qty"><t t-esc="num(g.qty, 2)"/><small> / <t t-esc="num(g.capacity, 0)"/> <t t-esc="g.unit"/></small></span></span>
+            </div>
+        </div>
+        <h2 class="sx-h">Matritsalar</h2>
+        <div class="cl-empty" t-if="!d.sections.length">Matritsa yo'q.</div>
+        <div class="cl-list" t-else="">
+            <div class="cl-mat" t-foreach="d.sections" t-as="s" t-key="s.id">
+                <span class="cl-mat-main"><span class="cl-mat-name" t-esc="s.name"/><span class="cl-mat-meta"><t t-esc="s.ok"/> yaroqli<t t-if="s.broken">, <span class="cl-bad"><t t-esc="s.broken"/> yaroqsiz</span></t></span></span>
+                <span class="cl-mat-right"><span class="cl-qty"><t t-esc="s.total"/><small> ta</small></span></span>
+            </div>
+        </div>
+        <div class="mx-links" t-if="d.can_manage">
+            <button class="btn btn-outline-secondary" t-on-click="() => this.openList('craf_matritsa.action_craf_matrix')"><i class="fa fa-list"/> Matritsalar ro'yxati</button>
+            <button class="btn btn-outline-secondary" t-on-click="() => this.openList('craf_gaz.action_craf_gaz')"><i class="fa fa-fire-extinguisher"/> Gaz ballonlari</button>
+        </div>
+    </t>
+
+    <!-- FORMALAR: alohida sahifa, tepada «orqaga», tugmalar pastda -->
+    <t t-name="craf_matritsa.Head">
+        <div class="cl-sheet-head">
+            <button class="cl-icon-btn sx-back" t-on-click="closeSheet" aria-label="Orqaga"><i class="fa fa-arrow-left"/></button>
+            <div class="cl-sheet-titles">
+                <div class="cl-sheet-title" t-esc="title"/>
+                <div class="cl-sheet-sub" t-if="sub" t-esc="sub"/>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_matritsa.Sheet">
+        <t t-set="s" t-value="state.sheet"/>
+        <div class="sx-page" t-att-class="'mx-sheet-' + s.type">
+            <t t-if="s.type === 'matrix'" t-call="craf_matritsa.SheetMatrix"/>
+            <t t-elif="s.type === 'gas'" t-call="craf_matritsa.SheetGas"/>
+            <t t-elif="s.type === 'soda'" t-call="craf_matritsa.SheetSoda"/>
+            <div class="cl-sheet-error" t-if="s.error" role="alert">
+                <i class="fa fa-exclamation-circle"/>
+                <div class="cl-sheet-error-text" t-esc="s.error"/>
+                <button class="cl-icon-btn" t-on-click="() => s.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_matritsa.SheetMatrix">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_matritsa.Head">
+            <t t-set="title" t-value="f.id ? 'Matritsa ' + s.m.name : 'Yangi matritsa'"/>
+            <t t-set="sub" t-value="f.id ? (s.m.state === 'ok' ? 'Yaroqli' : 'Yaroqsiz' + (s.m.broken_date ? ' · ' + s.m.broken_date : '')) : 'Raqami va qaysi profil uchun'"/>
+        </t>
+        <div class="cl-sheet-body">
+            <label class="cl-field"><span>Raqami</span><input type="text" class="form-control" t-model="f.name" placeholder="Masalan: M-015"/></label>
+            <label class="cl-field">
+                <span>Profil (kesim)</span>
+                <select class="form-select" t-model="f.section_id">
+                    <option value="">— tanlang —</option>
+                    <option t-foreach="s.o.sections" t-as="sec" t-key="sec.id" t-att-value="sec.id" t-att-selected="eq(f.section_id, sec.id)" t-esc="sec.name"/>
+                </select>
+            </label>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+            <t t-if="f.id">
+                <h3 class="cl-lines-head">Holati</h3>
+                <div class="mx-state-box" t-if="s.m.state === 'broken'">
+                    <span class="mx-state mx-state-bad">Yaroqsiz</span>
+                    <span class="cl-muted"><t t-esc="s.m.broken_date"/><t t-if="s.m.broken_note"> · <t t-esc="s.m.broken_note"/></t></span>
+                </div>
+                <t t-else="">
+                    <label class="cl-field"><span>Yaroqsiz bo'lsa — sababi</span><input type="text" class="form-control" t-model="f.broken_note" placeholder="Masalan: yorilgan, eskirgan"/></label>
+                </t>
+            </t>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-outline-danger me-auto" t-if="f.id and s.m.state === 'ok'" t-on-click="() => this.setMatrixState('broken')" t-att-disabled="state.busy">Yaroqsiz</button>
+            <button class="btn btn-outline-success me-auto" t-if="f.id and s.m.state === 'broken'" t-on-click="() => this.setMatrixState('ok')" t-att-disabled="state.busy">Yaroqli qilish</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveMatrix" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
+    <t t-name="craf_matritsa.SheetGas">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_matritsa.Head">
+            <t t-set="title" t-value="s.g.name + ' sarfi'"/>
+            <t t-set="sub" t-value="'Ballondan qancha sarflandi, ' + s.g.unit"/>
+        </t>
+        <div class="cl-sheet-body">
+            <h3 class="cl-lines-head">Ballon</h3>
+            <div class="cl-list sx-mb">
+                <button class="cl-mat mx-ballon sx-pick" t-foreach="s.g.ballons" t-as="b" t-key="b.id" t-att-class="{ picked: f.ballon_id === b.id }" t-on-click="() => this.pickBallon(s, b)">
+                    <span class="sx-check"><i t-att-class="f.ballon_id === b.id ? 'fa fa-dot-circle-o' : 'fa fa-circle-o'"/></span>
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name" t-esc="b.name"/>
+                        <span class="mx-bar"><span t-attf-style="width: {{ b.percent }}%; background-color: {{ s.g.color }}"/></span>
+                    </span>
+                    <span class="cl-mat-right"><span class="cl-qty"><t t-esc="num(b.qty, 2)"/><small> <t t-esc="s.g.unit"/></small></span></span>
+                </button>
+            </div>
+            <label class="cl-field">
+                <span>Sarf, <t t-esc="s.g.unit"/></span>
+                <input type="text" inputmode="decimal" class="form-control sx-big-input" t-model="f.qty" placeholder="0"/>
+            </label>
+            <p class="cl-hint">Qoladi: <b><t t-esc="num(gasLeft(s), 2)"/> <t t-esc="s.g.unit"/></b></p>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveGas" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
+    <t t-name="craf_matritsa.SheetSoda">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_matritsa.Head">
+            <t t-set="title" t-value="'Kaustik soda olindi'"/>
+            <t t-set="sub" t-value="'Ombordan (' + state.data.soda_location + ') olib ketilgan miqdor'"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
+                <label class="cl-field">
+                    <span>Kim oldi</span>
+                    <select class="form-select" t-model="f.employee_id">
+                        <option value="">—</option>
+                        <option t-foreach="s.o.employees" t-as="e" t-key="e.id" t-att-value="e.id" t-att-selected="eq(f.employee_id, e.id)" t-esc="e.name"/>
+                    </select>
+                </label>
+            </div>
+            <div class="sx-direct" t-foreach="state.data.soda" t-as="c" t-key="c.id">
+                <span><t t-esc="c.name"/><small class="d-block cl-muted">omborda <t t-esc="num(c.avail, 2)"/> <t t-esc="c.uom"/></small></span>
+                <input type="text" inputmode="decimal" class="form-control" placeholder="0" t-model="f.qty[c.id]" t-att-aria-label="c.name + ', kg'"/>
+            </div>
+            <label class="cl-field mt-3"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveSoda" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+</templates>

@@ -1,4 +1,5 @@
-"""Kislota olish: kimyo xodimi ombordan qancha kimyoviy modda (kislota) olib ketganini bir marta yozadi.
+"""Kislota / kaustik soda olish: xodim ombordan qancha kimyoviy modda olib ketganini bir marta yozadi
+(kislota — kimyo xodimi, kaustik soda — matritsa xodimi, qoliplarni tozalash uchun).
 
 Kimyo sarfi har bir kimyoviy ishlovda kuzatilmaydi (2026-11-03 qarori) — olib ketilgan miqdor shu zahoti
 sarf hisoblanadi: Xom-ashyo omboridan ishlab chiqarishga (sarfga) yechiladi.
@@ -11,11 +12,13 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
 
 CHEM_CODES = ("XA-03", "XA-04", "XA-05")
+ISSUE_KINDS = [("kislota", "Kislota"), ("soda", "Kaustik soda")]
+KIND_CODES = {"kislota": CHEM_CODES, "soda": ("XA-10",)}
 
 
 class CrafChemIssue(models.Model):
     _name = "craf.chem.issue"
-    _description = "Kislota olish (kimyo sarfi)"
+    _description = "Ombordan olingan kimyo (kislota, kaustik soda)"
     _inherit = ["craf.production.mixin"]
     _order = "date desc, id desc"
 
@@ -23,7 +26,8 @@ class CrafChemIssue(models.Model):
     _craf_stage = "chem"
     _craf_default_src = "Xom-ashyo ombori"
 
-    line_ids = fields.One2many("craf.chem.issue.line", "issue_id", string="Olingan kislota", copy=True)
+    kind = fields.Selection(ISSUE_KINDS, "Nima", required=True, default="kislota", index=True, tracking=True)
+    line_ids = fields.One2many("craf.chem.issue.line", "issue_id", string="Olingan", copy=True)
     qty_total = fields.Float("Jami, kg", compute="_compute_qty_total", store=True, digits=(16, 2), aggregator="sum")
     content = fields.Char("Nima olindi", compute="_compute_qty_total", store=True)
 
@@ -35,9 +39,9 @@ class CrafChemIssue(models.Model):
             rec.content = ", ".join("%s %s kg" % (l.product_id.name, fmt(l.qty, 2)) for l in lines) or False
 
     @api.model
-    def _craf_chem_products(self):
+    def _craf_chem_products(self, kind="kislota"):
         products = self.env["product.product"]
-        for code in CHEM_CODES:
+        for code in KIND_CODES.get(kind, CHEM_CODES):
             products |= self._craf_product(code)
         return products
 
@@ -45,7 +49,7 @@ class CrafChemIssue(models.Model):
         self.ensure_one()
         lines = self.line_ids.filtered(lambda l: l.qty > EPS)
         if not lines:
-            raise UserError("Olingan kislota miqdorini yozing.")
+            raise UserError("Olingan miqdorni yozing.")
         needs = {}
         for line in lines:
             needs[line.product_id] = needs.get(line.product_id, 0.0) + line.qty
@@ -68,15 +72,15 @@ class CrafChemIssue(models.Model):
             move._action_done()
             line.move_id = move
         self._craf_post_summary([
-            Markup("<b>Kislota olindi</b> — %s") % self.location_src_id.name,
+            Markup("<b>%s olindi</b> — %s") % (dict(ISSUE_KINDS)[self.kind], self.location_src_id.name),
             self.content or "—",
         ])
 
     def action_add_chems(self):
-        """Uchala kislota qatorini qo'shadi (miqdorini xodim yozadi)."""
+        """Shu turdagi (kislota yoki soda) mahsulot qatorlarini qo'shadi (miqdorini xodim yozadi)."""
         for rec in self.filtered(lambda r: r.state == "draft"):
             have = rec.line_ids.product_id
-            rec.line_ids = [Command.create({"product_id": p.id}) for p in rec._craf_chem_products() - have]
+            rec.line_ids = [Command.create({"product_id": p.id}) for p in rec._craf_chem_products(rec.kind) - have]
         return True
 
 

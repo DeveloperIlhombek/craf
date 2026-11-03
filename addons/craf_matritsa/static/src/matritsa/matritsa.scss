@@ -1,0 +1,119 @@
+// Craf → Matritsa. Asosiy uslub Литейка va Sexlar sahifalaridan (o_craf_litey, o_craf_sex); bu yerda faqat o'ziga xos qismlar.
+$mx-line: rgba(127, 127, 127, 0.22);
+$mx-muted: #63707a;
+$mx-ok: #12753a;
+$mx-bad: #c4314b;
+
+.o_craf_litey.o_craf_matritsa {
+    // 2-3 ta ko'rsatkich telefonda ham bir qatorga sig'adi (aylantirmasdan)
+    .cl-kpis {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+        overflow-x: visible;
+    }
+    .mx-toolbar {
+        flex-wrap: wrap;
+    }
+    .mx-group,
+    .mx-gas {
+        margin-bottom: 14px;
+    }
+    .mx-group-head,
+    .mx-gas-head {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        padding: 10px 2px 6px;
+    }
+    .mx-group-name {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .mx-counts {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+        font-size: 0.78rem;
+    }
+    .mx-count {
+        padding: 1px 8px;
+        border-radius: 10px;
+        border: 1px solid $mx-line;
+        color: $mx-muted;
+        white-space: nowrap;
+        &.mx-ok {
+            color: $mx-ok;
+            border-color: rgba(18, 117, 58, 0.35);
+        }
+        &.mx-bad {
+            color: $mx-bad;
+            border-color: rgba(196, 49, 75, 0.4);
+        }
+    }
+    .mx-row,
+    .mx-ballon {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: none;
+        color: inherit;
+    }
+    .mx-state {
+        flex: 0 0 auto;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+        &.mx-state-ok {
+            color: $mx-ok;
+            background-color: rgba(18, 117, 58, 0.1);
+        }
+        &.mx-state-bad {
+            color: $mx-bad;
+            background-color: rgba(196, 49, 75, 0.1);
+        }
+    }
+    .mx-state-box {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .mx-gas-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+    }
+    .mx-gas-total {
+        font-size: 0.95rem;
+    }
+    .mx-bar {
+        display: block;
+        height: 6px;
+        margin-top: 6px;
+        border-radius: 3px;
+        background-color: rgba(127, 127, 127, 0.15);
+        overflow: hidden;
+        max-width: 220px;
+        > span {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+        }
+    }
+    .mx-low {
+        margin-left: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: $mx-bad;
+    }
+    .mx-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0 8px;
+    }
+}

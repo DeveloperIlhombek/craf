@@ -93,6 +93,13 @@ class CrafKunlikHisobot(models.AbstractModel):
                 self._add(waste, d.scrap_product_id, d.scrap_qty)
             if "basket_count" in docs._fields:
                 extra.append("Korzinkalar: %s ta" % sum(done.mapped("basket_count")))
+            # kaustik soda (matritsa tozalash) — ombordan olingan kuni
+            day = self.env.context.get("craf_day")
+            if day:
+                for issue in self.env["craf.chem.issue"].search(
+                        [("kind", "=", "soda"), ("date", "=", day), ("state", "=", "done")]):
+                    for line in issue.line_ids:
+                        self._add(used, line.product_id, line.qty)
             billet = sum(done.mapped("billet_qty"))
             if billet:
                 extra.append("Chiqish: %.1f%%" % (sum(done.mapped("output_kg")) / billet * 100))
@@ -106,7 +113,8 @@ class CrafKunlikHisobot(models.AbstractModel):
             # kimyo sarfi — ombordan olingan kislota (Kislota olish)
             day = self.env.context.get("craf_day")
             if day:
-                for issue in self.env["craf.chem.issue"].search([("date", "=", day), ("state", "=", "done")]):
+                for issue in self.env["craf.chem.issue"].search(
+                        [("kind", "=", "kislota"), ("date", "=", day), ("state", "=", "done")]):
                     for line in issue.line_ids:
                         self._add(used, line.product_id, line.qty)
         elif key == "boyash":

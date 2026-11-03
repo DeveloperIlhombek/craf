@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_craf_matrix_user,craf.matrix user,model_craf_matrix,base.group_user,1,0,0,0
+access_craf_matrix_worker,craf.matrix worker,model_craf_matrix,craf_sex.group_craf_worker,1,1,1,0
+access_craf_matrix_manager,craf.matrix manager,model_craf_matrix,stock.group_stock_manager,1,1,1,1

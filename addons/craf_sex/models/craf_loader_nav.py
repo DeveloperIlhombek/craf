@@ -42,9 +42,10 @@ class IrHttp(models.AbstractModel):
         if request and request.session.uid and user and not user.share and user._craf_is_loader_only():
             info["craf_loader_nav"] = loader_nav_items(self.env)
             info["craf_nav_counts"] = ["craf.sotuv", "loader_nav_counts"]
-        elif request and request.session.uid and user and not user.share and user._craf_is_kimyo_only():
-            info["craf_loader_nav"] = kimyo_nav_items(self.env)
-            info["craf_nav_counts"] = ["craf.sex", "nav_counts"]
+        elif request and request.session.uid and user and not user.share and user._craf_own_app():
+            own = user._craf_own_app()
+            info["craf_loader_nav"] = user._craf_own_nav(own)
+            info["craf_nav_counts"] = user._craf_own_apps()[own].get("counts") or False
         return info
 
 
