@@ -83,9 +83,54 @@ class CrafSex(models.AbstractModel):
 
     @api.model
     def nav_counts(self):
-        """Telefondagi pastki panel belgisi: kimyoga kutayotgan korzinkalar soni."""
+        """Telefondagi pastki panel belgisi: kimyo — kutayotgan korzinkalar, bo'yash — sexdagi bo'yalmagan profillar."""
+        if self.env.user._craf_own_app() == "boyash":
+            semis = [r for r in self._stock("boyash")["rows"] if r["kind"] == "semi" and r["qty"] > 0]
+            return {"ish": len(semis)}
         return {"ish": self.env["craf.basket.load"].search_count(
             [("state", "=", "press"), ("shift_state", "=", "done")])}
+
+    def _materials(self):
+        """Bo'yash va qadoqlash materiallari (faqat ko'rish): kukun bo'yoqlar, salofan va lenta, stikerlar.
+        Sarf bo'yash hujjatidan avtomatik (stiker — profil uzunligi va tomoni bo'yicha) yechiladi."""
+        Batch = self.env["craf.paint.batch"]
+        colors = self.env["craf.color"].search([("is_painted", "=", True), ("paint_tmpl_id", "!=", False)])
+        Product = self.env["product.product"]
+        paints = colors.paint_tmpl_id.product_variant_ids | Product.search(
+            [("default_code", "in", ("XA-01", "XA-11", "XA-12"))])
+        packs = Product.search([("default_code", "in", ("QM-01", "QM-02"))])
+        rows = Batch._craf_material_forecast(paints | packs) if paints | packs else {}
+        status_tone = {"neg": "bad", "out": "bad", "low": "bad", "soon": "warn", "ok": "ok", "idle": ""}
+        status_label = {"neg": "Manfiy", "out": "Tugagan", "low": "Minimaldan kam", "soon": "Tez tugaydi",
+                        "ok": "Yetarli", "idle": "Sarflanmayapti"}
+
+        def row(product):
+            r = rows.get(product.id)
+            if not r:
+                return None
+            return {"id": product.id, "name": product.name, "code": product.default_code or "",
+                    "qty": round(r["qty"], 2), "in_sex": round(r["in_sex"], 2), "uom": self._uom_label(product),
+                    "days": Batch._craf_days_text(r["days_left"]) or "", "avg": round(r["avg"], 2),
+                    "tone": status_tone.get(r["status"], ""), "status": status_label.get(r["status"], "")}
+
+        groups = [
+            {"key": "paint", "title": "Bo'yoqlar (kukun)", "icon": "fa-tint",
+             "rows": [x for x in (row(p) for p in paints.sorted("name")) if x]},
+            {"key": "pack", "title": "Salofan va lenta", "icon": "fa-archive",
+             "rows": [x for x in (row(p) for p in packs.sorted("default_code")) if x]},
+        ]
+        if "craf.sticker" in self.env:
+            stickers = []
+            for st in self.env["craf.sticker"].search([("product_id", "!=", False)]):
+                stickers.append({
+                    "id": st.id, "name": st.name, "code": st.size_text or "",
+                    "qty": round(st.qty_rolls, 1), "in_sex": round(st.in_sex_rolls, 1), "uom": "rulon",
+                    "meters": round(st.qty_m), "days": st.days_text or "", "avg": round(st.avg_rolls, 2),
+                    "tone": status_tone.get(st.status, ""), "status": status_label.get(st.status, ""),
+                })
+            groups.append({"key": "sticker", "title": "Stikerlar", "icon": "fa-tag", "rows": stickers,
+                           "note": "Stiker sarfi bo'yalgan profil uzunligi va tomoni bo'yicha avtomatik hisoblanadi."})
+        return groups
 
     def _employees(self):
         return [{"id": e.id, "name": e.name, "job": e.job_title or ""}
@@ -139,6 +184,7 @@ class CrafSex(models.AbstractModel):
             "kpi": (self._kpi_kimyo(docs.filtered(lambda d: d.state == "done"), issues) if stage == "kimyo"
                     else getattr(self, "_kpi_%s" % stage)(docs.filtered(lambda d: d.state == "done"))),
             "issues": [self._issue_card(i) for i in issues],
+            "materials": self._materials() if stage == "boyash" else [],
             "docs": [self._card(stage, d) for d in docs],
             "drafts": [self._card(stage, d) for d in drafts],
             "baskets": self._baskets(),
@@ -643,6 +689,7 @@ class CrafSex(models.AbstractModel):
             "colors": colors, "semis": semi_rows, "powder_g_m2": norm["powder_g_m2"],
             "pack_materials": self._pack_materials_info(loc, norm),
             "employees": self._employees(), "equipment": self._equipment("boyash"),
+            "my_employee": self.env.user.employee_id.id or False,
             "shifts": [{"key": k, "label": v} for k, v in SHIFTS],
         }
 

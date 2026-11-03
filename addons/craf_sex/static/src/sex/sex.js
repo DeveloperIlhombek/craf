@@ -14,7 +14,7 @@ const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 const BOLIM_STAGES = { press: ["press"], boyash: ["kimyo", "boyash"] };
 const BOLIM_TITLE = { press: "Press", boyash: "Bo'yash va qadoqlash" };
 // modal emas, alohida sahifada ochiladigan formalar (telefonda pastki panel bilan to'qnashmaydi)
-const PAGE_SHEETS = new Set(["chem", "doc", "issue"]);
+const PAGE_SHEETS = new Set(["chem", "doc", "issue", "paint"]);
 const STAGE_MODEL = { press: "craf.extrusion.shift", kimyo: "craf.chem.treatment", boyash: "craf.paint.batch" };
 
 function addDays(iso, n) {
@@ -74,7 +74,7 @@ export class CrafSex extends Component {
         onWillStart(async () => {
             const ctx = (this.props.action && this.props.action.context) || {};
             let stage = ctx.craf_stage || null;
-            if (["ish", "hujjat", "kislota", "qoldiq"].includes(ctx.craf_tab)) {
+            if (["ish", "hujjat", "kislota", "material", "qoldiq"].includes(ctx.craf_tab)) {
                 this.state.tab = ctx.craf_tab; // telefondagi pastki paneldan
             }
             if (!stage) {
@@ -644,11 +644,12 @@ export class CrafSex extends Component {
     }
 
     // ---------------------------------------------------------------- BO'YASH
-    async openPaint(id = false) {
+    async openPaint(id = false, semiId = false) {
         await this.run(async () => {
             const o = await this.options("boyash");
             let f;
-            let loads = [...this.state.data.baskets.ready];
+            // bo'yash korzinka bilan ishlamaydi (korzinka kimyoviy ishlovda bo'shatiladi) — profillar sexdagi qoldiqdan
+            let loads = [];
             if (id) {
                 f = await this.orm.call(API, "paint_load", [id]);
                 for (const l of f.loads) {
@@ -659,12 +660,13 @@ export class CrafSex extends Component {
                 f.pick = Object.fromEntries(f.load_ids.map((i) => [i, true]));
                 f.lines = f.lines.map((l) => ({ ...l, key: key() }));
             } else {
-                f = { id: false, date: o.today, shift: "1", color_id: false, employee_id: false,
+                f = { id: false, date: o.today, shift: "1", color_id: false, employee_id: o.my_employee || false,
                       equipment_id: (o.equipment[0] || {}).id || false, powder_text: "", powder_bags: "", note: "",
                       film_text: "", tape_text: "",
                       pick: { ...this.state.pick }, lines: [] };
-                if (Object.keys(f.pick).length) {
-                    f.lines = this.linesFromLoads(loads.filter((l) => f.pick[l.id]));
+                if (semiId) {
+                    const semi = o.semis.find((x) => x.id === semiId);
+                    f.lines = [{ key: key(), semi_id: semiId, pcs_in: semi ? semi.avail || "" : "", defect: "", packs: "", extra: "", manual: true }];
                 }
             }
             this.openSheet({ type: "paint", o, f, loads, addSemi: "" });
@@ -745,6 +747,10 @@ export class CrafSex extends Component {
         const s = this.state.sheet;
         s.f.lines = s.f.lines.filter((l) => l !== line);
     }
+    get semisToPaint() {
+        // bo'yash: sexdagi bo'yalmagan profillar (kimyoviy ishlovdan o'tgan)
+        return this.state.data.stock.rows.filter((r) => r.kind === "semi" && r.qty > 0);
+    }
     get semisInStock() {
         const s = this.state.sheet;
         return s.o.semis.filter((x) => x.avail > 0 && !s.f.lines.find((l) => l.semi_id === x.id));
@@ -756,7 +762,7 @@ export class CrafSex extends Component {
             return;
         }
         if (!s.f.lines.length) {
-            s.error = "Profil qatorlarini qo'shing: korzinkalarni belgilang yoki «Profil qo'shish».";
+            s.error = "Bo'yalgan profilni qo'shing: «Sexdagi profildan qo'shish».";
             return;
         }
         if (s.f.powder_text && Number.isNaN(parseSum(s.f.powder_text))) {
@@ -778,7 +784,7 @@ export class CrafSex extends Component {
                       equipment_id: s.f.equipment_id ? Number(s.f.equipment_id) : false },
                     Boolean(confirm),
                 ]);
-                this.notification.add(confirm ? `${res.name} tasdiqlandi — omborga topshirishni unutmang` : `${res.name} saqlandi`, { type: "success" });
+                this.notification.add(confirm ? `${res.name} tasdiqlandi — tayyor mahsulot omborga o'tdi` : `${res.name} saqlandi`, { type: "success" });
                 this.state.pick = {};
                 this.closeSheet();
                 await this.refresh();
@@ -786,7 +792,7 @@ export class CrafSex extends Component {
         if (confirm) {
             this.confirm("Bo'yashni tasdiqlash",
                 `${t.color ? t.color.name : ""}: bo'yaldi ${this.num(t.ok, 0)} dona, brak ${this.num(t.defect, 0)} dona, kukun ${this.num(t.powder, 2)} kg. ` +
-                    "Bo'yalgan profil Qadoqlash joyiga kiradi.", "Tasdiqlash", doSave);
+                    "Bo'yalgan profil darhol Tayyor mahsulot omboriga o'tadi (sotishga tayyor); bo'yoq, salofan, lenta va stiker sarfi yechiladi.", "Tasdiqlash", doSave);
         } else {
             doSave();
         }

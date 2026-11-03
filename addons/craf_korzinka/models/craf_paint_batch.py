@@ -51,8 +51,37 @@ class CrafPaintBatch(models.Model):
             self.load_ids.write({"state": "boyash", "paint_batch_id": self.id})
         return res
 
+    def action_done(self):
+        """Tasdiqlangan bo'yash darhol omborga topshiriladi — tayyor mahsulot sotishga tayyor (2026-11-03)."""
+        res = super().action_done()
+        for batch in self.filtered(lambda b: b.state == "done" and not b.stock_picking_id):
+            batch._craf_to_stock()
+        return res
+
+    def _craf_pack_items(self):
+        """Pachka yorliqlari — mahsulot hozir turgan joyda (omborga topshirilgan bo'lsa, Tayyor mahsulot omborida)."""
+        items = super()._craf_pack_items()
+        if self.stock_picking_id.state == "done":
+            dest = self.stock_picking_id.location_dest_id
+            items = [(p, q, dest) for p, q, _loc in items]
+        return items
+
     def action_send_to_stock(self):
         """Bo'yalgan mahsulotni (va pachkalarini) Tayyor mahsulot omboriga topshiradi."""
+        picking, total, dest = self._craf_to_stock()
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": "success",
+                "title": "Omborga topshirildi",
+                "message": "%s: %s dona → %s" % (self.name, total, dest.name),
+                "next": {"type": "ir.actions.client", "tag": "soft_reload"},
+            },
+        }
+
+    def _craf_to_stock(self):
+        """(picking, dona, joy) — bo'yalgan mahsulot Qadoqlash joyidan Tayyor mahsulot omboriga."""
         self.ensure_one()
         if self.state != "done":
             raise UserError("Avval bo'yash smenasini tasdiqlang.")
@@ -90,13 +119,4 @@ class CrafPaintBatch(models.Model):
         packs = self.env["craf.pack"].search([("origin", "=", self.name)])
         packs.write({"location_id": dest.id})
         self.message_post(body="Omborga topshirildi: %s → %s (%s)" % (src.name, dest.name, picking.name))
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "type": "success",
-                "title": "Omborga topshirildi",
-                "message": "%s: %s dona → %s" % (self.name, sum(quantities.values()), dest.name),
-                "next": {"type": "ir.actions.client", "tag": "soft_reload"},
-            },
-        }
+        return picking, sum(quantities.values()), dest

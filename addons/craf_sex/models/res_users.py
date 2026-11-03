@@ -32,6 +32,8 @@ class ResUsers(models.Model):
         return {
             "kimyo": {"menu": "craf_sex.menu_craf_kimyo_root", "action": "craf_sex.action_craf_sex_kimyo",
                       "counts": ["craf.sex", "nav_counts"]},
+            "boyash": {"menu": "craf_sex.menu_craf_boyash_root", "action": "craf_sex.action_craf_sex_boyash_own",
+                       "counts": ["craf.sex", "nav_counts"]},
         }
 
     def _craf_own_app(self):
@@ -45,8 +47,8 @@ class ResUsers(models.Model):
 
     def _craf_own_nav(self, key):
         """Pastki panel bandlari (shaxsiy ilova)."""
-        from .craf_loader_nav import kimyo_nav_items
-        return kimyo_nav_items(self.env) if key == "kimyo" else []
+        from .craf_loader_nav import boyash_nav_items, kimyo_nav_items
+        return {"kimyo": kimyo_nav_items, "boyash": boyash_nav_items}.get(key, lambda env: [])(self.env)
 
     def _craf_is_kimyo_only(self):
         """Kimyo xodimi: faqat «Kimyo» ilovasi, pastki panel, bosh sahifa — kimyo sahifasi."""

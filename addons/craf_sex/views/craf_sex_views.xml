@@ -29,6 +29,17 @@
               web_icon="craf_sex,static/description/icon.png" groups="craf_sex.group_craf_worker"/>
     <menuitem id="menu_craf_kimyo_page" name="Kimyoviy ishlov" parent="menu_craf_kimyo_root"
               action="action_craf_sex_kimyo" sequence="1"/>
+    <!-- bo'yash va qadoqlash xodimi: alohida «Bo'yash» ilovasi (faqat u ko'radi), telefonda pastki panel -->
+    <record id="action_craf_sex_boyash_own" model="ir.actions.client">
+        <field name="name">Bo'yash va qadoqlash</field>
+        <field name="tag">craf_sex</field>
+        <field name="path">craf-boyash-sahifa</field>
+        <field name="context">{'craf_stage': 'boyash'}</field>
+    </record>
+    <menuitem id="menu_craf_boyash_root" name="Bo'yash" sequence="4"
+              web_icon="craf_sex,static/description/icon.png" groups="craf_sex.group_craf_worker"/>
+    <menuitem id="menu_craf_boyash_page" name="Bo'yash va qadoqlash" parent="menu_craf_boyash_root"
+              action="action_craf_sex_boyash_own" sequence="1"/>
     <menuitem id="menu_craf_sex_press" name="Press sahifasi" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_sex_press" sequence="1"/>
     <menuitem id="menu_craf_sex_boyash" name="Bo'yash sahifasi" parent="craf_production.menu_craf_bolim_boyash"

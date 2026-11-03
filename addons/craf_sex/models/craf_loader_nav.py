@@ -33,6 +33,19 @@ def kimyo_nav_items(env):
     ]
 
 
+def boyash_nav_items(env):
+    # bo'yash va qadoqlash sahifasining varaqlari — telefonda pastki panelda
+    ctx = {"craf_stage": "boyash"}
+    return [
+        {"key": "ish", "label": "Bo'yash", "icon": "fa-paint-brush", "tab": "ish", "tag": "craf_sex", "context": ctx},
+        {"key": "hujjat", "label": "Hujjatlar", "icon": "fa-list-ul", "tab": "hujjat", "tag": "craf_sex",
+         "context": ctx},
+        {"key": "material", "label": "Materiallar", "icon": "fa-cubes", "tab": "material", "tag": "craf_sex",
+         "context": ctx},
+        {"key": "qoldiq", "label": "Qoldiq", "icon": "fa-archive", "tab": "qoldiq", "tag": "craf_sex", "context": ctx},
+    ]
+
+
 class IrHttp(models.AbstractModel):
     _inherit = "ir.http"
 

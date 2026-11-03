@@ -30,6 +30,7 @@
                     <button role="tab" t-att-class="{ active: state.tab === 'ish' }" t-on-click="() => this.setTab('ish')">Ish</button>
                     <button role="tab" t-att-class="{ active: state.tab === 'hujjat' }" t-on-click="() => this.setTab('hujjat')">Hujjatlar</button>
                     <button role="tab" t-if="state.stage === 'kimyo'" t-att-class="{ active: state.tab === 'kislota' }" t-on-click="() => this.setTab('kislota')">Kislota</button>
+                    <button role="tab" t-if="state.stage === 'boyash'" t-att-class="{ active: state.tab === 'material' }" t-on-click="() => this.setTab('material')">Materiallar</button>
                     <button role="tab" t-att-class="{ active: state.tab === 'qoldiq' }" t-on-click="() => this.setTab('qoldiq')">Qoldiq</button>
                 </nav>
             </header>
@@ -52,6 +53,7 @@
                     </t>
                     <t t-if="state.tab === 'hujjat'" t-call="craf_sex.TabDocs"/>
                     <t t-if="state.tab === 'kislota' and state.stage === 'kimyo'" t-call="craf_sex.TabKislota"/>
+                    <t t-if="state.tab === 'material' and state.stage === 'boyash'" t-call="craf_sex.TabMaterial"/>
                     <t t-if="state.tab === 'qoldiq'" t-call="craf_sex.TabStock"/>
                 </t>
             </main>
@@ -130,6 +132,7 @@
             <t t-if="s.type === 'chem'" t-call="craf_sex.SheetChem"/>
             <t t-elif="s.type === 'doc'" t-call="craf_sex.SheetDoc"/>
             <t t-elif="s.type === 'issue'" t-call="craf_sex.SheetIssue"/>
+            <t t-elif="s.type === 'paint'" t-call="craf_sex.SheetPaint"/>
             <div class="cl-sheet-error" t-if="s.error" role="alert">
                 <i class="fa fa-exclamation-circle"/>
                 <div class="cl-sheet-error-text" t-esc="s.error"/>
@@ -243,18 +246,44 @@
                 </div>
             </div>
         </t>
-        <div class="sx-h-row">
-            <h2 class="sx-h">Bo'yashga tayyor korzinkalar <span class="cl-muted" t-esc="d.baskets.ready.length"/></h2>
-            <button class="btn btn-link cl-link" t-if="d.baskets.ready.length" t-on-click="pickAll">Hammasi</button>
-        </div>
-        <div class="cl-empty" t-if="!d.baskets.ready.length"><i class="fa fa-paint-brush"/><div>Tayyor korzinka yo'q. Profilni sexdagi qoldiqdan ham qo'shish mumkin: «+».</div></div>
+        <t t-set="semis" t-value="semisToPaint"/>
+        <h2 class="sx-h">Bo'yashga tayyor profillar <span class="cl-muted" t-esc="semis.length"/></h2>
+        <p class="cl-note">Kimyoviy ishlovdan o'tgan bo'yalmagan profillar (<t t-esc="d.stock.location"/>). Profilni bosing — bo'yash smenasi ochiladi.</p>
+        <div class="cl-empty sx-empty-card" t-if="!semis.length"><i class="fa fa-paint-brush"/><div>Sexda bo'yalmagan profil yo'q.</div></div>
         <div class="cl-list" t-else="">
-            <button class="sx-load sx-pick" t-foreach="d.baskets.ready" t-as="l" t-key="l.id" t-att-class="{ picked: state.pick[l.id] }"
-                    t-att-aria-pressed="state.pick[l.id] ? 'true' : 'false'" t-on-click="() => this.togglePick(l)">
-                <span class="sx-check"><i t-att-class="state.pick[l.id] ? 'fa fa-check-square' : 'fa fa-square-o'"/></span>
-                <t t-call="craf_sex.LoadRow"/>
+            <button class="cl-mat sx-semi" t-foreach="semis" t-as="r" t-key="r.product_id" t-on-click="() => this.openPaint(false, r.product_id)">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name" t-esc="r.name"/>
+                    <span class="cl-mat-meta"><t t-esc="r.code"/><t t-if="r.kg"> · <t t-esc="num(r.kg, 0)"/> kg</t></span>
+                </span>
+                <span class="cl-mat-right">
+                    <span class="cl-qty"><t t-esc="num(r.qty, 0)"/><small> dona</small></span>
+                    <span class="cl-flow cl-muted"><i class="fa fa-paint-brush"/> bo'yash</span>
+                </span>
             </button>
         </div>
+    </t>
+
+    <!-- BO'YASH: materiallar (faqat ko'rish; sarf bo'yash hujjatidan avtomatik yechiladi) -->
+    <t t-name="craf_sex.TabMaterial">
+        <p class="cl-note">Materiallar qoldig'i — faqat ko'rish uchun. Sarf bo'yash smenasi tasdiqlanganda avtomatik yechiladi.</p>
+        <section class="sx-mat-group" t-foreach="d.materials" t-as="g" t-key="g.key">
+            <h2 class="sx-h"><i t-att-class="'fa ' + g.icon"/> <t t-esc="g.title"/> <span class="cl-muted" t-esc="g.rows.length"/></h2>
+            <p class="cl-hint" t-if="g.note" t-esc="g.note"/>
+            <div class="cl-empty" t-if="!g.rows.length">Yo'q.</div>
+            <div class="cl-list" t-else="">
+                <div class="cl-mat" t-foreach="g.rows" t-as="r" t-key="r.id">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name" t-esc="r.name"/>
+                        <span class="cl-mat-meta"><t t-esc="r.code"/><t t-if="r.in_sex &gt;= 0.05"> · sexda <t t-esc="num(r.in_sex, 1)"/> <t t-esc="r.uom"/></t><t t-if="r.meters"> · <t t-esc="num(r.meters, 0)"/> m</t></span>
+                    </span>
+                    <span class="cl-mat-right">
+                        <span class="cl-qty" t-att-class="toneClass(r.tone === 'bad' ? 'bad' : '')"><t t-esc="num(r.qty, 1)"/><small> <t t-esc="r.uom"/></small></span>
+                        <span class="sx-mat-status" t-if="r.status" t-att-class="'sx-tone-' + (r.tone || 'none')"><t t-esc="r.status"/><t t-if="r.days"> · <t t-esc="r.days"/></t></span>
+                    </span>
+                </div>
+            </div>
+        </section>
     </t>
 
     <!-- hujjat qatori -->
@@ -593,7 +622,7 @@
                 </div>
             </t>
             <h3 class="cl-lines-head">Profillar</h3>
-            <div class="cl-empty" t-if="!f.lines.length">Korzinkani belgilang yoki pastdan profil qo'shing.</div>
+            <div class="cl-empty" t-if="!f.lines.length">Pastdan sexdagi profilni qo'shing.</div>
             <div class="cl-line sx-pline" t-foreach="f.lines" t-as="line" t-key="line.key">
                 <t t-set="li" t-value="lineInfo(s, line)"/>
                 <div class="sx-pline-head">

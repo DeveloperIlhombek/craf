@@ -178,9 +178,11 @@ class CrafChemTreatment(models.Model):
         # 3) kimyo sarfi
         for line in self.chem_line_ids.filtered(lambda l: l.qty > EPS):
             line.move_id = self._craf_consume(line.product_id, line.qty, self.location_src_id)
-        self.load_ids.write({"state": "kimyo", "treatment_id": self.id})
+        # korzinkalar shu yerda bo'shatiladi: profillar Bo'yash sexida qoladi, bo'yash korzinka bilan ishlamaydi
+        self.load_ids.write({"state": "boyash", "treatment_id": self.id,
+                             "returned_date": fields.Date.context_today(self)})
         summary = [
-            Markup("<b>Kimyoviy ishlov tasdiqlandi</b>"),
+            Markup("<b>Kimyoviy ishlov tasdiqlandi</b> — korzinkalar bo'shatildi"),
             "Korzinkalar: %s (%s dona, %s kg)" % (
                 ", ".join(self.load_ids.mapped("basket_id.name")), fmt(self.pcs_total), fmt(self.kg_total, 1)),
         ]

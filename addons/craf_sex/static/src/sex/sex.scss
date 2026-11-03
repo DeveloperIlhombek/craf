@@ -243,6 +243,35 @@ $sx-tap: 44px;
             font-size: 1rem;
         }
     }
+    // bo'yash: sexdagi profil qatori va materiallar holati
+    .sx-semi {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: none;
+        color: inherit;
+    }
+    .sx-mat-group {
+        margin-bottom: 8px;
+    }
+    .sx-mat-status {
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+        &.sx-tone-ok {
+            color: #12753a;
+        }
+        &.sx-tone-warn {
+            color: #9a6200;
+        }
+        &.sx-tone-bad {
+            color: #c4314b;
+        }
+        &.sx-tone-none {
+            color: $sx-muted;
+        }
+    }
+
     // forma alohida sahifada (sx-page): sarlavha tepada, tugmalar pastda yopishadi
     .sx-page {
         display: flex;
