@@ -27,7 +27,9 @@ def kimyo_nav_items(env):
          "context": ctx},
         {"key": "hujjat", "label": "Hujjatlar", "icon": "fa-list-ul", "tab": "hujjat", "tag": "craf_sex",
          "context": ctx},
-        {"key": "qoldiq", "label": "Qoldiq", "icon": "fa-flask", "tab": "qoldiq", "tag": "craf_sex", "context": ctx},
+        {"key": "kislota", "label": "Kislota", "icon": "fa-flask", "tab": "kislota", "tag": "craf_sex",
+         "context": ctx},
+        {"key": "qoldiq", "label": "Qoldiq", "icon": "fa-archive", "tab": "qoldiq", "tag": "craf_sex", "context": ctx},
     ]
 
 

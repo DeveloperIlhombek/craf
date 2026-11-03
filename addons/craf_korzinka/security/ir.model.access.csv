@@ -16,3 +16,7 @@ access_craf_basket_load_line_user,craf.basket.load.line user,model_craf_basket_l
 access_craf_basket_load_line_mrp,craf.basket.load.line mrp,model_craf_basket_load_line,mrp.group_mrp_user,1,1,1,1
 access_craf_chem_treatment_defect_user,craf.chem.treatment.defect user,model_craf_chem_treatment_defect,base.group_user,1,0,0,0
 access_craf_chem_treatment_defect_mrp,craf.chem.treatment.defect mrp,model_craf_chem_treatment_defect,mrp.group_mrp_user,1,1,1,1
+access_craf_chem_issue_user,craf.chem.issue user,model_craf_chem_issue,base.group_user,1,0,0,0
+access_craf_chem_issue_mrp,craf.chem.issue mrp,model_craf_chem_issue,mrp.group_mrp_user,1,1,1,1
+access_craf_chem_issue_line_user,craf.chem.issue.line user,model_craf_chem_issue_line,base.group_user,1,0,0,0
+access_craf_chem_issue_line_mrp,craf.chem.issue.line mrp,model_craf_chem_issue_line,mrp.group_mrp_user,1,1,1,1

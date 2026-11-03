@@ -65,6 +65,8 @@ export class CrafLoaderNav extends Component {
         onMounted(() => {
             this.env.bus.addEventListener("ACTION_MANAGER:UI-UPDATED", this._onUpdate);
             this.env.bus.addEventListener("MENUS:APP-CHANGED", this._onUpdate);
+            this._onRefresh = () => this.countsCall && this.refreshCounts();
+            this.env.bus.addEventListener("CRAF:NAV-REFRESH", this._onRefresh);
             if (this.countsCall) {
                 this._timer = setInterval(() => {
                     if (document.visibilityState === "visible") {
@@ -78,6 +80,7 @@ export class CrafLoaderNav extends Component {
             document.body.classList.remove("o_craf_bottom_nav", "o_craf_loader_bar");
             this.env.bus.removeEventListener("ACTION_MANAGER:UI-UPDATED", this._onUpdate);
             this.env.bus.removeEventListener("MENUS:APP-CHANGED", this._onUpdate);
+            this.env.bus.removeEventListener("CRAF:NAV-REFRESH", this._onRefresh);
             clearInterval(this._timer);
         });
     }

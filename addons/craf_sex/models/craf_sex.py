@@ -118,6 +118,9 @@ class CrafSex(models.AbstractModel):
         Model = self._model(stage)
         docs = Model.search([("date", ">=", dfrom), ("date", "<=", dto)], order="date desc, id desc")
         drafts = Model.search([("state", "=", "draft")], order="date desc, id desc")
+        issues = self.env["craf.chem.issue"].search(
+            [("date", ">=", dfrom), ("date", "<=", dto), ("state", "=", "done")], order="date desc, id desc") \
+            if stage == "kimyo" else self.env["craf.chem.issue"]
         stages = []
         for key, label, model, _loc in STAGES:
             if own and key != own:
@@ -132,7 +135,9 @@ class CrafSex(models.AbstractModel):
             "date_to": fields.Date.to_string(dto),
             "today": fields.Date.to_string(fields.Date.context_today(self)),
             "roles": roles,
-            "kpi": getattr(self, "_kpi_%s" % stage)(docs.filtered(lambda d: d.state == "done")),
+            "kpi": (self._kpi_kimyo(docs.filtered(lambda d: d.state == "done"), issues) if stage == "kimyo"
+                    else getattr(self, "_kpi_%s" % stage)(docs.filtered(lambda d: d.state == "done"))),
+            "issues": [self._issue_card(i) for i in issues],
             "docs": [self._card(stage, d) for d in docs],
             "drafts": [self._card(stage, d) for d in drafts],
             "baskets": self._baskets(),
@@ -169,7 +174,7 @@ class CrafSex(models.AbstractModel):
             "sub": "%s dona · %s kg · %s m²%s" % (
                 _q(rec.pcs_total), _q(rec.kg_total), _q(rec.area_total),
                 (" · yaroqsiz %s, kesildi %s" % (rec.brak_pcs, rec.cut_pcs)) if rec.brak_pcs or rec.cut_pcs else ""),
-            "metric": "kimyo %s kg" % fmt(rec.chem_kg, 2) if rec.chem_kg else "",
+            "metric": "",
             "loads": [self._load_info(l) for l in rec.load_ids] if rec.state == "draft" else [],
         }
 
@@ -199,20 +204,18 @@ class CrafSex(models.AbstractModel):
             {"label": "Unumdorlik", "value": _q(out / hours, 0) if hours else "—", "unit": "kg/soat" if hours else ""},
         ]
 
-    def _kpi_kimyo(self, done):
-        norm = self.env["craf.mrp.norm"]._get_norm(self.env.company)
+    def _kpi_kimyo(self, done, issues=None):
         area = sum(done.mapped("area_total"))
-        chem = sum(done.mapped("chem_kg"))
-        norm_kg = area * sum(norm[f] for _c, f in CHEMS)
+        chem = sum((issues or self.env["craf.chem.issue"]).mapped("qty_total"))
         return [
             {"label": "Ishlov", "value": _q(len(done)), "unit": ""},
             {"label": "Korzinkalar", "value": _q(sum(done.mapped("basket_count"))), "unit": "ta"},
             {"label": "Profil", "value": _q(sum(done.mapped("kg_total")), 0), "unit": "kg",
              "sub": "%s dona" % _q(sum(done.mapped("pcs_total")))},
+            {"label": "Yaroqsiz / kesildi", "value": "%s / %s" % (_q(sum(done.mapped("brak_pcs"))),
+                                                                  _q(sum(done.mapped("cut_pcs")))), "unit": "dona"},
             {"label": "Maydon", "value": _q(area, 0), "unit": "m²"},
-            {"label": "Kimyo sarfi", "value": fmt(chem, 1), "unit": "kg",
-             "sub": "me'yor %s kg" % fmt(norm_kg, 1) if norm_kg else "",
-             "tone": self._tone_over(chem, norm_kg)},
+            {"label": "Kislota olindi", "value": fmt(chem, 1), "unit": "kg"},
         ]
 
     def _kpi_boyash(self, done):
@@ -540,19 +543,59 @@ class CrafSex(models.AbstractModel):
             rec = Chem.create(header)
         else:
             rec.write(header)
-        area = rec.area_total
-        chem_vals = vals.get("chem") or {}
-        lines = [Command.clear()]
-        for c in self._chem_norms():
-            text = chem_vals.get(str(c["id"]))
-            norm_qty = round(area * c["per_m2"], 2)
-            qty = norm_qty if text in (None, "") else self._num(text, c["name"])
-            lines.append(Command.create({"product_id": c["id"], "qty_norm": norm_qty, "qty": qty}))
-        rec.write({"chem_line_ids": lines,
+        # kimyo sarfi bu yerda yozilmaydi — «Kislota» bo'limida (craf.chem.issue)
+        rec.write({"chem_line_ids": [Command.clear()],
                    "defect_line_ids": self._chem_defect_commands(rec.load_ids, vals.get("defects"))})
         if confirm:
             self._confirm(rec)
         return {"id": rec.id, "name": rec.name, "state": rec.state}
+
+    # ================================================================== KISLOTA
+    def _issue_card(self, rec):
+        return {
+            "id": rec.id, "name": rec.name, "date_label": rec.date.strftime("%d.%m.%Y"),
+            "who": rec.employee_id.sudo().name or "", "total": _q(rec.qty_total, 2),
+            "lines": [{"name": l.product_id.name, "qty": _q(l.qty, 2)} for l in rec.line_ids if l.qty > EPS],
+            "note": rec.note or "",
+        }
+
+    @api.model
+    def issue_options(self):
+        """Kislota olish sahifasi: kislotalar va ombordagi qoldig'i."""
+        Issue = self.env["craf.chem.issue"]
+        loc = Issue._craf_loc(Issue._craf_default_src)
+        return {
+            "today": fields.Date.to_string(fields.Date.context_today(self)),
+            "location": loc.name or "",
+            "chems": [{"id": p.id, "name": p.name, "code": p.default_code or "", "uom": self._uom_label(p),
+                       "avail": round(p.with_context(location=loc.id).qty_available, 2) if loc else 0.0}
+                      for p in Issue._craf_chem_products()],
+            "employees": self._employees(),
+            "my_employee": self.env.user.employee_id.id or False,
+        }
+
+    @api.model
+    def issue_save(self, vals):
+        """Ombordan olingan kislota: yoziladi va shu zahoti ombordan sarfga yechiladi."""
+        Issue = self.env["craf.chem.issue"]
+        lines = []
+        for c in Issue._craf_chem_products():
+            qty = self._num((vals.get("qty") or {}).get(str(c.id)), c.name)
+            if qty > EPS:
+                lines.append(Command.create({"product_id": c.id, "qty": qty}))
+        if not lines:
+            raise UserError("Olingan kislota miqdorini yozing (kg).")
+        date = vals.get("date") or fields.Date.context_today(self)
+        moment = self._H._moment(date)
+        rec = Issue.create({
+            "date": date,
+            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
+            "note": (vals.get("note") or "").strip() or False,
+            "line_ids": lines,
+        })
+        self._H._check_lock(rec.line_ids.product_id, moment, rec.name)
+        rec.action_done()
+        return {"id": rec.id, "name": rec.name, "total": _q(rec.qty_total, 2)}
 
     # ================================================================== BO'YASH
     @api.model

@@ -243,6 +243,46 @@ $sx-tap: 44px;
             font-size: 1rem;
         }
     }
+    // forma alohida sahifada (sx-page): sarlavha tepada, tugmalar pastda yopishadi
+    .sx-page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        background-color: $o-view-background-color;
+        .cl-sheet-head {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            align-items: center;
+            padding: 8px 12px 8px 4px;
+            background-color: $o-view-background-color;
+        }
+        .cl-sheet-titles {
+            flex: 1 1 auto;
+            padding-top: 0;
+        }
+        .cl-sheet-body {
+            flex: 1 1 auto;
+            overflow: visible;
+            padding-bottom: 24px;
+        }
+        .cl-sheet-foot {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            background-color: $o-view-background-color;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .cl-sheet-error {
+            position: sticky;
+            bottom: 72px;
+            z-index: 6;
+        }
+    }
+    .sx-back {
+        flex: 0 0 auto;
+    }
+
     // kimyo: korzinkadagi profillar bo'yicha yaroqsiz / 6 → 5 m
     .sx-defect-basket {
         border: 1px solid $sx-line;
@@ -388,5 +428,12 @@ $sx-tap: 44px;
         .sx-card-foot > .btn {
             flex: 0 0 auto;
         }
+    }
+}
+
+// telefonda pastki panel (yuklovchi / kimyo xodimi) bo'lsa — korzinka tanlash paneli uning ustida turadi
+@include media-breakpoint-down(md) {
+    body.o_craf_bottom_nav .o_craf_litey.o_craf_sex .sx-pickbar {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     }
 }

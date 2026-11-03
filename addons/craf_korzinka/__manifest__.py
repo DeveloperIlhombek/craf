@@ -1,6 +1,6 @@
 {
     "name": "Craf Korzinka va kimyoviy ishlov",
-    "version": "19.0.1.4.0",
+    "version": "19.0.1.5.0",
     "summary": "Press chiqishi korzinkalar bo'yicha, kimyoviy ishlov bosqichi, stalba chiqindisi, omborga topshirish",
     "description": """
 Zavodning haqiqiy jarayoniga moslash:
@@ -11,8 +11,9 @@ Zavodning haqiqiy jarayoniga moslash:
   profil brak va pitak otxod Liteykaga; quyma sarfi ixtiyoriy (Liteyka qoldig'i orqali)
 - Brak ajratish (bo'yashdan oldin): korzinkadan brak dona → kg Liteykaga, 6 m → 5 m kesilganlar
 - Kimyoviy ishlov — alohida bosqich: korzinkalar tanlanadi, ichidagi profillardan yaroqsiz (bo'yalmaydigan) va
-  6 m → 5 m kesilganlar (tasdiqda «Brak ajratish» bilan Liteykaga), kimyo sarfi (me'yor: maydon × kg/m²);
-  profillar Bo'yash sexida turadi
+  6 m → 5 m kesilganlar (tasdiqda «Brak ajratish» bilan Liteykaga); profillar Bo'yash sexida turadi
+- Kislota olish — kimyo sarfi ishlov bo'yicha kuzatilmaydi: xodim ombordan olgan kislotani bir marta yozadi,
+  u Xom-ashyo omboridan sarfga yechiladi
 - Bo'yash: korzinkalardan to'ldirish; tayyor mahsulotni bir tugmada omborga topshirish
 - Литейка: chiqqan quyma — stalba; kesilgan chiqindi (Сталба отход) alohida
 - Zavod xaritasida "Kimyoviy ishlov" bo'limi, BoM da "Kimyoviy ishlov" operatsiyasi
@@ -25,8 +26,10 @@ Zavodning haqiqiy jarayoniga moslash:
         "security/ir.model.access.csv",
         "data/craf_korzinka_data.xml",
         "data/craf_paint_sort_data.xml",
+        "data/craf_chem_issue_data.xml",
         "views/craf_basket_views.xml",
         "views/craf_chem_treatment_views.xml",
+        "views/craf_chem_issue_views.xml",
         "views/craf_extrusion_shift_views.xml",
         "views/craf_paint_batch_views.xml",
         "views/craf_paint_sort_views.xml",

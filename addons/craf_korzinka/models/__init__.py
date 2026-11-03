@@ -3,6 +3,7 @@ from . import (
     craf_paint_sort,
     craf_production_mixin,
     craf_chem_treatment,
+    craf_chem_issue,
     craf_extrusion_shift,
     craf_paint_batch,
     craf_foundry_melt,

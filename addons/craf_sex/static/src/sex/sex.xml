@@ -3,7 +3,9 @@
 
     <!-- sahifa -->
     <t t-name="craf_sex.Sex">
-        <div class="o_action o_craf_litey o_craf_sex" t-att-class="{ 'cl-busy': state.busy or state.loading }">
+        <div class="o_action o_craf_litey o_craf_sex" t-att-class="{ 'cl-busy': state.busy or state.loading, 'sx-in-page': pageSheet }">
+            <t t-if="pageSheet" t-call="craf_sex.Page"/>
+            <t t-else="">
             <header class="cl-top">
                 <div class="cl-top-row">
                     <h1 class="cl-title" t-esc="pageTitle"/>
@@ -27,6 +29,7 @@
                 <nav class="cl-tabs" role="tablist">
                     <button role="tab" t-att-class="{ active: state.tab === 'ish' }" t-on-click="() => this.setTab('ish')">Ish</button>
                     <button role="tab" t-att-class="{ active: state.tab === 'hujjat' }" t-on-click="() => this.setTab('hujjat')">Hujjatlar</button>
+                    <button role="tab" t-if="state.stage === 'kimyo'" t-att-class="{ active: state.tab === 'kislota' }" t-on-click="() => this.setTab('kislota')">Kislota</button>
                     <button role="tab" t-att-class="{ active: state.tab === 'qoldiq' }" t-on-click="() => this.setTab('qoldiq')">Qoldiq</button>
                 </nav>
             </header>
@@ -48,6 +51,7 @@
                         <t t-if="state.stage === 'boyash'" t-call="craf_sex.IshBoyash"/>
                     </t>
                     <t t-if="state.tab === 'hujjat'" t-call="craf_sex.TabDocs"/>
+                    <t t-if="state.tab === 'kislota' and state.stage === 'kimyo'" t-call="craf_sex.TabKislota"/>
                     <t t-if="state.tab === 'qoldiq'" t-call="craf_sex.TabStock"/>
                 </t>
             </main>
@@ -61,6 +65,76 @@
             </div>
             <button class="cl-fab d-lg-none" t-if="state.data and !(state.tab === 'ish' and state.stage !== 'press' and picked.length)" t-on-click="newDoc" t-att-aria-label="newLabel"><i class="fa fa-plus"/></button>
             <t t-if="state.sheet" t-call="craf_sex.Sheet"/>
+            </t>
+        </div>
+    </t>
+
+    <!-- KISLOTA: ombordan olingan kislota (kimyo sarfi shu yerda yoziladi) -->
+    <t t-name="craf_sex.TabKislota">
+        <div class="sx-h-row">
+            <h2 class="sx-h">Olingan kislota <span class="cl-muted" t-esc="d.issues.length"/></h2>
+            <button class="btn btn-link cl-link" t-on-click="openIssue"><i class="fa fa-plus"/> Yozish</button>
+        </div>
+        <div class="cl-empty sx-empty-card" t-if="!d.issues.length">
+            <i class="fa fa-flask"/>
+            <div>Bu davrda kislota olinmagan.</div>
+            <button class="btn btn-primary mt-2" t-on-click="openIssue"><i class="fa fa-plus"/> Kislota olindi</button>
+        </div>
+        <div class="cl-list" t-else="">
+            <div class="cl-doc" t-foreach="d.issues" t-as="i" t-key="i.id">
+                <span class="cl-doc-icon cl-k-kochirish"><i class="fa fa-flask"/></span>
+                <span class="cl-doc-main">
+                    <span class="cl-doc-name"><t t-esc="i.total"/> kg <span class="cl-muted" t-esc="i.name"/></span>
+                    <span class="cl-doc-sub"><t t-esc="i.date_label"/><t t-if="i.who"> · <t t-esc="i.who"/></t></span>
+                    <span class="cl-doc-sub" t-foreach="i.lines" t-as="l" t-key="l_index"><t t-esc="l.name"/> — <b t-esc="l.qty"/> kg</span>
+                </span>
+            </div>
+        </div>
+        <p class="cl-note">Kislota har ishlovda emas — ombordan olib ketilganda bir marta yoziladi va ombordan sarfga yechiladi.</p>
+    </t>
+
+    <t t-name="craf_sex.SheetIssue">
+        <t t-set="f" t-value="s.f"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="'Kislota olindi'"/>
+            <t t-set="sub" t-value="'Ombordan (' + s.o.location + ') olib ketilgan miqdor'"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
+                <label class="cl-field">
+                    <span>Kim oldi</span>
+                    <select class="form-select" t-model="f.employee_id">
+                        <option value="">—</option>
+                        <option t-foreach="s.o.employees" t-as="e" t-key="e.id" t-att-value="e.id" t-att-selected="eq(f.employee_id, e.id)" t-esc="e.name"/>
+                    </select>
+                </label>
+            </div>
+            <h3 class="cl-lines-head">Qancha olindi, kg</h3>
+            <div class="sx-direct" t-foreach="s.o.chems" t-as="c" t-key="c.id">
+                <span><t t-esc="c.name"/><small class="d-block cl-muted">omborda <t t-esc="num(c.avail, 2)"/> <t t-esc="c.uom"/></small></span>
+                <input type="text" inputmode="decimal" class="form-control" placeholder="0" t-model="f.qty[c.id]" t-att-aria-label="c.name + ', kg'"/>
+            </div>
+            <p class="cl-hint">Jami: <b><t t-esc="num(issueTotal(s), 2)"/> kg</b></p>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot">
+            <button class="btn btn-primary cl-btn-lg" t-on-click="saveIssue" t-att-disabled="state.busy">Saqlash</button>
+        </div>
+    </t>
+
+    <!-- forma alohida sahifada (kimyoviy ishlov, hujjat): tepada «orqaga», tugmalar pastda yopishib turadi -->
+    <t t-name="craf_sex.Page">
+        <t t-set="s" t-value="state.sheet"/>
+        <div class="sx-page" t-att-class="'cl-sheet-' + s.type">
+            <t t-if="s.type === 'chem'" t-call="craf_sex.SheetChem"/>
+            <t t-elif="s.type === 'doc'" t-call="craf_sex.SheetDoc"/>
+            <t t-elif="s.type === 'issue'" t-call="craf_sex.SheetIssue"/>
+            <div class="cl-sheet-error" t-if="s.error" role="alert">
+                <i class="fa fa-exclamation-circle"/>
+                <div class="cl-sheet-error-text" t-esc="s.error"/>
+                <button class="cl-icon-btn" t-on-click="() => s.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+            </div>
         </div>
     </t>
 
@@ -196,7 +270,7 @@
         <span class="cl-doc-right">
             <span class="cl-state" t-att-class="'cl-st-' + c.state" t-esc="c.state_label"/>
             <span class="cl-doc-total" t-if="c.metric" t-esc="c.metric"/>
-            <span class="sx-c1" t-if="c.state === 'done'" t-att-class="{ done: c.c1 === 'done' }" t-esc="c.c1 === 'done' ? '1C ✓' : '1C'"/>
+            <span class="sx-c1" t-if="c.state === 'done' and !state.data.roles.own" t-att-class="{ done: c.c1 === 'done' }" t-esc="c.c1 === 'done' ? '1C ✓' : '1C'"/>
         </span>
     </t>
 
@@ -265,11 +339,12 @@
 
     <t t-name="craf_sex.Head">
         <div class="cl-sheet-head">
+            <button class="cl-icon-btn sx-back" t-if="pageSheet" t-on-click="closeSheet" aria-label="Orqaga"><i class="fa fa-arrow-left"/></button>
             <div class="cl-sheet-titles">
                 <div class="cl-sheet-title" t-esc="title"/>
                 <div class="cl-sheet-sub" t-if="sub" t-esc="sub"/>
             </div>
-            <button class="cl-icon-btn" t-on-click="closeSheet" aria-label="Yopish"><i class="fa fa-times"/></button>
+            <button class="cl-icon-btn" t-if="!pageSheet" t-on-click="closeSheet" aria-label="Yopish"><i class="fa fa-times"/></button>
         </div>
     </t>
 
@@ -448,7 +523,7 @@
         <t t-set="equipmentLabel" t-value="'Vanna'"/>
         <t t-call="craf_sex.Head">
             <t t-set="title" t-value="f.id ? 'Kimyoviy ishlov ' + f.name : 'Kimyoviy ishlov'"/>
-            <t t-set="sub" t-value="&quot;Korzinka, yaroqsiz va kesilgan profillar, kimyo sarfi&quot;"/>
+            <t t-set="sub" t-value="&quot;Korzinka, yaroqsiz va kesilgan profillar&quot;"/>
         </t>
         <div class="cl-sheet-body">
             <t t-call="craf_sex.CommonFields"/>
@@ -479,12 +554,6 @@
                 </div>
                 <p class="cl-hint">Yaroqsizlar va kesilgan uchlari tasdiqlanganda Liteykaga (brak profil) yoziladi; kesilganlar 5 metrlik bo'lib bo'yashga o'tadi.</p>
             </t>
-            <h3 class="cl-lines-head">3. Kimyo sarfi <span class="cl-muted">— maydon <t t-esc="num(chemArea(s), 1)"/> m²</span></h3>
-            <div class="sx-direct" t-foreach="s.o.chems" t-as="c" t-key="c.id">
-                <span><t t-esc="c.name"/><small class="d-block cl-muted">me'yor <t t-esc="num(chemNorm(s, c), 2)"/> kg · bor <t t-esc="num(c.avail, 1)"/> kg</small></span>
-                <input type="text" inputmode="decimal" class="form-control" t-att-placeholder="num(chemNorm(s, c), 2)" t-model="f.chem[c.id]" t-att-aria-label="c.name + ' kg'"/>
-            </div>
-            <p class="cl-hint">Bo'sh qoldirilsa — me'yor bo'yicha yoziladi.</p>
             <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
         </div>
         <div class="cl-sheet-foot">
@@ -585,7 +654,7 @@
         <div class="cl-sheet-body">
             <div class="cl-doc-state">
                 <span class="cl-state" t-att-class="'cl-st-' + dd.state" t-esc="dd.state_label"/>
-                <span class="sx-c1 ms-1" t-if="dd.state === 'done'" t-att-class="{ done: dd.c1 === 'done' }" t-esc="dd.c1 === 'done' ? '1C ga kiritilgan' : '1C ga kiritilmagan'"/>
+                <span class="sx-c1 ms-1" t-if="dd.state === 'done' and !state.data.roles.own" t-att-class="{ done: dd.c1 === 'done' }" t-esc="dd.c1 === 'done' ? '1C ga kiritilgan' : '1C ga kiritilmagan'"/>
             </div>
             <div class="cl-section" t-if="dd.meta.length">
                 <div class="cl-kv" t-foreach="dd.meta" t-as="mt" t-key="mt_index"><span t-esc="mt[0]"/><b t-esc="mt[1]"/></div>

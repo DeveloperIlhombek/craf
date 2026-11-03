@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="craf_chem_issue_view_list" model="ir.ui.view">
+        <field name="name">craf.chem.issue.list</field>
+        <field name="model">craf.chem.issue</field>
+        <field name="arch" type="xml">
+            <list string="Kislota olish" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="content"/>
+                <field name="qty_total" sum="Jami"/>
+                <field name="location_src_id" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_chem_issue_view_form" model="ir.ui.view">
+        <field name="name">craf.chem.issue.form</field>
+        <field name="model">craf.chem.issue</field>
+        <field name="arch" type="xml">
+            <form string="Kislota olish">
+                <header>
+                    <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary" icon="fa-check"
+                            invisible="state != 'draft'"
+                            confirm="Tasdiqlansa, kislota ombordan sarfga yechiladi. Davom etasizmi?"/>
+                    <button name="action_add_chems" type="object" string="Kislotalarni qo'shish" icon="fa-flask"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted">Kislota olish</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                        </group>
+                        <group>
+                            <field name="location_src_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="qty_total"/>
+                        </group>
+                    </group>
+                    <field name="line_ids" readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="available_qty" column_invisible="parent.state != 'draft'"
+                                   decoration-danger="available_qty &lt; qty"/>
+                            <field name="qty" sum="Jami"/>
+                            <field name="uom_id" optional="hide"/>
+                            <field name="state" column_invisible="1"/>
+                        </list>
+                    </field>
+                    <field name="note" placeholder="Izoh…"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_chem_issue_view_search" model="ir.ui.view">
+        <field name="name">craf.chem.issue.search</field>
+        <field name="model">craf.chem.issue</field>
+        <field name="arch" type="xml">
+            <search string="Kislota olish">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="line_ids" string="Kislota" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
+                <filter name="done" string="Bajarilgan" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="month" string="Shu oy"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <group>
+                    <filter name="group_date" string="Sana" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_chem_issue" model="ir.actions.act_window">
+        <field name="name">Kislota olish</field>
+        <field name="res_model">craf.chem.issue</field>
+        <field name="view_mode">list,form</field>
+        <field name="path">craf-kislota</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ombordan olingan kislotani yozing</p>
+            <p>Kimyo xodimi telefonda «Kislota» bo'limidan yozadi; tasdiqlanganda kislota ombordan sarfga yechiladi.</p>
+        </field>
+    </record>
+</odoo>

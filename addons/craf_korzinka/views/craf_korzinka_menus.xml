@@ -4,6 +4,8 @@
          bu yerda — hujjatlar ro'yxati. Profillar Bo'yash sexida turadi (ko'chirilmaydi). -->
     <menuitem id="menu_craf_chem_treatment" name="Kimyoviy ishlov" parent="craf_production.menu_craf_bolim_boyash"
               action="action_craf_chem_treatment" sequence="15"/>
+    <menuitem id="menu_craf_chem_issue" name="Kislota olish" parent="craf_production.menu_craf_bolim_boyash"
+              action="action_craf_chem_issue" sequence="16"/>
     <menuitem id="menu_craf_paint_sort" name="Brak ajratish" parent="craf_production.menu_craf_bolim_boyash"
               action="action_craf_paint_sort" sequence="20"/>
     <menuitem id="menu_craf_basket" name="Korzinkalar" parent="craf_production.menu_craf_bolim_press"

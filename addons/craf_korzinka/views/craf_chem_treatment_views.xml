@@ -15,7 +15,7 @@
                 <field name="area_total" sum="Jami" optional="hide"/>
                 <field name="brak_pcs" sum="Jami" optional="show"/>
                 <field name="cut_pcs" sum="Jami" optional="show"/>
-                <field name="chem_kg" sum="Jami"/>
+                <field name="chem_kg" sum="Jami" optional="hide"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
                        decoration-info="state == 'draft'" decoration-muted="state == 'cancel'"/>
             </list>
@@ -37,7 +37,7 @@
                         <div class="text-muted small"><field name="date"/> · <field name="shift"/></div>
                         <div class="d-flex mt-1">
                             <span><field name="basket_count" class="fw-bold"/> korzinka · <field name="pcs_total"/> dona</span>
-                            <span class="ms-auto">kimyo <field name="chem_kg" class="fw-bold"/> kg</span>
+                            <span class="ms-auto">yaroqsiz <field name="brak_pcs" class="fw-bold"/> · kesildi <field name="cut_pcs" class="fw-bold"/></span>
                         </div>
                     </t>
                 </templates>
@@ -53,10 +53,8 @@
                 <header>
                     <button name="action_done" type="object" string="Tasdiqlash" class="btn-primary" icon="fa-check"
                             invisible="state != 'draft'"
-                            confirm="Tasdiqlansa, yaroqsiz va kesilgan profillar Liteykaga yoziladi, korzinkalar bo'yashga tayyor bo'ladi va kimyo qoldiqdan yechiladi. Davom etasizmi?"/>
+                            confirm="Tasdiqlansa, yaroqsiz va kesilgan profillar Liteykaga yoziladi, korzinkalar bo'yashga tayyor bo'ladi. Davom etasizmi?"/>
                     <button name="action_add_waiting" type="object" string="Kutayotgan korzinkalar" icon="fa-shopping-basket"
-                            invisible="state != 'draft'"/>
-                    <button name="action_fill_norms" type="object" string="Kimyoni me'yordan" icon="fa-flask"
                             invisible="state != 'draft'"/>
                     <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
                     <button name="action_draft" type="object" string="Qoralamaga qaytarish" invisible="state != 'cancel'"/>
@@ -91,7 +89,7 @@
                             <field name="area_total"/>
                             <field name="brak_pcs"/>
                             <field name="cut_pcs"/>
-                            <field name="chem_kg"/>
+                            <field name="chem_kg" invisible="not chem_kg"/>
                         </group>
                     </group>
                     <notebook>
@@ -132,7 +130,8 @@
                             </field>
                             <field name="sort_id" invisible="not sort_id" readonly="1"/>
                         </page>
-                        <page string="Kimyo sarfi" name="chem">
+                        <!-- eski hujjatlar uchun: kimyo sarfi endi «Kislota olish»da yoziladi -->
+                        <page string="Kimyo sarfi" name="chem" invisible="not chem_line_ids">
                             <field name="chem_line_ids" readonly="state != 'draft'">
                                 <list editable="bottom">
                                     <field name="product_id" options="{'no_create': True}"/>

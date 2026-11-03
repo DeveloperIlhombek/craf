@@ -103,6 +103,12 @@ class CrafKunlikHisobot(models.AbstractModel):
                 for product, qty in d.load_ids._product_quantities().items():
                     self._add(made, product, qty)
             extra.append("Korzinkalar: %s ta" % sum(done.mapped("basket_count")))
+            # kimyo sarfi — ombordan olingan kislota (Kislota olish)
+            day = self.env.context.get("craf_day")
+            if day:
+                for issue in self.env["craf.chem.issue"].search([("date", "=", day), ("state", "=", "done")]):
+                    for line in issue.line_ids:
+                        self._add(used, line.product_id, line.qty)
         elif key == "boyash":
             for d in done:
                 for line in d.line_ids:
@@ -218,7 +224,7 @@ class CrafKunlikHisobot(models.AbstractModel):
             if model not in self.env:
                 continue
             docs = self.env[model].search([("date", "=", day), ("state", "!=", "cancel")], order="id")
-            dep = self._department(key, docs)
+            dep = self.with_context(craf_day=day)._department(key, docs)
             dep.update({"key": key, "title": title, "model": model, "action": action})
             new_count += len(docs.filtered(lambda d: d.state == "done" and d.c1_state == "new"))
             departments.append(dep)

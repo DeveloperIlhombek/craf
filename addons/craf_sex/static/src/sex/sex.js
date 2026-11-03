@@ -13,6 +13,8 @@ const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 // Ishlab chiqarish bo'limi (menyudan ochilganda): qaysi sexlar ko'rinadi
 const BOLIM_STAGES = { press: ["press"], boyash: ["kimyo", "boyash"] };
 const BOLIM_TITLE = { press: "Press", boyash: "Bo'yash va qadoqlash" };
+// modal emas, alohida sahifada ochiladigan formalar (telefonda pastki panel bilan to'qnashmaydi)
+const PAGE_SHEETS = new Set(["chem", "doc", "issue"]);
 const STAGE_MODEL = { press: "craf.extrusion.shift", kimyo: "craf.chem.treatment", boyash: "craf.paint.batch" };
 
 function addDays(iso, n) {
@@ -72,7 +74,7 @@ export class CrafSex extends Component {
         onWillStart(async () => {
             const ctx = (this.props.action && this.props.action.context) || {};
             let stage = ctx.craf_stage || null;
-            if (["ish", "hujjat", "qoldiq"].includes(ctx.craf_tab)) {
+            if (["ish", "hujjat", "kislota", "qoldiq"].includes(ctx.craf_tab)) {
                 this.state.tab = ctx.craf_tab; // telefondagi pastki paneldan
             }
             if (!stage) {
@@ -109,8 +111,9 @@ export class CrafSex extends Component {
             this.state.loading = false;
         }
     }
-    refresh() {
-        return this.load();
+    async refresh() {
+        await this.load();
+        this.env.bus.trigger("CRAF:NAV-REFRESH"); // pastki paneldagi sonlar (kutayotgan korzinkalar)
     }
     setStage(stage) {
         if (stage === this.state.stage) {
@@ -271,11 +274,32 @@ export class CrafSex extends Component {
     }
 
     // ================================================================ varaqlar
+    get pageSheet() {
+        const s = this.state.sheet;
+        return s && PAGE_SHEETS.has(s.type) ? s : null;
+    }
+    scrollRoot(top) {
+        const root = document.querySelector(".o_craf_sex");
+        if (root) {
+            root.scrollTo(0, top);
+        }
+    }
     openSheet(sheet) {
+        if (PAGE_SHEETS.has(sheet.type)) {
+            if (!this.pageSheet) {
+                const root = document.querySelector(".o_craf_sex");
+                this.listScroll = root ? root.scrollTop : 0; // orqaga qaytganda ro'yxat shu joyda
+            }
+            setTimeout(() => this.scrollRoot(0));
+        }
         this.state.sheet = sheet;
     }
     closeSheet() {
+        const wasPage = this.pageSheet;
         this.state.sheet = null;
+        if (wasPage) {
+            setTimeout(() => this.scrollRoot(this.listScroll || 0));
+        }
     }
     async run(fn) {
         if (this.state.busy) {
@@ -307,6 +331,9 @@ export class CrafSex extends Component {
         return this.opts[stage];
     }
     newDoc() {
+        if (this.state.stage === "kimyo" && this.state.tab === "kislota") {
+            return this.openIssue();
+        }
         if (this.state.stage === "press") {
             return this.openPress();
         }
@@ -503,6 +530,41 @@ export class CrafSex extends Component {
             }
             this.openSheet({ type: "chem", o, f, loads });
         });
+    }
+    // ---------------------------------------------------------------- KISLOTA (ombordan olish)
+    async openIssue() {
+        await this.run(async () => {
+            const o = await this.orm.call(API, "issue_options", []);
+            const f = { date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
+            this.openSheet({ type: "issue", o, f });
+        });
+    }
+    issueTotal(s) {
+        return s.o.chems.reduce((a, c) => a + toNum(s.f.qty[c.id]), 0);
+    }
+    saveIssue() {
+        const s = this.state.sheet;
+        const total = this.issueTotal(s);
+        if (total <= 0) {
+            s.error = "Olingan kislota miqdorini yozing (kg).";
+            return;
+        }
+        const over = s.o.chems.filter((c) => toNum(s.f.qty[c.id]) > c.avail);
+        if (over.length) {
+            s.error = over.map((c) => `${c.name}: omborda ${this.num(c.avail, 2)} kg, yozildi ${this.num(toNum(s.f.qty[c.id]), 2)} kg`).join("\n");
+            return;
+        }
+        const lines = s.o.chems.filter((c) => toNum(s.f.qty[c.id]) > 0).map((c) => `${c.name} — ${this.num(toNum(s.f.qty[c.id]), 2)} kg`);
+        this.confirm("Kislota olindi", `${lines.join("; ")}. Ombordan sarfga yechiladi.`, "Saqlash", () =>
+            this.run(async () => {
+                const res = await this.orm.call(API, "issue_save", [
+                    { ...s.f, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false },
+                ]);
+                this.notification.add(`${res.name}: ${res.total} kg kislota yozildi`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
     }
     sheetPicked(s) {
         return s.loads.filter((l) => s.f.pick[l.id]);
