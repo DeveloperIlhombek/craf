@@ -267,11 +267,17 @@ class SaleOrder(models.Model):
             "; ".join("%s — %s %s" % (m.product_id.display_name, m.location_id._craf_sale_label(),
                                       packs_text(m.quantity, m.product_id.craf_pcs_per_pack)) for m in done_moves),
             "" if full else Markup(" — <i>qolgani navbatda</i>")), attachment_ids=photos.ids)
+        self._craf_after_load_done(done_moves, photos, full)
         self.sudo().craf_trip_photo_ids = [(5, 0, 0)]
         self._craf_notify(
             "done", "Berildi" if full else "Qisman berildi",
             "%s · %s · %s — %s" % (self.name, self.partner_id.name, self.craf_truck, self.env.user.name),
             users=self.user_id | self.create_uid, ntype="success" if full else "warning")
+        return True
+
+    def _craf_after_load_done(self, moves, photos, full):
+        """Yuklovchi «Berildi» bosgandan keyin (moves — berilgan harakatlar, photos — shu yuklash rasmlari).
+        Boshqa modullar uchun (masalan, Telegram savdo guruhiga xabar)."""
         return True
 
     def _craf_berildi(self):

@@ -22,6 +22,13 @@
                              help="Har kuni shu soatda (Toshkent) kechagi kun hisoboti «Kunlik hisobot» belgilangan mas'ullarga yuboriladi.">
                         <field name="craf_tg_daily_hour"/> <span>:00</span>
                     </setting>
+                    <setting id="craf_tg_sale_chat" string="Savdo guruhi"
+                             help="Yuklovchi «Berildi» bosganda yuklangan mahsulotlar ro'yxati va mashina rasmi shu Telegram guruhiga boradi. Botni guruhga admin qilib qo'shing; guruhda /id yozsangiz, bot guruh ID sini aytadi.">
+                        <field name="craf_tg_sale_chat" placeholder="-1001234567890"/>
+                        <div class="mt-2">
+                            <button name="action_craf_tg_sale_test" type="object" string="Guruhga sinov xabari" icon="fa-paper-plane" class="btn-link"/>
+                        </div>
+                    </setting>
                     <setting id="craf_tg_contacts" string="Mas'ullar va Telegram ID"
                              help="Kishi botga /start bosadi — bot unga Telegram ID sini yozib beradi. ID bo'lim sozlamasiga yoziladi.">
                         <button name="%(craf_production.action_craf_bolim)d" type="action" string="Bo'limlar va mas'ullar" icon="fa-users" class="btn-link"/>

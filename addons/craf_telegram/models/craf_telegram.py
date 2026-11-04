@@ -4,6 +4,7 @@ Bot Telegram serveridan yangi xabarlarni o'zi so'rab oladi (getUpdates, har daqi
 Token — sozlamada (ir.config_parameter), mas'ullar va Telegram ID — craf.bolim.contact da.
 """
 import html
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -23,6 +24,7 @@ P_BOT = "craf_telegram.bot_username"
 P_OFFSET = "craf_telegram.update_offset"
 P_HOUR = "craf_telegram.daily_hour"
 P_LAST_DAILY = "craf_telegram.last_daily"
+P_SALE_CHAT = "craf_telegram.sale_chat_id"  # savdo guruhi: yuklovchi «Berildi» bosganda ro'yxat + mashina rasmi
 DEFAULT_HOUR = 11  # kunlik hisobot (kechagi kun) — Toshkent vaqti bilan 11:00
 MAX_LEN = 4000
 BOLIM_ICON = {"litey": "🔥", "press": "⚙️", "boyash": "🎨"}
@@ -102,6 +104,115 @@ class CrafTelegram(models.AbstractModel):
         if error:
             _logger.warning("Telegram %s ga yuborilmadi: %s", chat_id, error)
         return not error
+
+    def _api_files(self, method, data, files, timeout=60):
+        """Fayl bilan so'rov (sendPhoto, sendMediaGroup) — multipart/form-data."""
+        token = self._token()
+        if not token:
+            raise TelegramError("Telegram bot tokeni sozlamada yozilmagan.")
+        try:
+            resp = requests.post(API_URL % (token, method), data=data, files=files, timeout=timeout)
+            result = resp.json()
+        except (requests.RequestException, ValueError) as err:
+            raise TelegramError("Telegram bilan aloqa yo'q: %s" % err) from err
+        if not result.get("ok"):
+            raise TelegramError(result.get("description") or "Telegram xatosi (%s)" % resp.status_code)
+        return result.get("result")
+
+    @api.model
+    def send_photos(self, chat_id, attachments, caption="", kind="info"):
+        """Rasmlarni yuboradi (bittasi — sendPhoto, ko'pi — 10 tadan albom); jurnalga yozadi."""
+        chat_id = str(chat_id or "").strip()
+        attachments = attachments.sudo().filtered(lambda a: a.raw)
+        if not chat_id or not attachments:
+            return False
+        error = False
+        batches = [attachments[i:i + 10] for i in range(0, len(attachments), 10)]
+        for n, batch in enumerate(batches):
+            cap = caption[:1000] if n == 0 else ""
+            try:
+                if len(batch) == 1:
+                    self._api_files("sendPhoto", {"chat_id": chat_id, "caption": cap, "parse_mode": "HTML"},
+                                    {"photo": (batch.name or "rasm.jpg", batch.raw, batch.mimetype or "image/jpeg")})
+                else:
+                    media, files = [], {}
+                    for i, att in enumerate(batch):
+                        key = "p%s" % i
+                        files[key] = (att.name or "%s.jpg" % key, att.raw, att.mimetype or "image/jpeg")
+                        item = {"type": "photo", "media": "attach://%s" % key}
+                        if i == 0 and cap:
+                            item.update(caption=cap, parse_mode="HTML")
+                        media.append(item)
+                    self._api_files("sendMediaGroup", {"chat_id": chat_id, "media": json.dumps(media)}, files)
+            except TelegramError as err:
+                error = str(err)
+                break
+        self.env["craf.telegram.log"].sudo().create({
+            "chat_id": chat_id, "kind": kind, "text": "📷 %s ta rasm. %s" % (len(attachments), caption or ""),
+            "state": "error" if error else "sent", "error": error or False,
+        })
+        if error:
+            _logger.warning("Telegram %s ga rasm yuborilmadi: %s", chat_id, error)
+        return not error
+
+    # ================================================================== savdo guruhi
+    def _sale_chat(self):
+        return (self._param(P_SALE_CHAT) or "").strip()
+
+    @api.model
+    def sale_loaded_text(self, order, moves, full=True):
+        """Yuklovchi «Berildi» bosganda savdo guruhiga xabar: buyurtma, mijoz, mashina, mahsulotlar ro'yxati."""
+        from odoo.addons.craf_sotuv.models.sale_order_line import packs_text
+        order = order.sudo()
+        when = fields.Datetime.context_timestamp(order.with_context(tz=TZ), order.craf_given_date or fields.Datetime.now())
+        lines = ["🚚 <b>%s</b> · %s" % ("Yuklandi" if full else "Qisman yuklandi", esc(order.name)),
+                 "👤 Mijoz: <b>%s</b>" % esc(order.partner_id.name)]
+        if order.craf_truck:
+            lines.append("🚛 Mashina: <b>%s</b>" % esc(order.craf_truck))
+        lines.append("📦 Yuklovchi: %s · %s" % (esc(self.env.user.name), when.strftime("%d.%m.%Y %H:%M")))
+        if order.user_id:
+            lines.append("🧑‍💼 Sotuvchi: %s" % esc(order.user_id.name))
+        lines.append("")
+        total_pcs = total_kg = 0.0
+        total_packs = 0
+        for i, m in enumerate(moves.sorted(lambda m: (m.product_id.display_name, m.id)), 1):
+            product = m.product_id
+            pcs = m.product_uom._compute_quantity(m.quantity, product.uom_id)
+            per = product.craf_pcs_per_pack
+            kg = pcs * (product.craf_kg_per_pc or 0.0)
+            total_pcs += pcs
+            total_kg += kg
+            total_packs += int(round(pcs)) // per if per else 0
+            lines.append("%s. %s — <b>%s</b>%s · %s" % (
+                i, esc(product.display_name), packs_text(pcs, per), " (%s kg)" % num(kg) if kg else "",
+                esc(m.location_id._craf_sale_label())))
+        if not moves:
+            lines.append("Mahsulot yo'q.")
+        lines.append("")
+        total = ["%s dona" % num(total_pcs, 0)]
+        if total_packs:
+            total.insert(0, "%s pachka" % total_packs)
+        if total_kg:
+            total.append("%s kg" % num(total_kg))
+        lines.append("Jami: <b>%s</b>" % ", ".join(total))
+        if not full:
+            lines.append("⏳ Qolgani navbatda")
+        if order.craf_load_note:
+            lines.append("📝 %s" % esc(order.craf_load_note))
+        return "\n".join(lines)
+
+    @api.model
+    def send_sale_loaded(self, order, moves, photos, full=True):
+        """Savdo guruhiga: avval ro'yxat, keyin mashina rasmlari. Guruh yoki token yo'q bo'lsa — hech narsa."""
+        chat = self._sale_chat()
+        if not chat or not self._token():
+            return False
+        ok = self.send(chat, self.sale_loaded_text(order, moves, full), kind="sale")
+        if photos:
+            caption = "%s · %s%s" % (esc(order.name), esc(order.partner_id.name),
+                                     " · %s" % esc(order.craf_truck) if order.craf_truck else "")
+            ok = self.send_photos(chat, photos, caption, kind="sale") and ok
+        return ok
 
     @api.model
     def _contacts(self, code=None, flag=None):
@@ -377,6 +488,13 @@ class CrafTelegram(models.AbstractModel):
             self._set_param(P_OFFSET, str(offset))
             msg = upd.get("message") or {}
             chat = msg.get("chat") or {}
+            if chat.get("type") in ("group", "supergroup") and (msg.get("text") or "").strip().lower().split(
+                    "@")[0].split(" ")[0] == "/id":
+                # guruh ID sini bilish uchun: guruhda /id yoziladi
+                self.send(chat["id"], "Guruh ID: <code>%s</code>\nShu raqamni Craf sozlamasida «Savdo guruhi» ga yozing."
+                          % chat["id"], kind="reply")
+                self.env.cr.commit()
+                continue
             if chat.get("type") != "private" or not msg.get("text"):
                 continue
             try:

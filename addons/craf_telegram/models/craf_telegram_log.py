@@ -12,7 +12,7 @@ class CrafTelegramLog(models.Model):
     contact_id = fields.Many2one("craf.bolim.contact", "Kimga", readonly=True, ondelete="set null")
     bolim_id = fields.Many2one("craf.bolim", "Bo'lim", readonly=True, ondelete="set null")
     kind = fields.Selection([("report", "Kunlik hisobot"), ("alert", "Minimal qoldiq"), ("reply", "Botning javobi"),
-                             ("test", "Sinov"), ("info", "Boshqa")], "Turi", readonly=True, default="info")
+                             ("test", "Sinov"), ("sale", "Savdo guruhi"), ("info", "Boshqa")], "Turi", readonly=True, default="info")
     text = fields.Text("Matn", readonly=True)
     state = fields.Selection([("sent", "Yuborildi"), ("error", "Xato")], "Holat", readonly=True)
     error = fields.Char("Xato", readonly=True)

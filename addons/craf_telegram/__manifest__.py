@@ -1,6 +1,6 @@
 {
     "name": "Craf: Telegram bot",
-    "version": "19.0.1.1.0",
+    "version": "19.0.1.2.0",
     "summary": "Bitta umumiy Telegram bot: bo'lim mas'ullariga kunlik hisobot va minimal qoldiq eslatmasi",
     "description": """
 Telegram bot (Ishlab chiqarish → Konfiguratsiya → Sozlamalar → Craf Telegram bot):
@@ -16,6 +16,8 @@ Telegram bot (Ishlab chiqarish → Konfiguratsiya → Sozlamalar → Craf Telegr
   («Minimal qoldiq» belgilanganlarga), tiklanganda yana kuzatiladi
 - Buyruqlar (faqat ro'yxatdagi mas'ullar uchun): /qoldiq — kam qolgan va tugagan materiallar,
   /hisobot — kechagi hisobot, /id — Telegram ID
+- Savdo guruhi (sozlamada guruh ID): yuklovchi «Berildi» bosganda yuklangan mahsulotlar ro'yxati va
+  mashina rasmi guruhga boradi; guruhda /id — guruh ID si; «Guruhga sinov xabari» tugmasi
 - Barcha yuborilgan xabarlar jurnali (Konfiguratsiya → Telegram xabarlari)
 """,
     "author": "Craf",
