@@ -234,6 +234,7 @@ class CrafSex(models.AbstractModel):
                 (" · yaroqsiz %s, kesildi %s" % (rec.brak_pcs, rec.cut_pcs)) if rec.brak_pcs or rec.cut_pcs else ""),
             "metric": "",
             "loads": [self._load_info(l) for l in rec.load_ids] if rec.state == "draft" else [],
+            "edit": rec._craf_edit_info() if rec.state == "done" else False,
         }
 
     def _card_boyash(self, rec):
@@ -310,9 +311,17 @@ class CrafSex(models.AbstractModel):
         return "ok" if diff <= 5 else ("bad" if diff > 15 else "warn")
 
     # ---------------------------------------------------------------- korzinkalar
-    def _load_info(self, load):
+    def _load_info(self, load, exclude_sort=None):
+        """exclude_sort — tasdiqlangan kimyoviy ishlovni tahrirlashda: shu hujjatning brak ajratishigacha bo'lgan
+        dona (yaroqsiz / kesilgan qayta yoziladi)."""
+        quantities = load._product_quantities()
+        if exclude_sort and exclude_sort.state == "done":
+            for line in exclude_sort.line_ids.filtered(lambda l: l.load_id == load):
+                quantities[line.product_id] = quantities.get(line.product_id, 0) + line.qty
+                if line.kind == "cut" and line.target_product_id:
+                    quantities[line.target_product_id] = quantities.get(line.target_product_id, 0) - line.qty
         products = [{"id": p.id, "name": p.name, "qty": q, "length": p.craf_length_m}
-                    for p, q in load._product_quantities().items()]
+                    for p, q in quantities.items() if q]
         return {
             "id": load.id, "basket_id": load.basket_id.id, "basket": load.basket_id.name,
             "content": load.content or "", "section": load.section_id.name or "",
@@ -537,10 +546,13 @@ class CrafSex(models.AbstractModel):
         return {
             "id": rec.id, "name": rec.name, "state": rec.state, "date": fields.Date.to_string(rec.date),
             "shift": rec.shift, "employee_id": rec.employee_id.id or False, "equipment_id": rec.equipment_id.id or False,
-            "load_ids": rec.load_ids.ids, "loads": [self._load_info(l) for l in rec.load_ids],
+            "load_ids": rec.load_ids.ids,
+            "loads": [self._load_info(l, exclude_sort=rec.sort_id) for l in rec.load_ids],
             "chem": {str(l.product_id.id): _q(l.qty, 2) for l in rec.chem_line_ids},
             "defects": self._chem_defects_map(rec),
             "note": rec.note or "",
+            "edit": rec._craf_edit_info() if rec.state == "done" else False,
+            "history": rec._craf_edit_history(),
         }
 
     def _chem_defects_map(self, rec):
@@ -578,7 +590,16 @@ class CrafSex(models.AbstractModel):
     def chem_save(self, vals, confirm=False):
         Chem = self.env["craf.chem.treatment"]
         rec = Chem.browse(int(vals["id"])).exists() if vals.get("id") else Chem
-        if vals.get("id"):
+        editing = bool(rec) and rec.state == "done"
+        if editing:
+            # tasdiqlangan: 24 soat ichida (xodim) yoki rahbar — eski tasdiq bekor qilinib, qayta tasdiqlanadi
+            rec._craf_check_edit()
+            before = rec._craf_edit_snapshot()
+            since = self._last_move_id()
+            self._H._check_lock(self._touched_products(rec), self._H._moment(rec.date), rec.name)
+            rec._craf_unconfirm()
+            confirm = True
+        elif vals.get("id"):
             self._check_draft(rec)
         load_ids = [int(i) for i in vals.get("load_ids") or []]
         Load = self.env["craf.basket.load"]
@@ -601,12 +622,34 @@ class CrafSex(models.AbstractModel):
             rec = Chem.create(header)
         else:
             rec.write(header)
-        # kimyo sarfi bu yerda yozilmaydi — «Kislota» bo'limida (craf.chem.issue)
-        rec.write({"chem_line_ids": [Command.clear()],
+        # kimyo sarfi bu yerda yozilmaydi — «Kislota» bo'limida (craf.chem.issue); eski hujjatlarda yechilgani qoladi
+        rec.write({"chem_line_ids": [Command.unlink(l.id) for l in rec.chem_line_ids if not l.move_id],
                    "defect_line_ids": self._chem_defect_commands(rec.load_ids, vals.get("defects"))})
         if confirm:
             self._confirm(rec)
-        return {"id": rec.id, "name": rec.name, "state": rec.state}
+        if editing:
+            self._edit_guard(since)
+            rec._craf_log_edit(before)
+        return {"id": rec.id, "name": rec.name, "state": rec.state, "edited": editing}
+
+    @api.model
+    def chem_cancel(self, rec_id):
+        """Tasdiqlangan kimyoviy ishlovni o'chirish (24 soat ichida yoki rahbar)."""
+        return self._chem_cancel(self.env["craf.chem.treatment"].browse(int(rec_id)).exists())
+
+    def _chem_cancel(self, rec):
+        if not rec:
+            raise UserError("Hujjat topilmadi (o'chirilgan bo'lishi mumkin).")
+        if rec.state != "done":
+            raise UserError("%s tasdiqlanmagan — qoralamani «O'chirish» bilan o'chiring." % rec.name)
+        rec._craf_check_edit()
+        before = rec._craf_edit_snapshot()
+        since = self._last_move_id()
+        self._H._check_lock(self._touched_products(rec), self._H._moment(rec.date), rec.name)
+        rec._craf_cancel_done()
+        self._edit_guard(since)
+        rec._craf_log_edit(before, kind="cancel")
+        return {"result": "void", "name": rec.name, "state": rec.state}
 
     # ================================================================== KISLOTA
     def _issue_card(self, rec):
@@ -616,6 +659,7 @@ class CrafSex(models.AbstractModel):
             "lines": [{"name": l.product_id.name, "qty": _q(l.qty, 2), "uom": self._uom_label(l.product_id)}
                       for l in rec.line_ids if l.qty > EPS],
             "note": rec.note or "",
+            "edit": rec._craf_edit_info(),
         }
 
     @api.model
@@ -659,6 +703,68 @@ class CrafSex(models.AbstractModel):
         """Ombordan olingan kislota: yoziladi va shu zahoti ombordan sarfga yechiladi."""
         return self._issue_save("kislota", vals)
 
+    @api.model
+    def issue_load(self, issue_id):
+        """Kislota yoki bo'yash materiali olishni tahrirlash uchun."""
+        return self._issue_load(("kislota", "boyash"), issue_id)
+
+    @api.model
+    def issue_cancel(self, issue_id):
+        """Kislota yoki bo'yash materiali olishni o'chirish (24 soat ichida yoki rahbar): miqdor omborga qaytadi."""
+        return self._issue_cancel(("kislota", "boyash"), issue_id)
+
+    def _issue_get(self, kinds, issue_id):
+        rec = self.env["craf.chem.issue"].browse(int(issue_id or 0)).exists()
+        if not rec or rec.kind not in kinds:
+            raise UserError("Yozuv topilmadi (o'chirilgan bo'lishi mumkin).")
+        return rec
+
+    def _issue_load(self, kinds, issue_id):
+        rec = self._issue_get(kinds, issue_id)
+        return {
+            "id": rec.id, "name": rec.name, "kind": rec.kind, "state": rec.state,
+            "date": fields.Date.to_string(rec.date), "employee_id": rec.employee_id.id or False,
+            "note": rec.note or "",
+            "qty": {str(l.product_id.id): _q(l.qty, 2) for l in rec.line_ids if l.qty > EPS},
+            "edit": rec._craf_edit_info() if rec.state == "done" else False,
+            "history": rec._craf_edit_history(),
+        }
+
+    def _issue_edit(self, kind, vals, lines, date):
+        """Tasdiqlangan olishni tahrirlash: eski yechim omborga qaytariladi, yangisi yechiladi (bitta tranzaksiya)."""
+        rec = self._issue_get((kind,), vals["id"])
+        if rec.state != "done":
+            raise UserError("%s bekor qilingan — tahrirlab bo'lmaydi." % rec.name)
+        rec._craf_check_edit()
+        before = rec._craf_edit_snapshot()
+        since = self._last_move_id()
+        self._H._check_lock(rec.line_ids.product_id, self._H._moment(rec.date), rec.name)
+        rec._craf_unpost()
+        data = {"date": date, "note": (vals.get("note") or "").strip() or False,
+                "line_ids": [Command.clear()] + lines}
+        if not self.env.user._craf_own_app() and vals.get("employee_id"):
+            data["employee_id"] = int(vals["employee_id"])
+        rec.write(data)
+        self._H._check_lock(rec.line_ids.product_id, self._H._moment(date), rec.name)
+        rec.action_done()
+        self._edit_guard(since)
+        rec._craf_log_edit(before)
+        return {"id": rec.id, "name": rec.name, "total": _q(rec.qty_total, 2), "edited": True}
+
+    def _issue_cancel(self, kinds, issue_id):
+        rec = self._issue_get(kinds, issue_id)
+        if rec.state != "done":
+            raise UserError("%s allaqachon bekor qilingan." % rec.name)
+        rec._craf_check_edit()
+        before = rec._craf_edit_snapshot()
+        since = self._last_move_id()
+        self._H._check_lock(rec.line_ids.product_id, self._H._moment(rec.date), rec.name)
+        rec._craf_unpost()
+        rec.state = "cancel"
+        self._edit_guard(since)
+        rec._craf_log_edit(before, kind="cancel")
+        return {"result": "cancel", "name": rec.name}
+
     def _issue_save(self, kind, vals):
         Issue = self.env["craf.chem.issue"]
         lines = []
@@ -669,6 +775,8 @@ class CrafSex(models.AbstractModel):
         if not lines:
             raise UserError("Olingan miqdorni yozing.")
         date = vals.get("date") or fields.Date.context_today(self)
+        if vals.get("id"):
+            return self._issue_edit(kind, vals, lines, date)
         moment = self._H._moment(date)
         rec = Issue.create({
             "kind": kind,
@@ -689,6 +797,7 @@ class CrafSex(models.AbstractModel):
             "powders": [{"color": p.color_id.name, "qty": _q(p.qty, 2)} for p in day.powder_ids if p.qty > EPS],
             "packs": day.packs_total, "pcs": day.pcs_total, "kg": _q(day.kg_total, 0),
             "who": day.employee_id.sudo().name or "",
+            "edit": day._craf_edit_info() if day.state == "done" else False,
         }
 
     @staticmethod
@@ -791,7 +900,18 @@ class CrafSex(models.AbstractModel):
                 "extra": l.extra or "",
             } for l in day.line_ids],
             "powders": {str(p.color_id.id): _q(p.qty, 2) for p in day.powder_ids if p.qty > EPS},
+            "edit": day._craf_edit_info() if day.state == "done" else False,
+            "history": day._craf_edit_history(),
+            # tahrirda: eski tasdiq bekor qilinganda sexga qaytadigan bo'yalmagan profil — {kesim|uzunlik: dona}
+            "semi_back": self._day_semi_back(day) if day.state == "done" else {},
         }
+
+    def _day_semi_back(self, day):
+        res = {}
+        for line in day.line_ids:
+            k = "%s|%s" % (line.section_id.id, self._len_key(line.length_m))
+            res[k] = res.get(k, 0) + line.pcs
+        return res
 
     @api.model
     def day_save(self, vals, confirm=False):
@@ -799,8 +919,9 @@ class CrafSex(models.AbstractModel):
         from .craf_paint_day import parse_packs
         Day = self.env["craf.paint.day"]
         day = Day.browse(int(vals["id"])).exists() if vals.get("id") else Day
-        if vals.get("id") and (not day or day.state != "draft"):
-            raise UserError("Bu kunlik yozuv qoralama emas — o'zgartirib bo'lmaydi.")
+        editing = bool(day) and day.state == "done"
+        if vals.get("id") and (not day or day.state not in ("draft", "done")):
+            raise UserError("Bu kunlik yozuv bekor qilingan yoki o'chirilgan — o'zgartirib bo'lmaydi.")
         lines = []
         for row in vals.get("lines") or []:
             packs = parse_packs(row.get("packs_text"))
@@ -832,14 +953,31 @@ class CrafSex(models.AbstractModel):
             "powder_ids": [Command.clear()] + powders,
         }
         self._H._moment(data["date"])
+        if editing:
+            # tasdiqlangan: 24 soat ichida (xodim) yoki rahbar — eski tasdiq bekor qilinib, qayta tasdiqlanadi
+            day._craf_check_edit()
+            before = day._craf_edit_snapshot()
+            since = self._last_move_id()
+            self._day_check_lock(day)
+            day._craf_unconfirm()
+            confirm = True
         if day:
             day.write(data)
         else:
             day = Day.create(data)
         if confirm:
             day.action_confirm()
-        return {"id": day.id, "name": day.name, "state": day.state,
+        if editing:
+            self._edit_guard(since)
+            day._craf_log_edit(before)
+        return {"id": day.id, "name": day.name, "state": day.state, "edited": editing,
                 "batches": ", ".join(day.batch_ids.mapped("name"))}
+
+    def _day_check_lock(self, day):
+        """Eski sanadagi harakatlar qaytariladi — shu sanadan keyin qoldiq sanalgan bo'lsa to'xtatadi."""
+        moment = self._H._moment(day.date)
+        for batch in day.batch_ids.filtered(lambda b: b.state == "done"):
+            self._H._check_lock(self._touched_products(batch), moment, day.name)
 
     @api.model
     def day_action(self, day_id, action):
@@ -847,11 +985,22 @@ class CrafSex(models.AbstractModel):
         if not day:
             raise UserError("Kunlik yozuv topilmadi (o'chirilgan bo'lishi mumkin).")
         name = day.name
+        if action == "delete" and day.state == "done":
+            action = "cancel"  # tasdiqlangani o'chirilmaydi — bekor qilinadi (ombor qaytariladi, tarix qoladi)
         if action == "delete":
-            if day.state == "done":
-                raise UserError("Tasdiqlangan kunlik yozuvni o'chirib bo'lmaydi.")
             day.unlink()
             return {"result": "deleted", "name": name}
+        if action == "cancel":
+            if day.state != "done":
+                raise UserError("%s tasdiqlanmagan." % name)
+            day._craf_check_edit()
+            before = day._craf_edit_snapshot()
+            since = self._last_move_id()
+            self._day_check_lock(day)
+            day._craf_cancel_done()
+            self._edit_guard(since)
+            day._craf_log_edit(before, kind="cancel")
+            return {"result": "cancel", "name": name}
         raise UserError("Bu amal mumkin emas.")
 
     # ================================================================== BO'YASH
@@ -1022,7 +1171,7 @@ class CrafSex(models.AbstractModel):
             if rec.billet_qty > EPS:
                 needs[rec.billet_product_id] += rec.billet_qty
         elif rec._name == "craf.chem.treatment":
-            for line in rec.chem_line_ids.filtered(lambda l: l.qty > EPS):
+            for line in rec.chem_line_ids.filtered(lambda l: l.qty > EPS and not l.move_id):
                 needs[line.product_id] += line.qty
         else:
             if rec.powder_qty > EPS and rec.powder_product_id:
@@ -1089,6 +1238,33 @@ class CrafSex(models.AbstractModel):
             if "picking_ids" in rec._fields:
                 rec.picking_ids = [Command.link(p.id) for p in pickings]
         return pickings
+
+    # ================================================================== TAHRIRLASH (24 soat)
+    def _last_move_id(self):
+        return self.env["stock.move"].sudo().search([], order="id desc", limit=1).id or 0
+
+    def _edit_guard(self, since):
+        """Tahrir (eski harakat qaytarilib, yangisi yozilgach) ombordagi qoldiqni manfiy qilib qo'ysa — to'xtatadi:
+        masalan, tayyor mahsulot sotilgan yoki 5 m profil bo'yalgan. Chiqindi (Литейка) joylari tekshirilmaydi."""
+        moves = self.env["stock.move"].sudo().search([("id", ">", since), ("state", "=", "done")])
+        delta = defaultdict(float)
+        for m in moves:
+            if m.location_id.usage == "internal":
+                delta[(m.product_id, m.location_id)] -= m.product_qty
+            if m.location_dest_id.usage == "internal":
+                delta[(m.product_id, m.location_dest_id)] += m.product_qty
+        waste = self._loc("Литейка") | self._loc("Chiqindi")
+        Quant = self.env["stock.quant"].sudo()
+        bad = []
+        for (product, loc), change in delta.items():
+            if change >= -EPS or loc in waste:
+                continue
+            qty = sum(Quant.search([("product_id", "=", product.id), ("location_id", "=", loc.id)]).mapped("quantity"))
+            if qty < -EPS:
+                bad.append("%s — %s: %s %s" % (loc.name, product.display_name, _q(qty, 2), self._uom_label(product)))
+        if bad:
+            raise UserError("Tahrirlab bo'lmaydi — ombordagi qoldiq manfiy bo'lib qoladi (mahsulot keyingi bosqichga "
+                            "o'tgan yoki sotilgan bo'lishi mumkin):\n" + "\n".join(bad))
 
     def _confirm(self, rec):
         """O'tgan sanadagi hujjat: shu sanadan keyin qoldiq sanalgan bo'lsa — to'xtatadi (ikki marta yozilmasin).
@@ -1169,6 +1345,7 @@ class CrafSex(models.AbstractModel):
                 self._H._local(rec.c1_date) if rec.c1_date else "", (", " + rec.c1_user_id.name) if rec.c1_user_id else "")))
         roles = self._roles()
         packs = self.env["craf.pack"].search_count([("origin", "=", rec.name)]) if rec.state == "done" else 0
+        edit = rec._craf_edit_info() if stage == "kimyo" and rec.state == "done" else False
         actions = []
         if rec.state == "draft":
             actions += ["edit", "done", "cancel", "delete"]
@@ -1183,13 +1360,17 @@ class CrafSex(models.AbstractModel):
                 actions.append("labels")
             if roles["accountant"]:
                 actions.append("c1_undo" if rec.c1_state == "done" else "c1")
-        actions.append("open")
+            if edit and edit["can"]:
+                actions += ["edit", "void"]
+        if not roles["own"]:
+            actions.append("open")
         return {
             "stage": stage, "id": rec.id, "name": rec.name, "state": rec.state,
             "state_label": STATE_LABELS.get(rec.state, rec.state), "title": card["title"],
             "meta": meta, "lines": lines, "outputs": outputs, "actions": actions, "packs": packs,
             "c1": rec.c1_state, "note": rec.note or "",
             "loads": card.get("loads", []), "section_id": card.get("section_id") or False,
+            "edit": edit, "history": rec._craf_edit_history() if stage == "kimyo" else [],
         }
 
     @api.model
@@ -1203,6 +1384,10 @@ class CrafSex(models.AbstractModel):
             rec.action_cancel()
         elif action == "draft":
             rec.action_draft()
+        elif action == "void":
+            if stage != "kimyo":
+                raise UserError("Bu amal faqat kimyoviy ishlov uchun.")
+            return self._chem_cancel(rec)
         elif action == "delete":
             if rec.state not in ("draft", "cancel"):
                 raise UserError("Faqat qoralama yoki bekor qilingan hujjat o'chiriladi.")

@@ -11,3 +11,5 @@ access_craf_paint_day_line_user,craf.paint.day.line user,model_craf_paint_day_li
 access_craf_paint_day_line_mrp,craf.paint.day.line mrp,model_craf_paint_day_line,mrp.group_mrp_user,1,1,1,1
 access_craf_paint_day_powder_user,craf.paint.day.powder user,model_craf_paint_day_powder,base.group_user,1,0,0,0
 access_craf_paint_day_powder_mrp,craf.paint.day.powder mrp,model_craf_paint_day_powder,mrp.group_mrp_user,1,1,1,1
+access_craf_edit_log_accountant,craf.edit.log omborchi,model_craf_edit_log,craf_sex.group_craf_accountant,1,0,0,0
+access_craf_edit_log_system,craf.edit.log admin,model_craf_edit_log,base.group_system,1,0,0,1

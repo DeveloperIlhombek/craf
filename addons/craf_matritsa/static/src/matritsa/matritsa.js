@@ -205,7 +205,9 @@ export class CrafMatritsa extends Component {
             f.preview = m && m.image ? this.imageUrl(m, "image_1920") : "";
             f.image = "";
             f.image_clear = false;
-            this.openSheet({ type: "matrix", o, f, m });
+            // tahrir: o'zi kiritganini 24 soat ichida (xodim) yoki rahbar; holatni har doim belgilaydi
+            const extra = m ? await this.orm.call(API, "matrix_load", [m.id]) : { edit: false, history: [] };
+            this.openSheet({ type: "matrix", o, f, m, edit: extra.edit, history: extra.history, locked: Boolean(m && !extra.edit.can) });
         });
     }
     imageUrl(m, field = "image_128") {
@@ -242,7 +244,7 @@ export class CrafMatritsa extends Component {
         this.run(async () => {
             const { preview, ...vals } = s.f; // preview — faqat ko'rsatish uchun
             const res = await this.orm.call(API, "matrix_save", [{ ...vals, section_id: Number(s.f.section_id) }]);
-            this.notification.add(`${res.name} saqlandi`, { type: "success" });
+            this.notification.add(s.f.id ? `${res.name} o'zgartirildi` : `${res.name} saqlandi`, { type: "success" });
             this.closeSheet();
             await this.refresh();
         });
@@ -289,14 +291,34 @@ export class CrafMatritsa extends Component {
 
     // ---------------------------------------------------------------- gaz sarfi
     openGas(g, b) {
-        this.openSheet({ type: "gas", g, b, f: { ballon_id: b.id, qty: "", note: "" } });
+        this.openSheet({ type: "gas", g, b, old: 0, f: { ballon_id: b.id, qty: "", note: "" } });
+    }
+    openGasEdit(mv) {
+        // yozilgan sarfni tuzatish yoki o'chirish (24 soat ichida yoki rahbar); ballon o'zgarmaydi
+        const g = this.state.data.gas.find((x) => x.id === mv.type_id);
+        const b = g && g.ballons.find((x) => x.id === mv.ballon_id);
+        if (!b) {
+            return;
+        }
+        this.openSheet({ type: "gas", g, b, mv, old: mv.qty_raw, f: { move_id: mv.id, ballon_id: b.id, qty: String(mv.qty_raw).replace(".", ","), note: mv.note } });
+    }
+    deleteGas() {
+        const s = this.state.sheet;
+        this.confirm("O'chirish", `${s.b.name}: ${s.mv.qty} ${s.g.unit} sarf o'chiriladi — miqdor ballonga qaytadi. Bu tahrirlash jurnaliga yoziladi.`, "O'chirish", () =>
+            this.run(async () => {
+                const res = await this.orm.call(API, "gaz_delete", [s.f.move_id]);
+                this.notification.add(`${res.ballon}: sarf o'chirildi, qoldi ${res.left}`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
     }
     pickBallon(s, b) {
         s.b = b;
         s.f.ballon_id = b.id;
     }
     gasLeft(s) {
-        return s.b.qty - toNum(s.f.qty);
+        return s.b.qty + (s.old || 0) - toNum(s.f.qty);
     }
     saveGas() {
         const s = this.state.sheet;
@@ -305,28 +327,44 @@ export class CrafMatritsa extends Component {
             s.error = "Sarf miqdorini yozing.";
             return;
         }
-        if (qty > s.b.qty) {
-            s.error = `${s.b.name}: ballonda ${this.num(s.b.qty, 2)} ${s.g.unit} qolgan.`;
+        if (qty > s.b.qty + (s.old || 0)) {
+            s.error = `${s.b.name}: ballonda ${this.num(s.b.qty + (s.old || 0), 2)} ${s.g.unit} bor.`;
             return;
         }
         this.run(async () => {
-            const res = await this.orm.call(API, "gaz_use", [s.f.ballon_id, s.f.qty, s.f.note]);
-            this.notification.add(`${res.ballon}: ${res.qty} ${s.g.unit} sarf, qoldi ${res.left}`, { type: "success" });
+            const res = s.f.move_id
+                ? await this.orm.call(API, "gaz_edit", [s.f.move_id, s.f.qty, s.f.note])
+                : await this.orm.call(API, "gaz_use", [s.f.ballon_id, s.f.qty, s.f.note]);
+            this.notification.add(`${res.ballon}: ${res.qty} ${s.g.unit} sarf${s.f.move_id ? " (tuzatildi)" : ""}, qoldi ${res.left}`, { type: "success" });
             this.closeSheet();
             await this.refresh();
         });
     }
 
     // ---------------------------------------------------------------- kaustik soda
-    async openSoda() {
+    async openSoda(id = false) {
+        id = typeof id === "number" ? id : false; // tugmadan (t-on-click) hodisa keladi
         await this.run(async () => {
             const o = await this.options();
-            const f = { date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
-            this.openSheet({ type: "soda", o, f });
+            const f = id ? await this.orm.call(API, "soda_load", [id]) : { id: false, date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
+            // tahrir: eski miqdor omborga qaytariladi — mavjud qoldiqqa qo'shib ko'rsatiladi
+            const items = this.state.data.soda.map((c) => ({ ...c, avail: c.avail + toNum(f.qty[c.id]) }));
+            this.openSheet({ type: "soda", o, f, items });
         });
     }
     sodaTotal(s) {
-        return this.state.data.soda.reduce((a, c) => a + toNum(s.f.qty[c.id]), 0);
+        return s.items.reduce((a, c) => a + toNum(s.f.qty[c.id]), 0);
+    }
+    deleteSoda() {
+        const f = this.state.sheet.f;
+        this.confirm("O'chirish", `${f.name} o'chiriladi — olingan kaustik soda omborga qaytariladi. Bu tahrirlash jurnaliga yoziladi.`, "O'chirish", () =>
+            this.run(async () => {
+                await this.orm.call(API, "soda_cancel", [f.id]);
+                this.notification.add(`${f.name} o'chirildi`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
     }
     saveSoda() {
         const s = this.state.sheet;
@@ -334,17 +372,19 @@ export class CrafMatritsa extends Component {
             s.error = "Olingan kaustik soda miqdorini yozing (kg).";
             return;
         }
-        const over = this.state.data.soda.filter((c) => toNum(s.f.qty[c.id]) > c.avail);
+        const over = s.items.filter((c) => toNum(s.f.qty[c.id]) > c.avail);
         if (over.length) {
             s.error = over.map((c) => `${c.name}: omborda ${this.num(c.avail, 2)} kg`).join("\n");
             return;
         }
-        this.confirm("Kaustik soda olindi", `${this.num(this.sodaTotal(s), 2)} kg ombordan sarfga yechiladi.`, "Saqlash", () =>
+        const editing = Boolean(s.f.id);
+        this.confirm(editing ? "O'zgarishni saqlash" : "Kaustik soda olindi",
+            editing ? `${this.num(this.sodaTotal(s), 2)} kg — oldingi yozuv o'rniga yoziladi (ombor qoldig'i tuzatiladi).` : `${this.num(this.sodaTotal(s), 2)} kg ombordan sarfga yechiladi.`, "Saqlash", () =>
             this.run(async () => {
                 const res = await this.orm.call(API, "soda_save", [
                     { ...s.f, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false },
                 ]);
-                this.notification.add(`${res.name}: ${res.total} kg kaustik soda yozildi`, { type: "success" });
+                this.notification.add(editing ? `${res.name} o'zgartirildi: ${res.total} kg` : `${res.name}: ${res.total} kg kaustik soda yozildi`, { type: "success" });
                 this.closeSheet();
                 await this.refresh();
             })

@@ -107,6 +107,7 @@
                         <span class="mx-card-meta" t-esc="m.section"/>
                         <span class="mx-card-meta mx-card-note" t-if="m.state === 'broken' and m.broken_note" t-esc="m.broken_note"/>
                         <span class="mx-card-meta mx-card-note" t-elif="m.note" t-esc="m.note"/>
+                        <span class="sx-chips-row" t-if="m.edit and !m.edit.manager and (m.edit.can or m.edit.count)"><t t-call="craf_sex.EditChip"><t t-set="ed" t-value="m.edit"/></t></span>
                     </span>
                 </button>
             </div>
@@ -190,17 +191,20 @@
             <div class="gz-moves">
                 <div t-if="!d.gas_moves.length" class="gz-muted py-2">Hali sarf yozilmagan.</div>
                 <t t-foreach="d.gas_moves" t-as="mv" t-key="mv.id">
-                    <div class="gz-move mx-gz-move" t-attf-style="--gc: #{mv.color}">
+                    <div class="gz-move mx-gz-move" t-attf-style="--gc: #{mv.color}" t-att-class="{ 'sx-editable': mv.edit.can }"
+                         t-att-role="mv.edit.can ? 'button' : false" t-att-tabindex="mv.edit.can ? '0' : false"
+                         t-on-click="() => mv.edit.can and this.openGasEdit(mv)">
                         <span class="gz-dot"/>
                         <b t-esc="mv.ballon"/>
                         <span class="gz-kind gz-k-use">Sarf</span>
                         <span>−<t t-esc="mv.qty"/> <t t-esc="mv.unit"/></span>
                         <span class="gz-muted">→ <t t-esc="mv.after"/></span>
                         <span class="gz-muted gz-grow"><t t-esc="mv.date"/><t t-if="mv.who"> · <t t-esc="mv.who"/></t><t t-if="mv.note"> · <t t-esc="mv.note"/></t></span>
+                        <t t-call="craf_sex.EditChip"><t t-set="ed" t-value="mv.edit"/></t>
                     </div>
                 </t>
             </div>
-            <p class="cl-note mt-2">Ballon to'ldirish va yangi ballon qo'shishni omborchi yozadi.</p>
+            <p class="cl-note mt-2">Ballon to'ldirish va yangi ballon qo'shishni omborchi yozadi. Xato yozilgan sarfni 24 soat ichida bosib tuzating.</p>
         </div>
     </t>
 
@@ -220,12 +224,16 @@
             <button class="btn btn-primary mt-2" t-on-click="openSoda"><i class="fa fa-plus"/> Soda olindi</button>
         </div>
         <div class="cl-list" t-else="">
-            <div class="cl-doc" t-foreach="d.issues" t-as="i" t-key="i.id">
+            <div class="cl-doc" t-foreach="d.issues" t-as="i" t-key="i.id" t-att-class="{ 'sx-editable': i.edit.can }"
+                 t-att-role="i.edit.can ? 'button' : false" t-att-tabindex="i.edit.can ? '0' : false"
+                 t-on-click="() => i.edit.can and this.openSoda(i.id)">
                 <span class="cl-doc-icon cl-k-kochirish"><i class="fa fa-flask"/></span>
                 <span class="cl-doc-main">
                     <span class="cl-doc-name"><t t-esc="i.total"/> kg <span class="cl-muted" t-esc="i.name"/></span>
                     <span class="cl-doc-sub"><t t-esc="i.date_label"/><t t-if="i.who"> · <t t-esc="i.who"/></t><t t-if="i.note"> · <t t-esc="i.note"/></t></span>
+                    <span class="sx-chips-row" t-if="i.edit.can or i.edit.count"><t t-call="craf_sex.EditChip"><t t-set="ed" t-value="i.edit"/></t></span>
                 </span>
+                <i class="fa fa-angle-right cl-muted" t-if="i.edit.can"/>
             </div>
         </div>
         <p class="cl-note">Kaustik soda ombordan olib ketilganda bir marta yoziladi va ombordan sarfga yechiladi.</p>
@@ -296,15 +304,16 @@
             <t t-set="sub" t-value="f.id ? (s.m.state === 'ok' ? 'Yaroqli' : 'Yaroqsiz' + (s.m.broken_date ? ' · ' + s.m.broken_date : '')) : 'Raqami va qaysi profil uchun'"/>
         </t>
         <div class="cl-sheet-body">
-            <label class="cl-field"><span>Raqami</span><input type="text" class="form-control" t-model="f.name" placeholder="Masalan: M-015"/></label>
+            <t t-if="f.id" t-call="craf_sex.EditNote"><t t-set="ei" t-value="s.edit"/></t>
+            <label class="cl-field"><span>Raqami</span><input type="text" class="form-control" t-model="f.name" placeholder="Masalan: M-015" t-att-disabled="s.locked"/></label>
             <label class="cl-field">
                 <span>Profil (kesim)</span>
-                <select class="form-select" t-model="f.section_id">
+                <select class="form-select" t-model="f.section_id" t-att-disabled="s.locked">
                     <option value="">— tanlang —</option>
                     <option t-foreach="s.o.sections" t-as="sec" t-key="sec.id" t-att-value="sec.id" t-att-selected="eq(f.section_id, sec.id)" t-esc="sec.name"/>
                 </select>
             </label>
-            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy" t-att-disabled="s.locked"/></label>
             <h3 class="cl-lines-head">Rasm</h3>
             <div class="mx-photo">
                 <a t-if="f.preview and !f.image" t-att-href="f.preview" target="_blank" class="mx-photo-img" aria-label="Rasmni kattalashtirish">
@@ -312,7 +321,7 @@
                 </a>
                 <span t-elif="f.preview" class="mx-photo-img"><img t-att-src="f.preview" alt="Matritsa rasmi"/></span>
                 <span t-else="" class="mx-photo-img mx-photo-empty"><i class="fa fa-camera"/><span>Rasm yo'q</span></span>
-                <div class="mx-photo-actions">
+                <div class="mx-photo-actions" t-if="!s.locked">
                     <label class="btn btn-outline-primary mb-0">
                         <i class="fa fa-camera"/> <t t-esc="f.preview ? 'Almashtirish' : 'Rasm yuklash'"/>
                         <input type="file" accept="image/*" class="d-none" t-on-change="onImage"/>
@@ -331,23 +340,25 @@
                     <label class="cl-field"><span>Yaroqsiz bo'lsa — sababi</span><input type="text" class="form-control" t-model="f.broken_note" placeholder="Masalan: yorilgan, eskirgan"/></label>
                 </t>
             </t>
+            <t t-call="craf_sex.EditHistory"><t t-set="hist" t-value="s.history"/></t>
         </div>
         <div class="cl-sheet-foot cl-foot-wrap">
             <button class="btn btn-outline-danger me-auto" t-if="f.id and s.m.state === 'ok'" t-on-click="() => this.setMatrixState('broken')" t-att-disabled="state.busy">Yaroqsiz</button>
             <button class="btn btn-outline-success me-auto" t-if="f.id and s.m.state === 'broken'" t-on-click="() => this.setMatrixState('ok')" t-att-disabled="state.busy">Yaroqli qilish</button>
-            <button class="btn btn-primary cl-btn-lg" t-on-click="saveMatrix" t-att-disabled="state.busy">Saqlash</button>
+            <button class="btn btn-primary cl-btn-lg" t-if="!s.locked" t-on-click="saveMatrix" t-att-disabled="state.busy">Saqlash</button>
         </div>
     </t>
 
     <t t-name="craf_matritsa.SheetGas">
         <t t-set="f" t-value="s.f"/>
         <t t-call="craf_matritsa.Head">
-            <t t-set="title" t-value="s.g.name + ' sarfi'"/>
-            <t t-set="sub" t-value="'Ballondan qancha sarflandi, ' + s.g.unit"/>
+            <t t-set="title" t-value="f.move_id ? 'Tahrirlash · ' + s.g.name + ' sarfi' : s.g.name + ' sarfi'"/>
+            <t t-set="sub" t-value="f.move_id ? s.b.name + ' · ' + s.mv.date : 'Ballondan qancha sarflandi, ' + s.g.unit"/>
         </t>
         <div class="cl-sheet-body">
-            <h3 class="cl-lines-head">Ballon</h3>
-            <div class="cl-list sx-mb">
+            <t t-if="f.move_id" t-call="craf_sex.EditNote"><t t-set="ei" t-value="s.mv.edit"/></t>
+            <h3 class="cl-lines-head" t-if="!f.move_id">Ballon</h3>
+            <div class="cl-list sx-mb" t-if="!f.move_id">
                 <button class="cl-mat mx-ballon sx-pick" t-foreach="s.g.ballons" t-as="b" t-key="b.id" t-att-class="{ picked: f.ballon_id === b.id }" t-on-click="() => this.pickBallon(s, b)">
                     <span class="sx-check"><i t-att-class="f.ballon_id === b.id ? 'fa fa-dot-circle-o' : 'fa fa-circle-o'"/></span>
                     <span class="cl-mat-main">
@@ -364,7 +375,8 @@
             <p class="cl-hint">Qoladi: <b><t t-esc="num(gasLeft(s), 2)"/> <t t-esc="s.g.unit"/></b></p>
             <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
         </div>
-        <div class="cl-sheet-foot">
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="f.move_id" t-on-click="deleteGas" t-att-disabled="state.busy">O'chirish</button>
             <button class="btn btn-primary cl-btn-lg" t-on-click="saveGas" t-att-disabled="state.busy">Saqlash</button>
         </div>
     </t>
@@ -372,10 +384,11 @@
     <t t-name="craf_matritsa.SheetSoda">
         <t t-set="f" t-value="s.f"/>
         <t t-call="craf_matritsa.Head">
-            <t t-set="title" t-value="'Kaustik soda olindi'"/>
+            <t t-set="title" t-value="f.id ? 'Tahrirlash · ' + f.name : 'Kaustik soda olindi'"/>
             <t t-set="sub" t-value="'Ombordan (' + state.data.soda_location + ') olib ketilgan miqdor'"/>
         </t>
         <div class="cl-sheet-body">
+            <t t-call="craf_sex.EditNote"><t t-set="ei" t-value="f.edit"/></t>
             <div class="cl-field-row">
                 <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
                 <label class="cl-field">
@@ -386,13 +399,15 @@
                     </select>
                 </label>
             </div>
-            <div class="sx-direct" t-foreach="state.data.soda" t-as="c" t-key="c.id">
+            <div class="sx-direct" t-foreach="s.items" t-as="c" t-key="c.id">
                 <span><t t-esc="c.name"/><small class="d-block cl-muted">omborda <t t-esc="num(c.avail, 2)"/> <t t-esc="c.uom"/></small></span>
                 <input type="text" inputmode="decimal" class="form-control" placeholder="0" t-model="f.qty[c.id]" t-att-aria-label="c.name + ', kg'"/>
             </div>
             <label class="cl-field mt-3"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+            <t t-call="craf_sex.EditHistory"><t t-set="hist" t-value="f.history"/></t>
         </div>
-        <div class="cl-sheet-foot">
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="f.id" t-on-click="deleteSoda" t-att-disabled="state.busy">O'chirish</button>
             <button class="btn btn-primary cl-btn-lg" t-on-click="saveSoda" t-att-disabled="state.busy">Saqlash</button>
         </div>
     </t>

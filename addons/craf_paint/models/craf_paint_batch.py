@@ -242,7 +242,7 @@ class CrafPaintBatch(models.Model):
             rows[product.id] = {
                 "product": product, "qty": qty, "in_sex": in_sex.get(product.id, 0.0), "min_qty": min_qty,
                 "used": spent, "avg": avg, "period": period, "days_left": days_left,
-                "end_date": today + timedelta(days=int(days_left)) if days_left is not None else False,
+                "end_date": today + timedelta(days=int(days_left)) if days_left is not None and days_left < 36500 else False,  # juda kam sarf — sana yo'q (100 yildan ortiq)
                 "status": status, "uom": product.uom_id.name,
             }
         return rows

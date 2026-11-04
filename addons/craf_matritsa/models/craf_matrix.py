@@ -7,8 +7,11 @@ class CrafMatrix(models.Model):
     """Matritsa (qolip): har biri raqami bilan; qaysi profil (kesim) uchun va holati."""
     _name = "craf.matrix"
     _description = "Matritsa (qolip)"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "craf.edit.mixin"]
     _order = "section_id, name"
+
+    _craf_edit_section = "matritsa"
+    _craf_edit_what = "Matritsa"
 
     name = fields.Char("Raqami", required=True, tracking=True)
     section_id = fields.Many2one("craf.profile.section", "Profil (kesim)", required=True, index=True, tracking=True)
@@ -27,6 +30,9 @@ class CrafMatrix(models.Model):
     def _compute_display_name(self):
         for rec in self:
             rec.display_name = "%s · %s" % (rec.name, rec.section_id.name) if rec.section_id else rec.name
+
+    def _craf_edit_snapshot(self):
+        return {"Raqami": self.name or "", "Profil": self.section_id.name or "", "Izoh": self.note or ""}
 
     def action_mark_broken(self, note=False):
         self.write({"state": "broken", "broken_date": fields.Date.context_today(self),
@@ -55,3 +61,29 @@ class CrafProfileSection(models.Model):
             c = counts.get(rec.id, {})
             rec.matrix_count = sum(c.values())
             rec.matrix_ok_count = c.get("ok", 0)
+
+
+class CrafGazMove(models.Model):
+    """Gaz sarfi: matritsa xodimi o'zi yozganini 24 soat ichida tuzatadi yoki o'chiradi (rahbar — har doim)."""
+    _name = "craf.gaz.move"
+    _inherit = ["craf.gaz.move", "craf.edit.mixin"]
+
+    _craf_edit_section = "matritsa"
+    _craf_edit_what = "Gaz sarfi"
+
+    def _craf_edit_owner(self):
+        return self.user_id
+
+    def _craf_edit_start(self):
+        return self.create_date
+
+    def _craf_unit(self):
+        return dict(self.type_id._fields["unit"].selection).get(self.type_id.unit, "")
+
+    def _craf_edit_name(self):
+        local = self.env["craf.litey.hisobot"]._local(self.date, "%d.%m.%Y %H:%M")
+        return "%s · %s · %s" % (self.type_id.name or "", self.ballon_id.name or "", local)
+
+    def _craf_edit_snapshot(self):
+        return {"Ballon": self.ballon_id.name or "", "Sarf": self._craf_qty_text(self.qty, self._craf_unit()),
+                "Izoh": self.note or ""}

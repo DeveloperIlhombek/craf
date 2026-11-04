@@ -666,3 +666,82 @@ $sx-tap: 44px;
         }
     }
 }
+
+// xodim tahriri (24 soat): kartadagi belgi, formadagi eslatma va tahrirlar tarixi (matritsa sahifasida ham)
+.o_craf_litey.o_craf_sex {
+    .sx-edit-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 7px;
+        border: 1px solid rgba(240, 173, 78, 0.5);
+        border-radius: 9px;
+        background-color: rgba(240, 173, 78, 0.14);
+        color: #8a5a00;
+        font-size: 0.72rem;
+        font-weight: 600;
+        line-height: 1.5;
+        white-space: nowrap;
+        &.sx-edited {
+            border-color: $sx-line;
+            background: none;
+            color: $sx-muted;
+            font-weight: 500;
+        }
+    }
+    .sx-chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 3px;
+    }
+    .sx-editable {
+        cursor: pointer;
+    }
+    .sx-editnote {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(240, 173, 78, 0.5);
+        border-radius: 12px;
+        background-color: rgba(240, 173, 78, 0.1);
+        > .fa {
+            margin-top: 3px;
+            color: #b07400;
+        }
+        &.sx-editnote-mgr {
+            border-color: rgba(13, 110, 253, 0.3);
+            background-color: rgba(13, 110, 253, 0.06);
+            > .fa {
+                color: $primary;
+            }
+        }
+        &.sx-editnote-off {
+            border-color: $sx-line;
+            background-color: rgba(127, 127, 127, 0.08);
+            > .fa {
+                color: $sx-muted;
+            }
+        }
+    }
+    .sx-hist {
+        margin-top: 16px;
+    }
+    .sx-hist-row {
+        padding: 8px 0;
+        border-bottom: 1px solid $sx-line;
+        font-size: 0.875rem;
+    }
+    .sx-hist-head {
+        display: block;
+        color: $sx-muted;
+        font-size: 0.78rem;
+    }
+    .sx-hist-text {
+        display: block;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+}

@@ -1,6 +1,6 @@
 {
     "name": "Craf Korzinka va kimyoviy ishlov",
-    "version": "19.0.1.9.0",
+    "version": "19.0.1.10.0",
     "summary": "Press chiqishi korzinkalar bo'yicha, kimyoviy ishlov bosqichi, stalba chiqindisi, omborga topshirish",
     "description": """
 Zavodning haqiqiy jarayoniga moslash:

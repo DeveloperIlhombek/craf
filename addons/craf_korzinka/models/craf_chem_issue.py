@@ -33,6 +33,8 @@ class CrafChemIssue(models.Model):
     line_ids = fields.One2many("craf.chem.issue.line", "issue_id", string="Olingan", copy=True)
     qty_total = fields.Float("Jami, kg", compute="_compute_qty_total", store=True, digits=(16, 2), aggregator="sum")
     content = fields.Char("Nima olindi", compute="_compute_qty_total", store=True)
+    move_ids = fields.Many2many("stock.move", "craf_chem_issue_move_rel", "issue_id", "move_id",
+                                string="Ombor harakatlari", readonly=True, copy=False)
 
     @api.depends("line_ids.qty", "line_ids.product_id")
     def _compute_qty_total(self):
@@ -97,10 +99,23 @@ class CrafChemIssue(models.Model):
                 move.picked = True
                 move._action_done()
                 line.move_id = line.move_id or move
+                self.move_ids = [Command.link(move.id)]
         self._craf_post_summary([
             Markup("<b>%s olindi</b> — %s") % (dict(ISSUE_KINDS)[self.kind], self.location_src_id.name),
             self.content or "—",
         ])
+
+    def _craf_unpost(self):
+        """Bajarilgan olishni bekor qiladi (xodim tahriri): sarfga yechilgan miqdor teskari harakat bilan o'sha
+        joyga qaytariladi, hujjat qoralamaga o'tadi — keyin yangi qiymat bilan qayta tasdiqlanadi yoki bekor qilinadi."""
+        self.ensure_one()
+        if self.state != "done":
+            return False
+        moves = self.move_ids or self.env["stock.move"].search([("origin", "=", self.name), ("state", "=", "done")])
+        self._craf_reverse_moves(moves)
+        self.line_ids.move_id = False
+        self.write({"move_ids": [Command.clear()], "state": "draft"})
+        return True
 
     def action_add_chems(self):
         """Shu turdagi (kislota yoki soda) mahsulot qatorlarini qo'shadi (miqdorini xodim yozadi)."""

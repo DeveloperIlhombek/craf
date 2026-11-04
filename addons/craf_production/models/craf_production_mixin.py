@@ -385,6 +385,23 @@ class CrafProductionMixin(models.AbstractModel):
         self.production_ids = [Command.clear()]
         return names
 
+    def _craf_reverse_moves(self, moves, origin=None):
+        """Bajarilgan ombor harakatlarini teskari harakat bilan bekor qiladi (xodim tahriri, bekor qilish).
+        Harakatning o'zi o'chirilmaydi — tarixda ikkalasi ham ko'rinadi."""
+        Move = self.env["stock.move"]
+        origin = origin or "%s (tahrir)" % self.name
+        for move in moves.filtered(lambda m: m.state == "done" and m.quantity > EPS):
+            rev = Move.create({
+                "product_id": move.product_id.id, "product_uom_qty": move.quantity,
+                "product_uom": move.product_uom.id, "location_id": move.location_dest_id.id,
+                "location_dest_id": move.location_id.id, "origin": origin, "company_id": move.company_id.id,
+            })
+            rev._action_confirm()
+            rev.quantity = move.quantity
+            rev.picked = True
+            rev._action_done()
+        return True
+
     def unlink(self):
         if any(rec.state == "done" for rec in self):
             raise UserError("Bajarilgan hujjatni o'chirib bo'lmaydi.")

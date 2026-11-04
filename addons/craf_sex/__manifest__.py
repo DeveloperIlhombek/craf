@@ -1,6 +1,6 @@
 {
     "name": "Craf: sexlar (Press, Kimyo, Bo'yash) va rollar",
-    "version": "19.0.1.22.0",
+    "version": "19.0.1.23.0",
     "summary": "Press, kimyoviy ishlov, bo'yash va qadoqlash — telefon uchun sahifa; direktor, omborchi, sex ishchisi rollari",
     "description": """
 Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
@@ -13,6 +13,7 @@ Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
   Ish joyi — Kimyo) telefon uchun: faqat «Kimyo» ilovasi, pastki panel (Korzinkalar, Hujjatlar, Qoldiq)
 - Bo'yash va qadoqlash: rang, tayyor korzinkalar, kirdi / brak / pachka + dona, kukun (o'ram yoki kg),
   tasdiqlash, omborga topshirish, pachka yorliqlari
+- Tahrirlash: kimyo, matritsa va bo'yash xodimi o'zi kiritganini 24 soat ichida, rahbarlar har doim; Tahrirlash jurnali
 - Har sexda: korzinkalar holati, sexdagi qoldiq, davr hujjatlari, 1C belgisi (omborchi)
 
 Hisobchi kunlik yakuni (Kunlik hisobot): xom-ashyo kirimi (yetkazib beruvchidan, qaytarish) va
@@ -43,6 +44,7 @@ Sahifalar rol bo'yicha:
         "data/craf_inventory_menus.xml",
         "views/craf_sex_views.xml",
         "views/craf_paint_day_views.xml",
+        "views/craf_edit_views.xml",
         "views/craf_c1_views.xml",
         "views/craf_role_menus.xml",
     ],

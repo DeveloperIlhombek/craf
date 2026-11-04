@@ -30,7 +30,7 @@ PAGES = {
         "press_load", "press_options", "press_save", "chem_load", "chem_options", "chem_save",
         "paint_load", "paint_options", "paint_save", "nav_counts",
         "issue_options", "issue_save", "mat_issue_options", "mat_issue_save",
-        "day_options", "day_load", "day_save", "day_action"]),
+        "day_options", "day_load", "day_save", "day_action", "issue_load", "issue_cancel", "chem_cancel"]),
 }
 
 

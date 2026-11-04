@@ -164,11 +164,13 @@ class CrafChemTreatment(models.Model):
         self.ensure_one()
         if not self.load_ids:
             raise UserError("Ishlov berilgan korzinkalarni tanlang.")
-        bad = self.load_ids.filtered(lambda l: l.state != "press" or l.shift_state != "done")
+        # tahrirda: shu hujjat avval bo'shatgan korzinkalar ham qabul qilinadi
+        bad = self.load_ids.filtered(lambda l: l.treatment_id != self and (l.state != "press" or l.shift_state != "done"))
         if bad:
             raise UserError("Bu korzinkalar kimyoga kutmayapti: %s" % ", ".join(bad.mapped("display_name")))
+        chem_lines = self.chem_line_ids.filtered(lambda l: l.qty > EPS and not l.move_id)  # eski hujjatlarda yechilgani qoladi
         needs = {}
-        for line in self.chem_line_ids.filtered(lambda l: l.qty > EPS):
+        for line in chem_lines:
             needs[line.product_id] = needs.get(line.product_id, 0.0) + line.qty
         self._craf_check_available(self.location_src_id, needs)
         # 1) yaroqsiz / 6 → 5 m — korzinka tarkibidan chiqadi (Liteykaga)
@@ -176,11 +178,14 @@ class CrafChemTreatment(models.Model):
         # 2) profillar bo'yash joyida turishi kerak
         self._craf_move_profiles()
         # 3) kimyo sarfi
-        for line in self.chem_line_ids.filtered(lambda l: l.qty > EPS):
+        for line in chem_lines:
             line.move_id = self._craf_consume(line.product_id, line.qty, self.location_src_id)
+        # tahrirda olib tashlangan korzinkalar yana «kimyoga kutmoqda»
+        self._craf_release_removed()
         # korzinkalar shu yerda bo'shatiladi: profillar Bo'yash sexida qoladi, bo'yash korzinka bilan ishlamaydi
-        self.load_ids.write({"state": "boyash", "treatment_id": self.id,
-                             "returned_date": fields.Date.context_today(self)})
+        self.load_ids.write({"state": "boyash", "treatment_id": self.id})
+        self.load_ids.filtered(lambda l: not l.returned_date).write(
+            {"returned_date": fields.Date.context_today(self)})
         summary = [
             Markup("<b>Kimyoviy ishlov tasdiqlandi</b> — korzinkalar bo'shatildi"),
             "Korzinkalar: %s (%s dona, %s kg)" % (
@@ -192,6 +197,46 @@ class CrafChemTreatment(models.Model):
         summary.append("Kimyo: %s" % (", ".join("%s %s kg" % (l.product_id.name, fmt(l.qty, 2))
                                                 for l in self.chem_line_ids if l.qty > EPS) or "—"))
         self._craf_post_summary(summary)
+
+    def _craf_release_removed(self):
+        """Avval shu hujjat bo'shatgan, endi ro'yxatda yo'q korzinkalar — yana kimyoga kutayotganlar qatoriga."""
+        Load = self.env["craf.basket.load"]
+        removed = Load.search([("treatment_id", "=", self.id)]) - self.load_ids
+        for load in removed:
+            if Load.search_count([("basket_id", "=", load.basket_id.id), ("id", "!=", load.id),
+                                  ("state", "in", ("press", "kimyo"))]):
+                raise UserError("%s korzinka allaqachon qayta yuklangan — uni bu hujjatdan olib tashlab bo'lmaydi."
+                                % load.basket_id.name)
+        removed.write({"state": "press", "treatment_id": False, "returned_date": False})
+        return removed
+
+    def _craf_unconfirm(self):
+        """Tasdiqni bekor qiladi (xodim tahriri): brak ajratish hujjati va profil ko'chirishlari teskari harakat
+        bilan qaytariladi, hujjat qoralamaga o'tadi. Korzinkalar bo'shatilganicha qoladi — qayta tasdiqlashda
+        (bitta tranzaksiyada) shu hujjatniki sifatida qabul qilinadi. Eski hujjatlardagi kimyo sarfi qoladi."""
+        self.ensure_one()
+        if self.state != "done":
+            return False
+        sort = self.sort_id
+        if sort:
+            if sort.state == "done":
+                sort._craf_reverse_productions()
+            sort.write({"state": "cancel", "note": "%s (tahrirlandi: %s)" % (sort.note or "", self.name)})
+            sort.message_post(body="Kimyoviy ishlov %s tahrirlandi — bu hujjat bekor qilindi." % self.name)
+        for picking in self.picking_ids.filtered(lambda p: p.state == "done"):
+            self._craf_reverse_moves(picking.move_ids)
+        self.write({"sort_id": False, "picking_ids": [Command.clear()], "state": "draft"})
+        return True
+
+    def _craf_cancel_done(self):
+        """Tasdiqlangan ishlovni o'chirish (bekor qilish): ombor harakatlari qaytariladi, korzinkalar yana
+        kimyoga kutadi (agar qayta yuklanmagan bo'lsa)."""
+        self.ensure_one()
+        self._craf_unconfirm()
+        self.load_ids = [Command.clear()]
+        self._craf_release_removed()
+        self.state = "cancel"
+        return True
 
     def action_view_sort(self):
         self.ensure_one()

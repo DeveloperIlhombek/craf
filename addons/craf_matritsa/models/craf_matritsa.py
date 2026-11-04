@@ -2,7 +2,7 @@
 kaustik soda olish, qoldiqlar."""
 from datetime import timedelta
 
-from odoo import Command, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
@@ -68,6 +68,7 @@ class CrafMatritsa(models.AbstractModel):
                 # rasm: kichigi ro'yxatda, kattasi ko'rish uchun; unique — keshlangan eski rasm chiqmasin
                 "image": bool(m.image_128),
                 "unique": fields.Datetime.to_string(m.write_date).replace(" ", "").replace("-", "").replace(":", ""),
+                "edit": m._craf_edit_info(),
             })
             s = by_section.setdefault(m.section_id.id, {"id": m.section_id.id, "name": m.section_id.name,
                                                         "total": 0, "ok": 0, "broken": 0})
@@ -99,6 +100,8 @@ class CrafMatritsa(models.AbstractModel):
             "unit": dict(mv.type_id._fields["unit"].selection).get(mv.type_id.unit, ""),
             "date": fields.Datetime.context_timestamp(self, mv.date).strftime("%d.%m %H:%M"),
             "who": mv.user_id.name or "", "note": mv.note or "",
+            "ballon_id": mv.ballon_id.id, "type_id": mv.type_id.id, "qty_raw": mv.qty,
+            "edit": mv._craf_edit_info(),
         } for mv in tz_moves]
         # kaustik soda
         Issue = self.env["craf.chem.issue"]
@@ -125,6 +128,7 @@ class CrafMatritsa(models.AbstractModel):
             "issues": [{
                 "id": i.id, "name": i.name, "date_label": i.date.strftime("%d.%m.%Y"),
                 "who": i.employee_id.sudo().name or "", "total": _q(i.qty_total, 2), "note": i.note or "",
+                "edit": i._craf_edit_info(),
             } for i in issues],
             "can_manage": self.env.user.has_group("craf_sex.group_craf_accountant")
             or self.env.user.has_group("base.group_system"),
@@ -165,13 +169,29 @@ class CrafMatritsa(models.AbstractModel):
         elif vals.get("image_clear"):
             data["image_1920"] = False
         rec = Matrix.browse(int(vals["id"])).exists() if vals.get("id") else Matrix
+        if vals.get("id") and not rec:
+            raise UserError("Matritsa topilmadi (o'chirilgan bo'lishi mumkin).")
         if Matrix.search_count([("name", "=", name), ("id", "!=", rec.id or 0)]):
             raise UserError("«%s» raqamli matritsa allaqachon bor." % name)
         if rec:
+            # o'zi kiritganini 24 soat ichida (xodim) yoki rahbar; holatni (yaroqli / yaroqsiz) hamma vaqt belgilaydi
+            rec._craf_check_edit()
+            before = rec._craf_edit_snapshot()
             rec.write(data)
+            extra = ["Rasm: yangilandi"] if vals.get("image") else (["Rasm: o'chirildi"] if vals.get("image_clear") else [])
+            rec._craf_log_edit(before, extra=extra)
         else:
             rec = Matrix.create(data)
         return {"id": rec.id, "name": rec.name}
+
+    @api.model
+    def matrix_load(self, matrix_id):
+        """Matritsa formasi: tahrirlash muddati va tahrirlar tarixi."""
+        self._check()
+        rec = self.env["craf.matrix"].browse(int(matrix_id)).exists()
+        if not rec:
+            raise UserError("Matritsa topilmadi.")
+        return {"edit": rec._craf_edit_info(), "history": rec._craf_edit_history()}
 
     @api.model
     def matrix_state(self, matrix_id, state, note=False):
@@ -200,28 +220,50 @@ class CrafMatritsa(models.AbstractModel):
                                           "note": (note or "").strip() or False})
         return {"ballon": ballon.name, "qty": _q(amount, 2), "left": _q(ballon.qty, 2)}
 
+    def _gas_move(self, move_id):
+        mv = self.env["craf.gaz.move"].browse(int(move_id)).exists()
+        if not mv or mv.kind != "use" or mv.type_id not in self._gas_types():
+            raise UserError("Gaz sarfi topilmadi (o'chirilgan bo'lishi mumkin).")
+        mv._craf_check_edit()
+        return mv
+
+    @api.model
+    def gaz_edit(self, move_id, qty, note=False):
+        """Gaz sarfini tuzatish (24 soat ichida yoki rahbar): ballon qoldig'i qayta hisoblanadi."""
+        self._check()
+        mv = self._gas_move(move_id)
+        amount = self._num(qty, "Sarf")
+        if amount <= EPS:
+            raise UserError("Sarf miqdorini yozing (o'chirish uchun «O'chirish» tugmasi).")
+        before = mv._craf_edit_snapshot()
+        mv.craf_change(qty=amount, note=(note or "").strip())
+        mv._craf_log_edit(before)
+        return {"ballon": mv.ballon_id.name, "qty": _q(amount, 2), "left": _q(mv.ballon_id.qty, 2)}
+
+    @api.model
+    def gaz_delete(self, move_id):
+        """Gaz sarfini o'chirish (24 soat ichida yoki rahbar): miqdor ballonga qaytadi."""
+        self._check()
+        mv = self._gas_move(move_id)
+        ballon = mv.ballon_id
+        mv._craf_log_edit(mv._craf_edit_snapshot(), kind="cancel")
+        mv.craf_change(remove=True)
+        return {"ballon": ballon.name, "left": _q(ballon.qty, 2)}
+
     # ------------------------------------------------------------------ kaustik soda
     @api.model
-    def soda_save(self, vals):
-        """Ombordan olingan kaustik soda: yoziladi va shu zahoti ombordan sarfga yechiladi."""
+    def soda_load(self, issue_id):
         self._check()
-        Issue = self.env["craf.chem.issue"]
-        lines = []
-        for p in Issue._craf_chem_products("soda"):
-            qty = self._num((vals.get("qty") or {}).get(str(p.id)), p.name)
-            if qty > EPS:
-                lines.append(Command.create({"product_id": p.id, "qty": qty}))
-        if not lines:
-            raise UserError("Olingan kaustik soda miqdorini yozing (kg).")
-        date = vals.get("date") or fields.Date.context_today(self)
-        moment = self._H._moment(date)
-        rec = Issue.create({
-            "kind": "soda",
-            "date": date,
-            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else False,
-            "note": (vals.get("note") or "").strip() or False,
-            "line_ids": lines,
-        })
-        self._H._check_lock(rec.line_ids.product_id, moment, rec.name)
-        rec.action_done()
-        return {"id": rec.id, "name": rec.name, "total": _q(rec.qty_total, 2)}
+        return self.env["craf.sex"]._issue_load(("soda",), issue_id)
+
+    @api.model
+    def soda_cancel(self, issue_id):
+        """Kaustik soda olishni o'chirish (24 soat ichida yoki rahbar): miqdor omborga qaytadi."""
+        self._check()
+        return self.env["craf.sex"]._issue_cancel(("soda",), issue_id)
+
+    @api.model
+    def soda_save(self, vals):
+        """Ombordan olingan kaustik soda: yoziladi va shu zahoti ombordan sarfga yechiladi (id bo'lsa — tahrir)."""
+        self._check()
+        return self.env["craf.sex"]._issue_save("soda", vals)

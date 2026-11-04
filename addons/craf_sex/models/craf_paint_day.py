@@ -38,8 +38,11 @@ def parse_packs(text):
 class CrafPaintDay(models.Model):
     _name = "craf.paint.day"
     _description = "Kunlik bo'yash va qadoqlash"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "craf.edit.mixin"]
     _order = "date desc, id desc"
+
+    _craf_edit_section = "boyash"
+    _craf_edit_what = "Kunlik bo'yash"
 
     name = fields.Char("Raqam", required=True, copy=False, readonly=True, default="Yangi", index=True)
     date = fields.Date("Sana", required=True, default=fields.Date.context_today, tracking=True, index=True)
@@ -159,8 +162,61 @@ class CrafPaintDay(models.Model):
                 Sex._confirm(batch)
                 batches |= batch
             day.state = "done"
+            if not day.craf_entered_at:
+                day.craf_entered_at = fields.Datetime.now()
             day.message_post(body="Tasdiqlandi — bo'yash smenalari: %s" % ", ".join(batches.mapped("name")))
         return True
+
+    def _craf_unconfirm(self):
+        """Tasdiqni bekor qiladi (xodim tahriri): har bo'yash smenasining omborga topshirishi va ishlab chiqarishi
+        teskari harakat bilan qaytariladi (tayyor mahsulot ombordan, bo'yalmagan profil, kukun va stiker sexga),
+        smenalar o'chiriladi, yozuv qoralamaga o'tadi. Qayta tasdiqlash bitta tranzaksiyada bo'ladi."""
+        self.ensure_one()
+        if self.state != "done":
+            return False
+        names = []
+        for batch in self.batch_ids:
+            if batch.state == "done":
+                if self.env["craf.pack"].search_count([("origin", "=", batch.name)]):
+                    raise UserError("%s bo'yicha pachka yorliqlari chiqarilgan — tahrirlash uchun omborchiga "
+                                    "murojaat qiling (avval yorliqlar o'chiriladi)." % batch.name)
+                if batch.stock_picking_id.state == "done":
+                    batch._craf_reverse_moves(batch.stock_picking_id.move_ids, "%s (tahrir)" % self.name)
+                batch._craf_reverse_productions()
+            names.append(batch.name)
+            batch.write({"state": "cancel", "stock_picking_id": False})
+        self.batch_ids.unlink()
+        self.state = "draft"
+        if names:
+            self.message_post(body="Tahrirlash: bo'yash smenalari bekor qilindi — %s" % ", ".join(names))
+        return True
+
+    def _craf_cancel_done(self):
+        """Tasdiqlangan kunlik yozuvni o'chirish (bekor qilish): ombordagi o'zgarishlar qaytariladi."""
+        self.ensure_one()
+        self._craf_unconfirm()
+        self.state = "cancel"
+        return True
+
+    # ------------------------------------------------------------------ tahrirlash jurnali
+    def _craf_edit_snapshot(self):
+        res = {"Sana": self._craf_date_text(self.date), "Izoh": self.note or ""}
+        rows = {}
+        for line in self.line_ids:
+            logo = line.logo_id.name or ""
+            key = "%s%s %sm · %s" % ("" if not logo or logo.upper() == "CRAF" else logo + " ", line.section_id.name,
+                                      fmt(line.length_m, 0), line.color_id.name or "")
+            if logo.upper() == "CRAF":
+                key += " · CRAF"
+            text = "%s pachka" % (line.packs_text or line.packs)
+            if line.extra:
+                text += " + %s dona" % line.extra
+            rows.setdefault(key, []).append(text)
+        for key, texts in rows.items():
+            res[key] = "; ".join(texts)
+        for p in self.powder_ids.filtered(lambda x: x.qty > EPS):
+            res["Bo'yoq %s" % p.color_id.name] = self._craf_qty_text(p.qty, "kg")
+        return res
 
     def action_cancel(self):
         if any(day.state == "done" for day in self):

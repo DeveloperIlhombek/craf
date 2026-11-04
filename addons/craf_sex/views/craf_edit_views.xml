@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tahrirlash jurnali: kimyo, matritsa va bo'yash xodimlari (24 soat ichida) hamda rahbarlar tahrirlari -->
+    <record id="view_craf_edit_log_list" model="ir.ui.view">
+        <field name="name">craf.edit.log.list</field>
+        <field name="model">craf.edit.log</field>
+        <field name="arch" type="xml">
+            <list string="Tahrirlash jurnali" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="section"/>
+                <field name="what"/>
+                <field name="res_name"/>
+                <field name="kind" widget="badge" decoration-danger="kind == 'cancel'" decoration-info="kind == 'edit'"/>
+                <field name="changes"/>
+                <field name="by_manager" optional="show"/>
+                <field name="entered_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_craf_edit_log_form" model="ir.ui.view">
+        <field name="name">craf.edit.log.form</field>
+        <field name="model">craf.edit.log</field>
+        <field name="arch" type="xml">
+            <form string="Tahrir" create="false" edit="false">
+                <header>
+                    <button name="action_open_record" type="object" string="Yozuvni ochish" class="btn-secondary"
+                            invisible="kind == 'cancel' and res_model == 'craf.gaz.move'"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="res_name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="what"/>
+                            <field name="section"/>
+                            <field name="kind"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="user_id"/>
+                            <field name="by_manager"/>
+                            <field name="entered_at"/>
+                        </group>
+                    </group>
+                    <separator string="O'zgarishlar (oldin → keyin)"/>
+                    <field name="changes" nolabel="1"/>
+                    <field name="res_model" invisible="1"/>
+                    <field name="res_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_craf_edit_log_search" model="ir.ui.view">
+        <field name="name">craf.edit.log.search</field>
+        <field name="model">craf.edit.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="res_name"/>
+                <field name="user_id"/>
+                <field name="changes"/>
+                <filter name="f_edit" string="Tahrirlangan" domain="[('kind', '=', 'edit')]"/>
+                <filter name="f_cancel" string="O'chirilgan" domain="[('kind', '=', 'cancel')]"/>
+                <separator/>
+                <filter name="f_worker" string="Xodim (24 soat ichida)" domain="[('by_manager', '=', False)]"/>
+                <filter name="f_manager" string="Rahbar tahriri" domain="[('by_manager', '=', True)]"/>
+                <separator/>
+                <filter name="f_date" string="Sana" date="date"/>
+                <group>
+                    <filter name="g_section" string="Bo'lim" context="{'group_by': 'section'}"/>
+                    <filter name="g_user" string="Kim" context="{'group_by': 'user_id'}"/>
+                    <filter name="g_day" string="Kun" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_edit_log" model="ir.actions.act_window">
+        <field name="name">Tahrirlash jurnali</field>
+        <field name="res_model">craf.edit.log</field>
+        <field name="path">craf-tahrir-jurnali</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Hali tahrir yo'q</p>
+            <p>Kimyo, matritsa va bo'yash xodimlari o'zi kiritgan yozuvni 24 soat ichida tahrirlashi yoki o'chirishi
+               mumkin; omborchi, direktor va administrator — har doim. Har bir tahrir shu yerga yoziladi: kim, qachon,
+               nima o'zgardi (oldin → keyin).</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_craf_edit_log" name="Tahrirlash jurnali" parent="mrp.menu_mrp_root" sequence="18"
+              action="action_craf_edit_log" groups="craf_sex.group_craf_accountant,base.group_system"/>
+</odoo>

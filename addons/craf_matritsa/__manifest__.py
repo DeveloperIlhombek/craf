@@ -1,6 +1,6 @@
 {
     "name": "Craf: matritsa (qolip) xodimi",
-    "version": "19.0.1.3.0",
+    "version": "19.0.1.4.0",
     "summary": "Press: matritsalar (yaroqli / yaroqsiz), Ammiak va Azot ballonlari sarfi, kaustik soda — telefon sahifasi",
     "description": """
 Press bo'limining qolip (matritsa) mutaxassisi uchun — kimyo xodimi kabi, telefon birinchi:

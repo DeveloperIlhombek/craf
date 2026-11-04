@@ -545,6 +545,10 @@ export class CrafSex extends Component {
             if (id) {
                 f = await this.orm.call(API, "day_load", [id]);
                 f.lines = f.lines.map((l) => ({ ...l, key: key() }));
+                // tahrirda eski tasdiq bekor qilinadi — o'sha profillar sexga qaytadi (yetarlilik shu bilan)
+                for (const [k, v] of Object.entries(f.semi_back || {})) {
+                    o.semi_stock[k] = (o.semi_stock[k] || 0) + v;
+                }
             } else {
                 f = { id: false, date: o.today, employee_id: o.my_employee || false, note: "", powders: {}, lines: [] };
                 f.lines.push(this.newDayLine(o, null));
@@ -649,6 +653,8 @@ export class CrafSex extends Component {
     saveDay(confirm) {
         const s = this.state.sheet;
         const f = s.f;
+        const editing = f.state === "done";
+        confirm = confirm || editing; // tasdiqlangani qayta tasdiqlanadi
         const lines = f.lines.filter((l) => l.section_id || String(l.packs_text || "").trim() || toInt(l.extra));
         if (!lines.length) {
             s.error = "Qadoqlangan profillarni yozing: profil, rang, pachka.";
@@ -684,7 +690,9 @@ export class CrafSex extends Component {
             this.run(async () => {
                 const res = await this.orm.call(API, "day_save", [payload, Boolean(confirm)]);
                 this.notification.add(
-                    confirm ? `${res.name} tasdiqlandi — tayyor mahsulot omborga o'tdi` : `${res.name} saqlandi (qoralama)`,
+                    res.edited
+                        ? `${res.name} o'zgartirildi — ombor qoldig'i tuzatildi`
+                        : confirm ? `${res.name} tasdiqlandi — tayyor mahsulot omborga o'tdi` : `${res.name} saqlandi (qoralama)`,
                     { type: "success" }
                 );
                 this.closeSheet();
@@ -695,17 +703,23 @@ export class CrafSex extends Component {
                 lines.map((l) => this.dayLineText(s, l)).join("; ") +
                 `. Jami ${this.num(t.packs, 0)} pachka, ${this.num(t.pcs, 0)} dona.` +
                 (noPowder.length ? ` Bo'yoq sarfi yozilmagan: ${noPowder.join(", ")}.` : "") +
-                " Tayyor mahsulot omborga o'tadi.";
-            this.confirm("Kunlik bo'yashni tasdiqlash", body, "Tasdiqlash", doSave);
+                (editing
+                    ? " Oldingi tasdiq bekor qilinib, shu qiymatlar bilan qayta yoziladi (ombor qoldig'i tuzatiladi). O'zgarish tahrirlash jurnaliga yoziladi."
+                    : " Tayyor mahsulot omborga o'tadi.");
+            this.confirm(editing ? "O'zgarishni saqlash" : "Kunlik bo'yashni tasdiqlash", body, editing ? "Saqlash" : "Tasdiqlash", doSave);
         } else {
             doSave();
         }
     }
     deleteDay() {
         const f = this.state.sheet.f;
-        this.confirm("O'chirish", `${f.name} qoralamasi o'chiriladi.`, "O'chirish", () =>
+        const done = f.state === "done";
+        const body = done
+            ? `${f.name} o'chiriladi: tayyor mahsulot ombordan qaytariladi, bo'yalmagan profil va bo'yoq sexga qaytadi. Bu tahrirlash jurnaliga yoziladi.`
+            : `${f.name} qoralamasi o'chiriladi.`;
+        this.confirm("O'chirish", body, "O'chirish", () =>
             this.run(async () => {
-                await this.orm.call(API, "day_action", [f.id, "delete"]);
+                await this.orm.call(API, "day_action", [f.id, done ? "cancel" : "delete"]);
                 this.notification.add(`${f.name} o'chirildi`, { type: "success" });
                 this.closeSheet();
                 await this.refresh();
@@ -727,12 +741,32 @@ export class CrafSex extends Component {
     }
 
     // ---------------------------------------------------------------- BO'YASH MATERIALLARI (ombordan olish)
-    async openMatIssue() {
+    async openMatIssue(id = false) {
+        id = typeof id === "number" ? id : false; // tugmadan (t-on-click) hodisa keladi
         await this.run(async () => {
             const o = await this.orm.call(API, "mat_issue_options", []);
-            const f = { date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
+            const f = id ? await this.loadIssue(id, o) : { id: false, date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
             this.openSheet({ type: "matissue", o, f });
         });
+    }
+    async loadIssue(id, o) {
+        // tahrir: eski miqdor omborga qaytariladi — mavjud qoldiqqa qo'shib ko'rsatiladi
+        const f = await this.orm.call(API, "issue_load", [id]);
+        for (const c of o.chems) {
+            c.avail += toNum(f.qty[c.id]);
+        }
+        return f;
+    }
+    deleteIssue() {
+        const f = this.state.sheet.f;
+        this.confirm("O'chirish", `${f.name} o'chiriladi — olingan miqdor omborga qaytariladi. Bu tahrirlash jurnaliga yoziladi.`, "O'chirish", () =>
+            this.run(async () => {
+                await this.orm.call(API, "issue_cancel", [f.id]);
+                this.notification.add(`${f.name} o'chirildi`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
     }
     get matGroups() {
         return [{ key: "paint", title: "Bo'yoqlar (kukun)" }, { key: "pack", title: "Salofan va lenta" }];
@@ -753,12 +787,14 @@ export class CrafSex extends Component {
             return;
         }
         const lines = picked.map((c) => `${c.name} — ${this.num(toNum(s.f.qty[c.id]), 2)} ${c.uom}`);
-        this.confirm("Material olindi", `${lines.join("; ")}. Ombordan sarfga yechiladi.`, "Saqlash", () =>
+        const editing = Boolean(s.f.id);
+        this.confirm(editing ? "O'zgarishni saqlash" : "Material olindi",
+            `${lines.join("; ")}. ` + (editing ? "Oldingi yozuv o'rniga yoziladi (ombor qoldig'i tuzatiladi)." : "Ombordan sarfga yechiladi."), "Saqlash", () =>
             this.run(async () => {
                 const res = await this.orm.call(API, "mat_issue_save", [
                     { ...s.f, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false },
                 ]);
-                this.notification.add(`${res.name}: sarf yozildi`, { type: "success" });
+                this.notification.add(editing ? `${res.name} o'zgartirildi` : `${res.name}: sarf yozildi`, { type: "success" });
                 this.closeSheet();
                 await this.refresh();
             })
@@ -766,10 +802,11 @@ export class CrafSex extends Component {
     }
 
     // ---------------------------------------------------------------- KISLOTA (ombordan olish)
-    async openIssue() {
+    async openIssue(id = false) {
+        id = typeof id === "number" ? id : false; // tugmadan (t-on-click) hodisa keladi
         await this.run(async () => {
             const o = await this.orm.call(API, "issue_options", []);
-            const f = { date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
+            const f = id ? await this.loadIssue(id, o) : { id: false, date: o.today, employee_id: o.my_employee || false, qty: {}, note: "" };
             this.openSheet({ type: "issue", o, f });
         });
     }
@@ -789,12 +826,14 @@ export class CrafSex extends Component {
             return;
         }
         const lines = s.o.chems.filter((c) => toNum(s.f.qty[c.id]) > 0).map((c) => `${c.name} — ${this.num(toNum(s.f.qty[c.id]), 2)} kg`);
-        this.confirm("Kislota olindi", `${lines.join("; ")}. Ombordan sarfga yechiladi.`, "Saqlash", () =>
+        const editing = Boolean(s.f.id);
+        this.confirm(editing ? "O'zgarishni saqlash" : "Kislota olindi",
+            `${lines.join("; ")}. ` + (editing ? "Oldingi yozuv o'rniga yoziladi (ombor qoldig'i tuzatiladi)." : "Ombordan sarfga yechiladi."), "Saqlash", () =>
             this.run(async () => {
                 const res = await this.orm.call(API, "issue_save", [
                     { ...s.f, employee_id: s.f.employee_id ? Number(s.f.employee_id) : false },
                 ]);
-                this.notification.add(`${res.name}: ${res.total} kg kislota yozildi`, { type: "success" });
+                this.notification.add(editing ? `${res.name} o'zgartirildi: ${res.total} kg` : `${res.name}: ${res.total} kg kislota yozildi`, { type: "success" });
                 this.closeSheet();
                 await this.refresh();
             })
@@ -860,11 +899,21 @@ export class CrafSex extends Component {
                       equipment_id: s.f.equipment_id ? Number(s.f.equipment_id) : false },
                     Boolean(confirm),
                 ]);
-                this.notification.add(confirm ? `${res.name} tasdiqlandi — korzinkalar bo'yashga tayyor` : `${res.name} saqlandi`, { type: "success" });
+                this.notification.add(
+                    res.edited ? `${res.name} o'zgartirildi` : confirm ? `${res.name} tasdiqlandi — korzinkalar bo'yashga tayyor` : `${res.name} saqlandi`,
+                    { type: "success" }
+                );
                 this.state.pick = {};
                 this.closeSheet();
                 await this.refresh();
             });
+        if (s.f.state === "done") {
+            // tasdiqlangan hujjat tahriri: eski tasdiq bekor qilinib, yangi qiymatlar bilan qayta tasdiqlanadi
+            this.confirm("O'zgarishni saqlash",
+                `${s.f.name}: ${ids.length} ta korzinka. Oldingi tasdiq bekor qilinib, yangi qiymatlar bilan qayta yoziladi ` +
+                    "(yaroqsiz va kesilganlar Liteykada tuzatiladi). O'zgarish tahrirlash jurnaliga yoziladi.", "Saqlash", doSave);
+            return;
+        }
         if (confirm) {
             const brak = defects.reduce((a, r) => a + r.brak, 0);
             const cut = defects.reduce((a, r) => a + r.cut, 0);
@@ -875,6 +924,20 @@ export class CrafSex extends Component {
         } else {
             doSave();
         }
+    }
+
+    deleteChem() {
+        const f = this.state.sheet.f;
+        this.confirm("O'chirish",
+            `${f.name} o'chiriladi: korzinkalar yana kimyoga kutayotganlar qatoriga qaytadi, yaroqsiz va kesilganlar Liteykadan qaytariladi. ` +
+                "Bu tahrirlash jurnaliga yoziladi.", "O'chirish", () =>
+            this.run(async () => {
+                await this.orm.call(API, "chem_cancel", [f.id]);
+                this.notification.add(`${f.name} o'chirildi`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
     }
 
     // ---------------------------------------------------------------- BO'YASH
@@ -1052,6 +1115,7 @@ export class CrafSex extends Component {
             cancel: ["Bekor qilish", `${d.name} bekor qilinadi.`, "Bekor qilish"],
             draft: ["Qoralamaga qaytarish", `${d.name} yana qoralama bo'ladi.`, "Qaytarish"],
             delete: ["O'chirish", `${d.name} butunlay o'chiriladi.`, "O'chirish"],
+            void: ["O'chirish", `${d.name} o'chiriladi: ombor harakatlari qaytariladi, korzinkalar yana kimyoga kutadi. Bu tahrirlash jurnaliga yoziladi.`, "O'chirish"],
             to_stock: ["Omborga topshirish", `${d.name}: bo'yalgan profillar Qadoqlashdan Tayyor mahsulot omboriga o'tadi.`, "Topshirish"],
         };
         const run = () =>
@@ -1063,7 +1127,7 @@ export class CrafSex extends Component {
                     return;
                 }
                 const done = {
-                    done: "tasdiqlandi", cancel: "bekor qilindi", draft: "qoralamaga qaytdi", delete: "o'chirildi",
+                    done: "tasdiqlandi", cancel: "bekor qilindi", draft: "qoralamaga qaytdi", delete: "o'chirildi", void: "o'chirildi",
                     c1: "1C ga kiritildi deb belgilandi", c1_undo: "1C belgisi olib tashlandi",
                     to_stock: `omborga topshirildi (${res.picking || ""})`,
                 }[action];

@@ -75,9 +75,9 @@ class CrafLiteyHisobot(models.AbstractModel):
                 "days_left": round(days_left, 1) if days_left is not None else None,
                 "days_to_min": round(days_to_min, 1) if days_to_min is not None else None,
                 "end_date": fields.Date.to_string(today + timedelta(days=int(days_left)))
-                if days_left is not None else False,
+                if days_left is not None and days_left < 36500 else False,
                 "min_date": fields.Date.to_string(today + timedelta(days=int(days_to_min)))
-                if days_to_min is not None else False,
+                if days_to_min is not None and days_to_min < 36500 else False,
                 "status": status,
             })
         return bolim, period, warn, rows

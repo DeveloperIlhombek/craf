@@ -57,14 +57,14 @@ class CrafPaintSort(models.Model):
                 raise UserError("%s: brak kg 0 — profil og'irligini tekshiring." % line.product_id.display_name)
         needs = {}
         for line in lines:
-            loc = line.load_id.location_id
+            loc = line.load_id.location_id or self.location_src_id  # bo'shatilgan korzinka — profil sexda
             needs.setdefault(loc, {})
             needs[loc][line.product_id] = needs[loc].get(line.product_id, 0) + line.qty
         for loc, need in needs.items():
             self._craf_check_available(loc, need)
         names = []
         for line in lines:
-            loc = line.load_id.location_id
+            loc = line.load_id.location_id or self.location_src_id  # bo'shatilgan korzinka — profil sexda
             if line.kind == "brak":
                 mo = self._craf_produce(self.scrap_product_id, line.kg, loc, self.waste_location_id,
                                         [(line.product_id, line.qty)])

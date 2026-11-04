@@ -191,6 +191,38 @@ class CrafGazMove(models.Model):
             b.qty = after
         return recs
 
+    def craf_change(self, qty=None, note=None, remove=False):
+        """Harakatni tuzatish yoki o'chirish (xodim tahriri): ballon qoldig'i va keyingi harakatlarning
+        «oldin / keyin» qiymatlari qayta hisoblanadi. Qoldiq manfiy yoki sig'imdan oshsa — to'xtatadi."""
+        self.ensure_one()
+        ballon = self.ballon_id
+        chain = self.search([("ballon_id", "=", ballon.id)], order="date, id")
+        idx = chain.ids.index(self.id)
+        level = self.qty_before
+        if remove:
+            rest = chain[idx + 1:]
+            super(CrafGazMove, self).unlink()
+        else:
+            vals = {}
+            if qty is not None:
+                vals["qty"] = qty
+            if note is not None:
+                vals["note"] = note or False
+            self.write(vals)
+            rest = chain[idx:]
+        for m in rest:
+            if m.kind != "adjust" and m.qty <= 0:
+                raise UserError("Miqdor 0 dan katta bo'lishi kerak.")
+            after = {"fill": level + m.qty, "use": level - m.qty}.get(m.kind, m.qty)
+            if after < -EPS:
+                raise UserError(f"{ballon.name}: ballonda {level:g} bo'ladi, {m.qty:g} sarflab bo'lmaydi.")
+            if after > ballon.capacity + EPS:
+                raise UserError(f"{ballon.name}: sig'im {ballon.capacity:g}, {after:g} gacha to'ldirib bo'lmaydi.")
+            m.write({"qty_before": level, "qty_after": after})
+            level = after
+        ballon.qty = level
+        return True
+
     def unlink(self):
         for m in self.sorted(lambda x: (x.date, x.id), reverse=True):
             last = self.search([("ballon_id", "=", m.ballon_id.id)], limit=1)
