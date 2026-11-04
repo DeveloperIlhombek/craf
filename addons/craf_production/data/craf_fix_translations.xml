@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- har yangilanishda: Odoo tarjimalaridagi buzilgan view ifodalarini tuzatish (models/ir_ui_view.py) -->
+    <function model="ir.ui.view" name="_craf_fix_translations"/>
+</odoo>
