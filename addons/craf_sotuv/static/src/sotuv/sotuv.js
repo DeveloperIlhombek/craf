@@ -37,6 +37,14 @@ function nowLocal() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// telefonga bildirishnoma (veb-push): ruxsat holati. iPhone'da faqat «Bosh ekranga qo'shish» bilan o'rnatilganda
+function pushPermission() {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+        return "unsupported";
+    }
+    return window.Notification.permission; // default / granted / denied
+}
+
 export class CrafSotuv extends Component {
     static template = "craf_sotuv.Sotuv";
     static props = { ...standardActionServiceProps };
@@ -69,6 +77,8 @@ export class CrafSotuv extends Component {
             settings: false,
             expanded: {},
             ret: null,
+            push: pushPermission(),
+            pushHidden: false,
         });
         this.searchProducts = debounce(this._searchProducts.bind(this), 250);
         this.searchPartners = debounce(this._searchPartners.bind(this), 250);
@@ -146,6 +156,32 @@ export class CrafSotuv extends Component {
                 // tebranish yo'q
             }
         }
+    }
+
+    // ------------------------------------------------------------------ telefonga bildirishnoma
+    get showPushBanner() {
+        return !this.state.pushHidden && this.state.push !== "granted";
+    }
+    async enablePush() {
+        try {
+            this.state.push = await window.Notification.requestPermission();
+        } catch {
+            this.state.push = pushPermission();
+        }
+        if (this.state.push === "granted") {
+            // Odoo qurilmani ruxsatdan keyin ro'yxatga oladi — sahifa yangilanganda aniq bo'ladi
+            this.notification.add("Bildirishnoma yoqildi. Endi «Sinab ko'rish» mumkin.", { type: "success" });
+            setTimeout(() => window.location.reload(), 900);
+        }
+    }
+    async testPush() {
+        const res = await this.orm.call(MODEL, "push_test", []);
+        this.notification.add(
+            res.devices
+                ? "Sinov bildirishnomasi yuborildi — bir necha soniyada telefonga keladi."
+                : "Bu foydalanuvchida bildirishnoma yoqilgan qurilma topilmadi. Sahifani yangilab, qayta urinib ko'ring.",
+            { type: res.devices ? "success" : "warning" }
+        );
     }
 
     // ------------------------------------------------------------------ umumiy

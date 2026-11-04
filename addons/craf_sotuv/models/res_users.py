@@ -1,4 +1,9 @@
+import json
+
 from odoo import api, models
+
+# bildirishnoma bosilganda ochiladigan sahifa: Odoo service worker «/odoo/<model>/<res_id>» ni ochadi
+PUSH_OPEN = "action-craf_sotuv.action_craf_yuklash"
 
 
 class ResUsers(models.Model):
@@ -29,3 +34,24 @@ class ResUsers(models.Model):
         if "action_id" not in vals and any(k.startswith(("group_ids", "sel_groups_", "in_group_")) for k in vals):
             self._craf_loader_home()
         return res
+
+    def _craf_web_push(self, title, body, tag=False):
+        """Telefonga (o'rnatilgan ilova / brauzer) bildirishnoma — Odoo veb-push navbati orqali, buyurtmani
+        tasdiqlash tarmoqni kutmaydi. Faqat bildirishnomaga ruxsat bergan qurilmalarga boradi."""
+        devices = self.env["mail.push.device"].sudo().search([("partner_id", "in", self.partner_id.ids)])
+        if not devices:
+            return 0
+        payload = json.dumps({
+            "title": title,
+            "options": {
+                "body": body,
+                "icon": "/web/static/img/odoo-icon-192x192.png",
+                "tag": tag or "craf",
+                "renotify": True,
+                "vibrate": [200, 100, 200],
+                "data": {"model": PUSH_OPEN, "res_id": ""},
+            },
+        })
+        self.env["mail.push"].sudo().create([{"mail_push_device_id": d.id, "payload": payload} for d in devices])
+        self.env.ref("mail.ir_cron_web_push_notification").sudo()._trigger()
+        return len(devices)

@@ -22,6 +22,22 @@
             </div>
 
             <div class="cs-body">
+                <!-- telefonga bildirishnoma: yuklovchi yangi buyurtmani ilova yopiq bo'lsa ham biladi -->
+                <div class="cs-push" t-if="!state.init.is_seller and showPushBanner" role="note">
+                    <i t-att-class="state.push === 'default' ? 'fa fa-bell' : 'fa fa-bell-slash'"/>
+                    <div class="cs-push-text">
+                        <t t-if="state.push === 'default'"><b>Yangi buyurtma telefonga kelsin</b><span>Bildirishnomani yoqing — ilova yopiq bo'lsa ham xabar keladi.</span></t>
+                        <t t-elif="state.push === 'denied'"><b>Bildirishnoma bloklangan</b><span>Telefon sozlamalarida (Chrome → Sayt sozlamalari → Bildirishnomalar) shu sayt uchun ruxsat bering.</span></t>
+                        <t t-else=""><b>Bu telefonda bildirishnoma ishlamaydi</b><span>iPhone'da saytni Safari → «Ulashish» → «Bosh ekranga qo'shish» orqali o'rnating va o'shandan oching.</span></t>
+                    </div>
+                    <button class="btn btn-primary btn-sm" t-if="state.push === 'default'" t-on-click="enablePush">Yoqish</button>
+                    <button class="btn cs-icon-btn" t-else="" t-on-click="() => state.pushHidden = true" aria-label="Yopish"><i class="fa fa-times"/></button>
+                </div>
+                <div class="cs-push cs-push-ok" t-if="!state.init.is_seller and state.push === 'granted' and state.tab === 'load' and !state.load.current">
+                    <i class="fa fa-bell"/>
+                    <div class="cs-push-text"><span>Bildirishnoma yoqilgan — yangi buyurtma telefonga keladi.</span></div>
+                    <button class="btn btn-link btn-sm" t-on-click="testPush">Sinab ko'rish</button>
+                </div>
                 <t t-if="state.tab === 'new'" t-call="craf_sotuv.TabNew"/>
                 <t t-elif="state.tab === 'load'" t-call="craf_sotuv.TabLoad"/>
                 <t t-elif="state.tab === 'sales'" t-call="craf_sotuv.TabSales"/>

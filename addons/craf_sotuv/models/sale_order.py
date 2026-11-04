@@ -126,7 +126,7 @@ class SaleOrder(models.Model):
                 "new", "Yangi buyurtma — yuklash",
                 "%s · %s · %s pachka (%s)" % (order.name, order.partner_id.name, order.craf_total_packs,
                                              order.craf_location_id._craf_sale_label()),
-                to_loaders=True)
+                to_loaders=True, push=True)
 
     def action_craf_send(self):
         """Formadagi tugma: tasdiqlash va yuklashga yuborish."""
@@ -137,14 +137,17 @@ class SaleOrder(models.Model):
                 order._craf_to_queue()
         return True
 
-    def _craf_notify(self, kind, title, message, users=None, to_loaders=False, ntype="info"):
-        """Bus: sahifalar yangilanadi; kerakli foydalanuvchilarga qisqa xabar."""
+    def _craf_notify(self, kind, title, message, users=None, to_loaders=False, ntype="info", push=False):
+        """Bus: sahifalar yangilanadi; kerakli foydalanuvchilarga qisqa xabar. push=True — ilova yopiq
+        bo'lsa ham telefonga bildirishnoma (veb-push)."""
         group = self.env.ref("craf_sotuv.group_craf_loader", raise_if_not_found=False)
         everyone = group.sudo().all_user_ids.filtered(lambda u: not u.share) if group else self.env["res.users"]
         targets = users if users is not None else (everyone if to_loaders else self.env["res.users"])
         for user in (targets - self.env.user):
             user._bus_send("simple_notification", {"title": title, "message": message, "type": ntype,
                                                    "sticky": False})
+        if push:
+            (targets - self.env.user)._craf_web_push(title, message, tag="craf-%s-%s" % (kind, "-".join(map(str, self.ids))))
         if everyone:
             everyone._bus_send("craf_sotuv_update", {"kind": kind, "order_ids": self.ids})
 

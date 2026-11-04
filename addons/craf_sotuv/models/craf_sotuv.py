@@ -198,6 +198,14 @@ class CrafSotuv(models.AbstractModel):
 
     # ------------------------------------------------------------------ sahifa API
     @api.model
+    def push_test(self):
+        """«Sinab ko'rish»: shu foydalanuvchining telefoniga sinov bildirishnomasi."""
+        self._check_loader()
+        n = self.env.user._craf_web_push("Craf: sinov bildirishnomasi",
+                                         "Bildirishnoma ishlayapti — yangi buyurtma shunday keladi.", tag="craf-test")
+        return {"devices": n}
+
+    @api.model
     def get_init(self):
         self._check_loader()
         company = self.env.company

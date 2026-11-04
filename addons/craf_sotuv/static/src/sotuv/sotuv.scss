@@ -1732,3 +1732,44 @@ $cs-orange-bg: #fff1e0;
         display: block;
     }
 }
+
+// telefonga bildirishnoma (veb-push) taklifi
+.o_craf_sotuv {
+    .cs-push {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(13, 110, 253, 0.3);
+        border-radius: 12px;
+        background-color: rgba(13, 110, 253, 0.07);
+        > .fa {
+            font-size: 1.2rem;
+            color: $primary;
+        }
+        .cs-push-text {
+            flex: 1 1 auto;
+            min-width: 0;
+            > b,
+            > span {
+                display: block;
+            }
+            > span {
+                font-size: 0.85rem;
+                opacity: 0.75;
+            }
+        }
+        > .btn {
+            flex: 0 0 auto;
+        }
+        &.cs-push-ok {
+            padding: 6px 10px;
+            border-color: rgba(25, 135, 84, 0.3);
+            background-color: rgba(25, 135, 84, 0.07);
+            > .fa {
+                color: #198754;
+            }
+        }
+    }
+}
