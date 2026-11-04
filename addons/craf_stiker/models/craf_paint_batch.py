@@ -8,14 +8,6 @@ from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
 from .craf_sticker import ADHESION
 
 
-class CrafColor(models.Model):
-    _inherit = "craf.color"
-
-    craf_sticker_adhesion = fields.Selection(
-        ADHESION, string="Stiker yopishqoqligi", default="medium",
-        help="Shu rangdagi profilga qaysi stiker ketadi: Antratsit (J306) — High (80 mic), qolganlari — Medium.")
-
-
 class CrafPaintBatch(models.Model):
     _inherit = "craf.paint.batch"
 
@@ -46,33 +38,28 @@ class CrafPaintBatch(models.Model):
         Rule = self.env["craf.sticker.rule"]
         for batch in self:
             sections = batch.line_ids.filtered(lambda l: l.pcs_ok > 0).product_id.craf_section_id
-            covered = Rule.search([("section_id", "in", sections.ids)]).section_id
-            batch.sticker_missing = ", ".join((sections - covered).mapped("name")) or False
+            missing = sections.filtered(lambda s: not Rule.search_count(
+                [("section_id", "=", Rule._craf_norm_section(s).id)]))
+            batch.sticker_missing = ", ".join(missing.mapped("name")) or False
 
     # ------------------------------------------------------------------ hisob
     def _craf_sticker_plan(self):
         """{stiker: metr} — bo'yalgan dona × profil uzunligi × tomonlar, kesim normalari bo'yicha."""
         self.ensure_one()
         Rule = self.env["craf.sticker.rule"]
-        Sticker = self.env["craf.sticker"]
-        Logo = self.env["craf.sticker.logo"]
-        adhesion = self.color_id.craf_sticker_adhesion or "medium"
         plan, missing = defaultdict(float), []
         for line in self.line_ids.filtered(lambda l: l.pcs_ok > 0 and l.product_id):
             product = line.product_id
             section = product.craf_section_id
             length = product.craf_length_m or line.semi_product_id.craf_length_m
-            for rule in Rule.search([("section_id", "=", section.id)]):
-                sticker = rule.sticker_id
-                if not sticker:
-                    logo = Logo._craf_for_section(section) or self.sticker_logo_id
-                    sticker = Sticker.search([("logo_id", "=", logo.id), ("adhesion", "=", adhesion),
-                                              ("width_mm", "=", rule.width_mm)], limit=1)
-                    if not sticker:
-                        missing.append("%s: %s %s %s mm" % (product.name, logo.name or "logo tanlanmagan",
-                                                            dict(ADHESION)[adhesion].split(" ")[0], rule.width_mm))
-                        continue
-                plan[sticker] += line.pcs_ok * length * int(rule.sides)
+            # kenglik/tomon — profil normasidan, qalinlik va logo — stiker qoidalaridan (Antratsit → High 80 mic)
+            for item in Rule._craf_stickers_for(section, self.color_id, self.sticker_logo_id):
+                if not item["sticker"]:
+                    missing.append("%s: %s %s %s mm" % (product.name, item["logo"].name or "logo tanlanmagan",
+                                                        dict(ADHESION)[item["adhesion"]].split(" ")[0],
+                                                        item["width"]))
+                    continue
+                plan[item["sticker"]] += line.pcs_ok * length * item["sides"]
         if missing:
             raise UserError("Bu stiker turlari ro'yxatda yo'q (Stiker → Stiker qoldig'i dan qo'shing yoki "
                             "profil normasida aniq stiker tanlang):\n• %s" % "\n• ".join(missing))

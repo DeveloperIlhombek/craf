@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="craf_sex.StikerSozlama">
+        <div class="o_action o_craf_litey o_craf_sex o_craf_stiker" t-att-class="{ 'cl-busy': state.busy, 'sx-in-page': state.form }">
+            <t t-if="state.form" t-call="craf_sex.StikerForm"/>
+            <t t-else="">
+                <header class="cl-top">
+                    <div class="cl-top-row">
+                        <button class="cl-icon-btn ss-back" t-if="fromPage" t-on-click="goBack" aria-label="Orqaga"><i class="fa fa-arrow-left"/></button>
+                        <h1 class="cl-title">Stiker sozlamalari</h1>
+                        <div class="cl-top-actions" t-if="state.data">
+                            <span class="ss-ro" t-if="!canEdit"><i class="fa fa-lock"/> Faqat ko'rish</span>
+                            <button class="btn btn-primary cl-new-desk d-none d-lg-inline-flex" t-if="addLabel" t-on-click="() => this.openForm(state.tab)"><i class="fa fa-plus"/> <t t-esc="addLabel"/></button>
+                        </div>
+                    </div>
+                    <div class="cl-chips ss-tabs" role="tablist" aria-label="Bo'limlar">
+                        <button t-foreach="tabs" t-as="t" t-key="t.key" role="tab" t-att-aria-selected="state.tab === t.key ? 'true' : 'false'"
+                                t-att-class="{ active: state.tab === t.key }" t-on-click="() => this.setTab(t.key)">
+                            <i t-att-class="'fa ' + t.icon"/> <t t-esc="t.label"/><span t-if="t.count !== undefined"> <t t-esc="t.count"/></span>
+                        </button>
+                    </div>
+                </header>
+                <main class="cl-body">
+                    <div class="cl-empty" t-if="!state.data"><i class="fa fa-circle-o-notch fa-spin"/> Yuklanmoqda…</div>
+                    <t t-else="">
+                        <t t-set="d" t-value="state.data"/>
+                        <t t-if="state.tab === 'choice'" t-call="craf_sex.StikerTabChoice"/>
+                        <t t-if="state.tab === 'norm'" t-call="craf_sex.StikerTabNorm"/>
+                        <t t-if="state.tab === 'sticker'" t-call="craf_sex.StikerTabSticker"/>
+                        <t t-if="state.tab === 'logo'" t-call="craf_sex.StikerTabLogo"/>
+                        <t t-if="state.tab === 'check'" t-call="craf_sex.StikerTabCheck"/>
+                        <div class="form-check form-switch cl-switch mt-3" t-if="archivedCount">
+                            <input class="form-check-input" type="checkbox" id="ss_archived" t-model="state.archived"/>
+                            <label class="form-check-label" for="ss_archived">Arxivdagilarni ham ko'rsatish <span class="cl-muted" t-esc="archivedCount"/></label>
+                        </div>
+                    </t>
+                </main>
+                <button class="cl-fab d-lg-none" t-if="state.data and addLabel" t-on-click="() => this.openForm(state.tab)" t-att-aria-label="addLabel"><i class="fa fa-plus"/></button>
+            </t>
+        </div>
+    </t>
+
+    <!-- QOIDALAR: rang / profil → qalinlik (yopishqoqlik), logo -->
+    <t t-name="craf_sex.StikerTabChoice">
+        <p class="cl-note">Qaysi holatda qanday stiker ketadi: shart — rang va/yoki profil, natija — qalinlik (Medium 50 / High 80 mic) va/yoki logo. Masalan: Antratsit bo'yoq → High (80 mic).</p>
+        <div class="cl-empty sx-empty-card" t-if="!choices.length">
+            <i class="fa fa-random"/>
+            <div>Qoida yo'q — hamma profilga Medium (50 mic).</div>
+            <button class="btn btn-primary mt-2" t-if="canEdit" t-on-click="() => this.openForm('choice')"><i class="fa fa-plus"/> Qoida qo'shish</button>
+        </div>
+        <div class="cl-list" t-else="">
+            <button class="cl-mat ss-row" t-foreach="choices" t-as="c" t-key="c.id" t-att-class="{ 'ss-off': !c.active, 'ss-static': !canEdit }"
+                    t-att-disabled="!canEdit" t-on-click="() => this.openForm('choice', c)">
+                <span class="cl-mat-main">
+                    <span class="ss-line">
+                        <span class="ss-k">Agar</span>
+                        <t t-if="c.colors.length"><span class="ss-chip ss-chip-color" t-foreach="c.colors" t-as="n" t-key="n_index" t-esc="n"/></t>
+                        <span class="ss-chip" t-else="">hamma rang</span>
+                        <t t-if="c.sections.length">
+                            <span class="ss-chip ss-chip-section" t-foreach="c.sections.slice(0, 4)" t-as="n" t-key="n_index" t-esc="n"/>
+                            <span class="ss-chip ss-chip-more" t-if="moreCount(c.sections, 4)">+<t t-esc="moreCount(c.sections, 4)"/></span>
+                        </t>
+                    </span>
+                    <span class="ss-line">
+                        <span class="ss-k">→</span>
+                        <span class="ss-chip" t-if="c.adhesion" t-att-class="c.adhesion === 'high' ? 'ss-chip-high' : 'ss-chip-med'" t-esc="c.adhesion_label"/>
+                        <span class="ss-chip ss-chip-logo" t-if="c.logo">logo <t t-esc="c.logo"/></span>
+                        <span class="ss-chip ss-chip-more" t-if="!c.active">arxivda</span>
+                    </span>
+                    <span class="cl-mat-meta" t-if="c.note" t-esc="c.note"/>
+                </span>
+                <i class="fa fa-angle-right ss-go" t-if="canEdit"/>
+            </button>
+        </div>
+        <div class="ss-default">
+            <b>Qoida mos kelmasa:</b> Medium (50 mic); logo — kesim seriyasi (ALUSAM, CRAF) yoki smenadagi logo (standart: <t t-esc="d.default_logo.name or '—'"/>).
+            Bir nechta qoida mos kelsa aniqrog'i ustun: profil + rang → faqat profil → faqat rang → hamma uchun. Normada aniq stiker tanlangan bo'lsa — har doim o'sha.
+        </div>
+    </t>
+
+    <!-- NORMALAR: profil × kenglik × tomon -->
+    <t t-name="craf_sex.StikerTabNorm">
+        <p class="cl-note">Har profilga qaysi kenglikdagi stiker necha tomonga yopishtiriladi. Sarf = bo'yalgan dona × uzunlik × tomon (L 6 m: 40 mm — 6 m, 52 mm — 6 m; Chip 2 tomon — 12 m).</p>
+        <div class="cl-search mb-2">
+            <i class="fa fa-search"/>
+            <input type="search" class="form-control" placeholder="Profilni qidirish" t-model="state.q" aria-label="Profilni qidirish"/>
+        </div>
+        <div class="cl-empty" t-if="!normGroups.length">Norma topilmadi.</div>
+        <section class="ss-group" t-foreach="normGroups" t-as="g" t-key="g.id">
+            <div class="ss-group-head"><b t-esc="g.name"/><span class="cl-muted">6 m da <t t-esc="g.perM * 6"/> m · 5 m da <t t-esc="g.perM * 5"/> m</span></div>
+            <div class="cl-list">
+                <button class="cl-mat ss-row" t-foreach="g.items" t-as="n" t-key="n.id" t-att-class="{ 'ss-static': !canEdit }"
+                        t-att-disabled="!canEdit" t-on-click="() => this.openForm('norm', n)">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name"><t t-esc="n.width"/> mm <span class="sx-rule-cell" t-att-class="{ 'sx-rule-2': n.sides === 2 }"><t t-esc="n.sides"/> tomon</span></span>
+                        <span class="cl-mat-meta" t-if="n.sticker"><i class="fa fa-thumb-tack"/> aniq stiker: <t t-esc="n.sticker"/></span>
+                        <span class="cl-mat-meta" t-if="n.note" t-esc="n.note"/>
+                    </span>
+                    <i class="fa fa-angle-right ss-go" t-if="canEdit"/>
+                </button>
+            </div>
+        </section>
+        <details class="ss-details" t-if="!state.q and sectionsWithoutNorm.length">
+            <summary>Stikersiz profillar <span class="cl-muted" t-esc="sectionsWithoutNorm.length"/></summary>
+            <p class="cl-hint" t-esc="sectionsWithoutNormText"/>
+        </details>
+    </t>
+
+    <!-- STIKER TURLARI -->
+    <t t-name="craf_sex.StikerTabSticker">
+        <p class="cl-note">Stiker lenta turlari: logo × qalinlik × kenglik. Qoldiq rulonda; ombor mahsuloti (metrda) tur yaratilganda o'zi paydo bo'ladi.</p>
+        <div class="cl-empty" t-if="!stickerGroups.length">Stiker turi yo'q.</div>
+        <section class="ss-group" t-foreach="stickerGroups" t-as="g" t-key="g.id">
+            <div class="ss-group-head"><b t-esc="g.name"/><span class="cl-muted"><t t-esc="g.items.length"/> tur</span></div>
+            <div class="cl-list">
+                <button class="cl-mat ss-row" t-foreach="g.items" t-as="s" t-key="s.id" t-att-class="{ 'ss-off': !s.active, 'ss-static': !canEdit }"
+                        t-att-disabled="!canEdit" t-on-click="() => this.openForm('sticker', s)">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name">
+                            <span class="ss-chip" t-att-class="s.adhesion === 'high' ? 'ss-chip-high' : 'ss-chip-med'" t-esc="s.adhesion_label"/>
+                            <t t-esc="s.width"/> mm
+                        </span>
+                        <span class="cl-mat-meta"><t t-if="s.micron"><t t-esc="s.micron"/> mic · </t><t t-esc="num(s.roll, 0)"/> m rulon<t t-if="s.min_rolls"> · min <t t-esc="num(s.min_rolls, 0)"/> rulon</t><t t-if="!s.active"> · arxivda</t></span>
+                    </span>
+                    <span class="cl-mat-right">
+                        <span class="cl-qty"><t t-esc="num(s.qty_rolls, 1)"/><small> rulon</small></span>
+                    </span>
+                </button>
+            </div>
+        </section>
+    </t>
+
+    <!-- LOGOLAR -->
+    <t t-name="craf_sex.StikerTabLogo">
+        <p class="cl-note">Stikerdagi logo. Kesim seriyasi logo nomiga teng bo'lsa (ALUSAM, CRAF) — o'sha logo, aks holda smenadagi logo yoki stiker qoidasi.</p>
+        <div class="cl-empty" t-if="!logos.length">Logo yo'q.</div>
+        <div class="cl-list" t-else="">
+            <button class="cl-mat ss-row" t-foreach="logos" t-as="l" t-key="l.id" t-att-class="{ 'ss-off': !l.active, 'ss-static': !canEdit }"
+                    t-att-disabled="!canEdit" t-on-click="() => this.openForm('logo', l)">
+                <span class="cl-mat-main">
+                    <span class="cl-mat-name" t-esc="l.name"/>
+                    <span class="cl-mat-meta"><t t-esc="l.count"/> stiker turi<t t-if="l.id === d.default_logo.id"> · smenada standart</t><t t-if="!l.active"> · arxivda</t></span>
+                </span>
+                <i class="fa fa-angle-right ss-go" t-if="canEdit"/>
+            </button>
+        </div>
+    </t>
+
+    <!-- TEKSHIRISH: rang + profil → qaysi stiker, necha metr -->
+    <t t-name="craf_sex.StikerTabCheck">
+        <t t-set="c" t-value="state.check"/>
+        <p class="cl-note">Sozlamalarni tekshirish: rang va profilni tanlang — bo'yash smenasidagi kabi qaysi stiker necha metr ketishi chiqadi.</p>
+        <div class="cl-field-row">
+            <label class="cl-field">
+                <span>Rang (bo'yoq)</span>
+                <select class="form-select" t-model="c.color_id">
+                    <option value="">— tanlang —</option>
+                    <option t-foreach="d.colors" t-as="x" t-key="x.id" t-att-value="x.id" t-att-selected="eqNum(c.color_id, x.id)" t-esc="x.name"/>
+                </select>
+            </label>
+            <label class="cl-field">
+                <span>Profil (kesim)</span>
+                <select class="form-select" t-model="c.section_id">
+                    <option value="">— tanlang —</option>
+                    <option t-foreach="d.sections" t-as="x" t-key="x.id" t-att-value="x.id" t-att-selected="eqNum(c.section_id, x.id)" t-esc="x.name"/>
+                </select>
+            </label>
+        </div>
+        <div class="cl-field-row">
+            <div class="cl-field">
+                <span>Uzunlik</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-att-class="{ active: c.length === '6' }" t-on-click="() => c.length = '6'">6 m</button>
+                    <button t-att-class="{ active: c.length === '5' }" t-on-click="() => c.length = '5'">5 m</button>
+                </div>
+            </div>
+            <label class="cl-field"><span>Dona</span><input type="text" inputmode="numeric" class="form-control" t-model="c.pcs" placeholder="1"/></label>
+        </div>
+        <label class="cl-field">
+            <span>Smenadagi logo</span>
+            <select class="form-select" t-model="c.logo_id">
+                <option value="">Standart (<t t-esc="d.default_logo.name or '—'"/>)</option>
+                <option t-foreach="activeLogos" t-as="x" t-key="x.id" t-att-value="x.id" t-att-selected="eqNum(c.logo_id, x.id)" t-esc="x.name"/>
+            </select>
+        </label>
+        <button class="btn btn-primary w-100 ss-calc" t-on-click="runCheck" t-att-disabled="state.busy"><i class="fa fa-calculator"/> Hisoblash</button>
+        <div class="cl-sheet-error mt-2" t-if="c.error" role="alert"><i class="fa fa-exclamation-circle"/><div class="cl-sheet-error-text" t-esc="c.error"/></div>
+        <t t-if="c.result">
+            <t t-set="r" t-value="c.result"/>
+            <h3 class="cl-lines-head mt-3" t-esc="r.title"/>
+            <div class="cl-empty" t-if="r.no_norm">Bu profilga stiker normasi yo'q — stiker ketmaydi.</div>
+            <div class="cl-list" t-else="">
+                <div class="cl-mat" t-foreach="r.lines" t-as="l" t-key="l_index">
+                    <span class="cl-mat-main">
+                        <span class="cl-mat-name" t-if="l.sticker"><t t-esc="l.sticker"/><t t-if="l.explicit"> <i class="fa fa-thumb-tack" title="normada aniq tanlangan"/></t></span>
+                        <span class="cl-mat-name cl-bad" t-else="" t-esc="l.missing"/>
+                        <span class="cl-mat-meta"><t t-esc="l.width"/> mm · <t t-esc="l.sides"/> tomon</span>
+                    </span>
+                    <span class="cl-mat-right">
+                        <span class="cl-qty"><t t-esc="l.meters"/><small> m</small></span>
+                        <span class="cl-flow cl-muted" t-if="l.rolls"><t t-esc="l.rolls"/> rulon</span>
+                    </span>
+                </div>
+            </div>
+            <div class="sx-preview" t-if="!r.no_norm">
+                <div class="cl-kv cl-kv-total"><span>Jami stiker</span><b><t t-esc="r.total"/> m</b></div>
+            </div>
+            <ul class="ss-why"><li t-foreach="r.why" t-as="w" t-key="w_index" t-esc="w"/></ul>
+        </t>
+    </t>
+
+    <!-- FORMA: alohida sahifa, tepada «orqaga», tugmalar pastda -->
+    <t t-name="craf_sex.StikerForm">
+        <t t-set="fm" t-value="state.form"/>
+        <t t-set="v" t-value="fm.vals"/>
+        <div class="sx-page ss-form">
+            <div class="cl-sheet-head">
+                <button class="cl-icon-btn sx-back" t-on-click="closeForm" aria-label="Orqaga"><i class="fa fa-arrow-left"/></button>
+                <div class="cl-sheet-titles">
+                    <div class="cl-sheet-title" t-esc="fm.title"/>
+                    <div class="cl-sheet-sub" t-if="fm.sub" t-esc="fm.sub"/>
+                </div>
+            </div>
+            <div class="cl-sheet-body">
+                <t t-if="fm.kind === 'choice'" t-call="craf_sex.StikerFormChoice"/>
+                <t t-if="fm.kind === 'norm'" t-call="craf_sex.StikerFormNorm"/>
+                <t t-if="fm.kind === 'sticker'" t-call="craf_sex.StikerFormSticker"/>
+                <t t-if="fm.kind === 'logo'" t-call="craf_sex.StikerFormLogo"/>
+            </div>
+            <div class="cl-sheet-error" t-if="fm.error" role="alert">
+                <i class="fa fa-exclamation-circle"/>
+                <div class="cl-sheet-error-text" t-esc="fm.error"/>
+                <button class="cl-icon-btn" t-on-click="() => fm.error = ''" aria-label="Xabarni yopish"><i class="fa fa-times"/></button>
+            </div>
+            <div class="cl-sheet-foot cl-foot-wrap">
+                <button class="btn btn-link cl-danger-link me-auto" t-if="!fm.isNew" t-on-click="deleteForm" t-att-disabled="state.busy">O'chirish</button>
+                <button class="btn btn-outline-secondary" t-on-click="closeForm">Bekor</button>
+                <button class="btn btn-primary cl-btn-lg" t-on-click="saveForm" t-att-disabled="state.busy">Saqlash</button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="craf_sex.StikerFormChoice">
+        <h3 class="cl-lines-head">Agar rang <span class="cl-muted">— bo'sh bo'lsa hamma rang</span></h3>
+        <div class="ss-pills" role="group" aria-label="Ranglar">
+            <button t-foreach="state.data.colors" t-as="c" t-key="c.id" class="ss-pill" t-att-class="{ active: v.color_ids.includes(c.id) }"
+                    t-att-aria-pressed="v.color_ids.includes(c.id) ? 'true' : 'false'" t-on-click="() => this.toggleIn(v.color_ids, c.id)">
+                <i t-att-class="v.color_ids.includes(c.id) ? 'fa fa-check-square' : 'fa fa-square-o'"/> <t t-esc="c.name"/>
+            </button>
+        </div>
+        <h3 class="cl-lines-head">va profil <span class="cl-muted">— bo'sh bo'lsa hamma profil · tanlandi <t t-esc="v.section_ids.length"/></span></h3>
+        <div class="cl-search mb-2">
+            <i class="fa fa-search"/>
+            <input type="search" class="form-control" placeholder="Profilni qidirish" t-model="fm.sectionQ" aria-label="Profilni qidirish"/>
+        </div>
+        <div class="ss-checklist">
+            <button t-foreach="formSections" t-as="s" t-key="s.id" class="ss-check" t-att-class="{ active: v.section_ids.includes(s.id) }"
+                    t-att-aria-pressed="v.section_ids.includes(s.id) ? 'true' : 'false'" t-on-click="() => this.toggleIn(v.section_ids, s.id)">
+                <i t-att-class="v.section_ids.includes(s.id) ? 'fa fa-check-square' : 'fa fa-square-o'"/> <t t-esc="s.name"/>
+            </button>
+        </div>
+        <h3 class="cl-lines-head">Unda stiker</h3>
+        <div class="cl-field">
+            <span>Qalinlik (yopishqoqlik)</span>
+            <div class="cl-seg cl-seg-full ss-seg-wrap" role="group">
+                <button t-att-class="{ active: !v.adhesion }" t-on-click="() => this.setAdhesion('')">O'zgarmasin</button>
+                <button t-foreach="state.data.adhesions" t-as="a" t-key="a.key" t-att-class="{ active: v.adhesion === a.key }" t-on-click="() => this.setAdhesion(a.key)" t-esc="a.label"/>
+            </div>
+        </div>
+        <label class="cl-field">
+            <span>Logo</span>
+            <select class="form-select" t-model="v.logo_id">
+                <option value="">O'zgarmasin (kesim seriyasi yoki smena logosi)</option>
+                <option t-foreach="activeLogos" t-as="l" t-key="l.id" t-att-value="l.id" t-att-selected="eqNum(v.logo_id, l.id)" t-esc="l.name"/>
+            </select>
+        </label>
+        <div class="cl-field-row">
+            <label class="cl-field"><span>Tartib</span><input type="text" inputmode="numeric" class="form-control" t-model="v.sequence"/></label>
+            <div class="cl-field">
+                <span>Holati</span>
+                <div class="form-check form-switch cl-switch">
+                    <input class="form-check-input" type="checkbox" id="ss_choice_active" t-model="v.active"/>
+                    <label class="form-check-label" for="ss_choice_active" t-esc="v.active ? 'Faol' : 'Arxivda'"/>
+                </div>
+            </div>
+        </div>
+        <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="v.note" placeholder="Masalan: Antratsit bo'yoq — 80 mic"/></label>
+        <div class="ss-default"><b>Qoida:</b> <t t-esc="choiceText"/></div>
+    </t>
+
+    <t t-name="craf_sex.StikerFormNorm">
+        <label class="cl-field">
+            <span>Profil (kesim)</span>
+            <select class="form-select" t-model="v.section_id">
+                <option value="">— tanlang —</option>
+                <option t-foreach="state.data.sections" t-as="s" t-key="s.id" t-att-value="s.id" t-att-selected="eqNum(v.section_id, s.id)" t-esc="s.name"/>
+            </select>
+        </label>
+        <div class="cl-field">
+            <span>Stiker kengligi, mm</span>
+            <div class="ss-pills" role="group">
+                <button t-foreach="state.data.widths" t-as="w" t-key="w" class="ss-pill" t-att-class="{ active: eqNum(v.width, w) }" t-on-click="() => v.width = w"><t t-esc="w"/> mm</button>
+            </div>
+            <input type="text" inputmode="numeric" class="form-control mt-2" t-model="v.width" placeholder="boshqa kenglik, mm" aria-label="Kenglik, mm"/>
+        </div>
+        <div class="cl-field">
+            <span>Necha tomonga</span>
+            <div class="cl-seg cl-seg-full" role="group">
+                <button t-att-class="{ active: v.sides === '1' }" t-on-click="() => v.sides = '1'">1 tomon</button>
+                <button t-att-class="{ active: v.sides === '2' }" t-on-click="() => v.sides = '2'">2 tomon</button>
+            </div>
+        </div>
+        <label class="cl-field">
+            <span>Aniq stiker <span class="cl-muted">(ixtiyoriy)</span></span>
+            <select class="form-select" t-model="v.sticker_id">
+                <option value="">Avtomatik — qoida va logo bo'yicha (Antratsit → High …)</option>
+                <option t-foreach="stickersForWidth(v.width)" t-as="s" t-key="s.id" t-att-value="s.id" t-att-selected="eqNum(v.sticker_id, s.id)" t-esc="s.name"/>
+            </select>
+        </label>
+        <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="v.note" placeholder="Ixtiyoriy"/></label>
+        <p class="cl-hint">6 metrlik profilga: <b><t t-esc="num(6 * (v.sides === '2' ? 2 : 1), 0)"/> m</b> <t t-esc="v.width"/> mm stiker (har dona uchun).</p>
+    </t>
+
+    <t t-name="craf_sex.StikerFormSticker">
+        <div class="ss-default" t-if="v.locked"><i class="fa fa-info-circle"/> Bu stiker smenalarda ishlatilgan — o'chirib bo'lmaydi, kerak bo'lmasa arxivlang.</div>
+        <label class="cl-field">
+            <span>Logo</span>
+            <select class="form-select" t-model="v.logo_id">
+                <option value="">— tanlang —</option>
+                <option t-foreach="state.data.logos" t-as="l" t-key="l.id" t-att-value="l.id" t-att-selected="eqNum(v.logo_id, l.id)"><t t-esc="l.name"/><t t-if="!l.active"> (arxivda)</t></option>
+            </select>
+        </label>
+        <div class="cl-field">
+            <span>Qalinlik (yopishqoqlik)</span>
+            <div class="cl-seg cl-seg-full" role="group">
+                <button t-foreach="state.data.adhesions" t-as="a" t-key="a.key" t-att-class="{ active: v.adhesion === a.key }" t-on-click="() => this.setAdhesion(a.key)" t-esc="a.label"/>
+            </div>
+        </div>
+        <div class="cl-field">
+            <span>Kenglik, mm</span>
+            <div class="ss-pills" role="group">
+                <button t-foreach="state.data.widths" t-as="w" t-key="w" class="ss-pill" t-att-class="{ active: eqNum(v.width, w) }" t-on-click="() => v.width = w"><t t-esc="w"/> mm</button>
+            </div>
+            <input type="text" inputmode="numeric" class="form-control mt-2" t-model="v.width" placeholder="boshqa kenglik, mm" aria-label="Kenglik, mm"/>
+        </div>
+        <div class="cl-field-row">
+            <label class="cl-field"><span>Qalinlik, mic</span><input type="text" inputmode="numeric" class="form-control" t-model="v.micron"/></label>
+            <label class="cl-field"><span>Rulon uzunligi, m</span><input type="text" inputmode="decimal" class="form-control" t-model="v.roll"/></label>
+        </div>
+        <div class="cl-field-row">
+            <label class="cl-field"><span>Minimal qoldiq, rulon</span><input type="text" inputmode="decimal" class="form-control" t-model="v.min_rolls" placeholder="0"/></label>
+            <div class="cl-field">
+                <span>Holati</span>
+                <div class="form-check form-switch cl-switch">
+                    <input class="form-check-input" type="checkbox" id="ss_sticker_active" t-model="v.active"/>
+                    <label class="form-check-label" for="ss_sticker_active" t-esc="v.active ? 'Faol' : 'Arxivda'"/>
+                </div>
+            </div>
+        </div>
+        <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="v.note" placeholder="Ixtiyoriy"/></label>
+    </t>
+
+    <t t-name="craf_sex.StikerFormLogo">
+        <label class="cl-field"><span>Logo nomi</span><input type="text" class="form-control" t-model="v.name" placeholder="Masalan: CRAF"/></label>
+        <div class="cl-field-row">
+            <label class="cl-field"><span>Tartib</span><input type="text" inputmode="numeric" class="form-control" t-model="v.sequence"/></label>
+            <div class="cl-field">
+                <span>Holati</span>
+                <div class="form-check form-switch cl-switch">
+                    <input class="form-check-input" type="checkbox" id="ss_logo_active" t-model="v.active"/>
+                    <label class="form-check-label" for="ss_logo_active" t-esc="v.active ? 'Faol' : 'Arxivda'"/>
+                </div>
+            </div>
+        </div>
+        <p class="cl-hint" t-if="v.count">Bu logoli <t t-esc="v.count"/> ta stiker turi bor — logoni o'chirib bo'lmaydi, faqat arxivlash mumkin.</p>
+        <p class="cl-hint">Kesim seriyasi shu nomga teng bo'lsa (masalan, ALUSAM) — o'sha profillarga shu logo avtomatik tanlanadi.</p>
+    </t>
+</templates>

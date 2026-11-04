@@ -190,6 +190,12 @@ class CrafSex(models.AbstractModel):
                     else getattr(self, "_kpi_%s" % stage)(docs.filtered(lambda d: d.state == "done"))),
             "issues": [self._issue_card(i) for i in issues],
             "materials": self._materials() if stage == "boyash" else [],
+            "sticker_summary": self.env["craf.stiker.sozlama"].summary() if stage == "boyash" else {},
+            "days": [self._day_card(x) for x in self.env["craf.paint.day"].search(
+                [("date", ">=", dfrom), ("date", "<=", dto), ("state", "=", "done")], order="date desc, id desc")]
+            if stage == "boyash" else [],
+            "day_drafts": [self._day_card(x) for x in self.env["craf.paint.day"].search(
+                [("state", "=", "draft")], order="date desc, id desc")] if stage == "boyash" else [],
             "docs": [self._card(stage, d) for d in docs],
             "drafts": [self._card(stage, d) for d in drafts],
             "baskets": self._baskets(),
@@ -674,6 +680,179 @@ class CrafSex(models.AbstractModel):
         self._H._check_lock(rec.line_ids.product_id, moment, rec.name)
         rec.action_done()
         return {"id": rec.id, "name": rec.name, "total": _q(rec.qty_total, 2)}
+
+    # ================================================================== KUNLIK BO'YASH (daftardagidek)
+    def _day_card(self, day):
+        return {
+            "id": day.id, "name": day.name, "state": day.state, "date_label": day.date.strftime("%d.%m.%Y"),
+            "lines": [{"text": text, "color": color} for text, color in day._craf_lines_text()],
+            "powders": [{"color": p.color_id.name, "qty": _q(p.qty, 2)} for p in day.powder_ids if p.qty > EPS],
+            "packs": day.packs_total, "pcs": day.pcs_total, "kg": _q(day.kg_total, 0),
+            "who": day.employee_id.sudo().name or "",
+        }
+
+    @staticmethod
+    def _len_key(length):
+        return ("%g" % float(length or 0)).replace(".", ",")
+
+    @api.model
+    def day_options(self):
+        """Kunlik bo'yash formasi: profillar (uzunliklari bilan), ranglar, stikerlar va mahsulot xaritasi —
+        {kesim|uzunlik|rang|logo: tayyor mahsulot} (Alusam stikerli L → «L … ALUSAM», bo'lsa)."""
+        Tmpl = self.env["product.template"]
+        raw = Tmpl._craf_raw_color()
+        loc = self._loc("Bo'yash sexi")
+        logos = self.env["craf.sticker.logo"].search([])
+        brand_series = {(l.name or "").strip().lower() for l in logos}
+        colors = self.env["craf.color"].search([("is_painted", "=", True)], order="sequence, name")
+        norm = self.env["craf.mrp.norm"]._get_norm(self.env.company)
+        templates = Tmpl.search([("craf_section_id", "!=", False), ("craf_length_m", ">", 0)])
+        index = {}
+        for t in templates:
+            index[(t.craf_section_id.id, round(t.craf_length_m, 1), t.craf_color_id.id)] = t
+        # brend kesimlar: (profil turi, seriya) → kesim (L + ALUSAM → «L ALUSAM»)
+        brands = {}
+        for sec in templates.craf_section_id:
+            series = (sec.series or "").strip().lower()
+            if series in brand_series and sec.profile_type:
+                brands[(sec.profile_type, series)] = sec
+        stock = {}
+        semis = templates.filtered(lambda t: t.craf_color_id == raw).product_variant_id
+        if loc and semis:
+            for product, qty in self.env["stock.quant"]._read_group(
+                    [("location_id", "child_of", loc.id), ("product_id", "in", semis.ids)],
+                    ["product_id"], ["quantity:sum"]):
+                stock[product.id] = qty
+        sections, products, semi_stock = [], {}, {}
+        for sec in templates.filtered(lambda t: t.craf_color_id == raw).craf_section_id.sorted(lambda s: (s.sequence, s.name)):
+            if (sec.series or "").strip().lower() in brand_series:
+                continue  # brend kesim alohida tanlanmaydi — stiker orqali
+            lengths = sorted({round(t.craf_length_m, 1) for t in templates
+                              if t.craf_section_id == sec and t.craf_color_id == raw}, reverse=True)
+            sections.append({"id": sec.id, "name": sec.display_name, "lengths": lengths,
+                             "perimeter": sec.perimeter_m or 0.0})
+            for length in lengths:
+                semi = index.get((sec.id, length, raw.id))
+                semi_stock["%s|%s" % (sec.id, self._len_key(length))] = round(stock.get(
+                    semi.product_variant_id.id, 0.0)) if semi else 0
+                for color in colors:
+                    for logo in logos | self.env["craf.sticker.logo"]:
+                        tmpl = None
+                        if logo and not (sec.series or "").strip():
+                            brand = brands.get((sec.profile_type, (logo.name or "").strip().lower()))
+                            if brand:
+                                tmpl = index.get((brand.id, length, color.id))
+                        tmpl = tmpl or index.get((sec.id, length, color.id))
+                        if tmpl:
+                            products["%s|%s|%s|%s" % (sec.id, self._len_key(length), color.id, logo.id or 0)] = {
+                                "id": tmpl.product_variant_id.id, "name": tmpl.name,
+                                "per_pack": tmpl.craf_pcs_per_pack or (semi.craf_pcs_per_pack if semi else 0),
+                                "kg_pc": round(semi.craf_kg_per_pc if semi else tmpl.craf_kg_per_pc, 4),
+                            }
+        default_logo = self.env["craf.paint.batch"]._craf_default_sticker_logo()
+        return {
+            "today": fields.Date.to_string(fields.Date.context_today(self)),
+            "sections": sections,
+            "colors": [{
+                "id": c.id, "name": c.name, "label": c.name + (" · 1376" if (c.code or "").upper() == "J306" else ""),
+                "g_m2": c.craf_powder_norm or 120.0,
+                "powder": c.paint_tmpl_id.name or "",
+                "avail": round(c.paint_tmpl_id.product_variant_id.qty_available, 1) if c.paint_tmpl_id else 0.0,
+            } for c in colors],
+            "logos": [{"id": l.id, "name": l.name} for l in logos],
+            "default_logo": default_logo.id or False,
+            "products": products,
+            "semi_stock": semi_stock,
+            "employees": self._employees(),
+            "my_employee": self.env.user.employee_id.id or False,
+            "recent": self._day_recent_sections(),
+        }
+
+    def _day_recent_sections(self):
+        """Oxirgi kunlarda ko'p yozilgan profillar — formada tez tanlash uchun."""
+        lines = self.env["craf.paint.day.line"].search([], order="id desc", limit=60)
+        seen = []
+        for line in lines:
+            if line.section_id.id not in seen:
+                seen.append(line.section_id.id)
+        return seen[:6]
+
+    @api.model
+    def day_load(self, day_id):
+        day = self.env["craf.paint.day"].browse(int(day_id)).exists()
+        if not day:
+            raise UserError("Kunlik yozuv topilmadi (o'chirilgan bo'lishi mumkin).")
+        return {
+            "id": day.id, "name": day.name, "state": day.state, "date": fields.Date.to_string(day.date),
+            "employee_id": day.employee_id.id or False, "note": day.note or "",
+            "lines": [{
+                "section_id": l.section_id.id, "length": l.length_m, "color_id": l.color_id.id,
+                "logo_id": l.logo_id.id or False, "packs_text": l.packs_text or (str(l.packs) if l.packs else ""),
+                "extra": l.extra or "",
+            } for l in day.line_ids],
+            "powders": {str(p.color_id.id): _q(p.qty, 2) for p in day.powder_ids if p.qty > EPS},
+        }
+
+    @api.model
+    def day_save(self, vals, confirm=False):
+        """Kunlik bo'yash: saqlash (qoralama) yoki tasdiqlash (bo'yash smenalari yaratiladi, omborga — darhol)."""
+        from .craf_paint_day import parse_packs
+        Day = self.env["craf.paint.day"]
+        day = Day.browse(int(vals["id"])).exists() if vals.get("id") else Day
+        if vals.get("id") and (not day or day.state != "draft"):
+            raise UserError("Bu kunlik yozuv qoralama emas — o'zgartirib bo'lmaydi.")
+        lines = []
+        for row in vals.get("lines") or []:
+            packs = parse_packs(row.get("packs_text"))
+            extra = self._int(row.get("extra"))
+            if not row.get("section_id") and not packs and not extra:
+                continue  # bo'sh qator
+            if not row.get("section_id"):
+                raise UserError("Har qatorda profilni tanlang.")
+            if not row.get("color_id"):
+                raise UserError("Har qatorda rangni tanlang.")
+            if not (packs or extra):
+                raise UserError("Har qatorda pachka sonini yozing.")
+            lines.append(Command.create({
+                "section_id": int(row["section_id"]), "length_m": float(row.get("length") or 6),
+                "color_id": int(row["color_id"]), "logo_id": int(row["logo_id"]) if row.get("logo_id") else False,
+                "packs_text": (row.get("packs_text") or "").strip() or False, "packs": packs, "extra": extra,
+            }))
+        if not lines:
+            raise UserError("Qadoqlangan profillarni yozing (profil, rang, pachka).")
+        used_colors = {int(c.get("color_id")) for c in vals.get("lines") or [] if c.get("color_id")}
+        powders = [Command.create({"color_id": int(cid), "qty": self._num(qty, "Bo'yoq sarfi")})
+                   for cid, qty in (vals.get("powders") or {}).items()
+                   if int(cid) in used_colors and str(qty or "").strip()]
+        data = {
+            "date": vals.get("date") or fields.Date.context_today(self),
+            "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else self._own_employee(),
+            "note": (vals.get("note") or "").strip() or False,
+            "line_ids": [Command.clear()] + lines,
+            "powder_ids": [Command.clear()] + powders,
+        }
+        self._H._moment(data["date"])
+        if day:
+            day.write(data)
+        else:
+            day = Day.create(data)
+        if confirm:
+            day.action_confirm()
+        return {"id": day.id, "name": day.name, "state": day.state,
+                "batches": ", ".join(day.batch_ids.mapped("name"))}
+
+    @api.model
+    def day_action(self, day_id, action):
+        day = self.env["craf.paint.day"].browse(int(day_id)).exists()
+        if not day:
+            raise UserError("Kunlik yozuv topilmadi (o'chirilgan bo'lishi mumkin).")
+        name = day.name
+        if action == "delete":
+            if day.state == "done":
+                raise UserError("Tasdiqlangan kunlik yozuvni o'chirib bo'lmaydi.")
+            day.unlink()
+            return {"result": "deleted", "name": name}
+        raise UserError("Bu amal mumkin emas.")
 
     # ================================================================== BO'YASH
     @api.model

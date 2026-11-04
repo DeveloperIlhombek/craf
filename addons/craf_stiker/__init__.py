@@ -15,9 +15,12 @@ INITIAL_ROLLS = {
 
 
 def post_init_hook(env):
-    # Antratsit ranglariga High (80 mic) stiker
-    env["craf.color"].search(["|", "|", ("code", "in", ("J306", "1376")), ("name", "ilike", "Антрацит"),
-                              ("name", "ilike", "antrasit")]).write({"craf_sticker_adhesion": "high"})
+    # Antratsit ranglariga High (80 mic) stiker — stiker qoidasi (Stiker sozlamalarida o'zgartiriladi)
+    anthracite = env["craf.color"].search(["|", "|", ("code", "in", ("J306", "1376")), ("name", "ilike", "Антрацит"),
+                                           ("name", "ilike", "antrasit")])
+    if anthracite and not env["craf.sticker.choice"].search_count([("adhesion", "=", "high")]):
+        env["craf.sticker.choice"].create({"color_ids": [(6, 0, anthracite.ids)], "adhesion": "high",
+                                           "note": "Antratsit bo'yoq — 80 mic stiker"})
     # boshlang'ich qoldiq — faqat hali qoldig'i yo'q stikerlarga
     counts = {}
     for sticker in env["craf.sticker"].search([]):

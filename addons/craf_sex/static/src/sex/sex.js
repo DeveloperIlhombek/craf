@@ -14,7 +14,7 @@ const WEEKDAYS = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 const BOLIM_STAGES = { press: ["press"], boyash: ["kimyo", "boyash"] };
 const BOLIM_TITLE = { press: "Press", boyash: "Bo'yash va qadoqlash" };
 // modal emas, alohida sahifada ochiladigan formalar (telefonda pastki panel bilan to'qnashmaydi)
-const PAGE_SHEETS = new Set(["chem", "doc", "issue", "paint", "matissue"]);
+const PAGE_SHEETS = new Set(["chem", "doc", "issue", "paint", "matissue", "pday"]);
 const STAGE_MODEL = { press: "craf.extrusion.shift", kimyo: "craf.chem.treatment", boyash: "craf.paint.batch" };
 
 function addDays(iso, n) {
@@ -337,6 +337,9 @@ export class CrafSex extends Component {
         if (this.state.stage === "boyash" && this.state.tab === "material") {
             return this.openMatIssue();
         }
+        if (this.state.stage === "boyash") {
+            return this.openDay();
+        }
         if (this.state.stage === "press") {
             return this.openPress();
         }
@@ -534,6 +537,195 @@ export class CrafSex extends Component {
             this.openSheet({ type: "chem", o, f, loads });
         });
     }
+    // ---------------------------------------------------------------- KUNLIK BO'YASH (daftardagidek)
+    async openDay(id = false) {
+        await this.run(async () => {
+            const o = await this.orm.call(API, "day_options", []);
+            let f;
+            if (id) {
+                f = await this.orm.call(API, "day_load", [id]);
+                f.lines = f.lines.map((l) => ({ ...l, key: key() }));
+            } else {
+                f = { id: false, date: o.today, employee_id: o.my_employee || false, note: "", powders: {}, lines: [] };
+                f.lines.push(this.newDayLine(o, null));
+            }
+            this.openSheet({ type: "pday", o, f });
+        });
+    }
+    newDayLine(o, prev) {
+        // yangi qator: rang va stiker — oldingi qatordan (bir kunda odatda bir xil), stiker standart — CRAF
+        return {
+            key: key(), section_id: "", length: 6,
+            color_id: prev ? prev.color_id : (o.colors[0] || {}).id || "",
+            logo_id: prev ? prev.logo_id : o.default_logo || (o.logos[0] || {}).id || false,
+            packs_text: "", extra: "",
+        };
+    }
+    addDayLine(s) {
+        s.f.lines.push(this.newDayLine(s.o, s.f.lines[s.f.lines.length - 1] || null));
+    }
+    removeDayLine(s, line) {
+        s.f.lines = s.f.lines.filter((l) => l !== line);
+        if (!s.f.lines.length) {
+            s.f.lines.push(this.newDayLine(s.o, null));
+        }
+    }
+    daySections(s) {
+        // oxirgi kunlarda yozilganlar — ro'yxat boshida
+        const recent = s.o.recent || [];
+        const rank = (x) => (recent.includes(x.id) ? recent.indexOf(x.id) : 1000);
+        return [...s.o.sections].sort((a, b) => rank(a) - rank(b));
+    }
+    setDaySection(s, line, value) {
+        line.section_id = value ? Number(value) : "";
+        const sec = s.o.sections.find((x) => x.id === line.section_id);
+        if (sec && sec.lengths.length && !sec.lengths.includes(Number(line.length))) {
+            line.length = sec.lengths[0];
+        }
+    }
+    parsePacks(text) {
+        const parts = String(text || "").trim().split(/[+\s,;]+/).filter(Boolean);
+        let sum = 0;
+        for (const p of parts) {
+            if (!/^\d+$/.test(p)) {
+                return null;
+            }
+            sum += Number(p);
+        }
+        return sum;
+    }
+    dayLineInfo(s, line) {
+        const o = s.o;
+        const sec = o.sections.find((x) => x.id === Number(line.section_id)) || null;
+        const lenKey = String(Number(line.length)).replace(".", ",");
+        const product = sec && line.color_id ? o.products[`${sec.id}|${lenKey}|${line.color_id}|${line.logo_id || 0}`] || null : null;
+        const packs = this.parsePacks(line.packs_text);
+        const extra = toInt(line.extra);
+        const perPack = product ? product.per_pack : 0;
+        const pcs = (packs || 0) * perPack + extra;
+        const avail = sec ? o.semi_stock[`${sec.id}|${lenKey}`] || 0 : 0;
+        return {
+            sec, product, packs: packs || 0, extra, perPack, pcs, avail,
+            lengths: sec ? sec.lengths : [],
+            kg: pcs * (product ? product.kg_pc : 0),
+            area: pcs * Number(line.length || 0) * (sec ? sec.perimeter : 0),
+            badPacks: packs === null,
+            missing: sec && line.color_id && !product ? "Bu profil, rang va uzunlik uchun tayyor mahsulot katalogda yo'q." : "",
+            short: Boolean(sec && pcs > avail),
+        };
+    }
+    dayTotals(s) {
+        const t = { packs: 0, pcs: 0, kg: 0, colors: [] };
+        const byColor = {};
+        for (const line of s.f.lines) {
+            const li = this.dayLineInfo(s, line);
+            t.packs += li.packs;
+            t.pcs += li.pcs;
+            t.kg += li.kg;
+            if (!line.color_id) {
+                continue;
+            }
+            const c = s.o.colors.find((x) => x.id === Number(line.color_id));
+            if (!c) {
+                continue;
+            }
+            if (!byColor[c.id]) {
+                byColor[c.id] = { ...c, area: 0, norm: 0 };
+                t.colors.push(byColor[c.id]);
+            }
+            byColor[c.id].area += li.area;
+            byColor[c.id].norm = (byColor[c.id].area * c.g_m2) / 1000;
+        }
+        return t;
+    }
+    dayLineText(s, line) {
+        // tasdiqlash oynasida — daftardagidek: «Alusam L 6m — 41+39+44 pachka»
+        const li = this.dayLineInfo(s, line);
+        const logo = (s.o.logos.find((x) => x.id === Number(line.logo_id)) || {}).name || "";
+        const prefix = logo && logo.toUpperCase() !== "CRAF" ? `${logo} ` : "";
+        const color = (s.o.colors.find((x) => x.id === Number(line.color_id)) || {}).name || "";
+        return `${prefix}${li.sec ? li.sec.name : "?"} ${li.lengths.length ? line.length : ""}m — ${line.packs_text || li.packs} pachka${li.extra ? ` ${li.extra} dona` : ""} (${color})`;
+    }
+    saveDay(confirm) {
+        const s = this.state.sheet;
+        const f = s.f;
+        const lines = f.lines.filter((l) => l.section_id || String(l.packs_text || "").trim() || toInt(l.extra));
+        if (!lines.length) {
+            s.error = "Qadoqlangan profillarni yozing: profil, rang, pachka.";
+            return;
+        }
+        for (const line of lines) {
+            const li = this.dayLineInfo(s, line);
+            if (!li.sec) {
+                s.error = "Har qatorda profilni tanlang.";
+                return;
+            }
+            if (!line.color_id) {
+                s.error = `${li.sec.name}: rangni tanlang.`;
+                return;
+            }
+            if (li.badPacks || !(li.packs || li.extra)) {
+                s.error = `${li.sec.name}: pachka sonini yozing (211 yoki 41+39+44).`;
+                return;
+            }
+            if (li.missing) {
+                s.error = `${li.sec.name}: ${li.missing}`;
+                return;
+            }
+        }
+        const t = this.dayTotals(s);
+        const noPowder = t.colors.filter((c) => !String(f.powders[c.id] || "").trim()).map((c) => c.name);
+        const payload = {
+            id: f.id, date: f.date, note: f.note, powders: f.powders,
+            employee_id: f.employee_id ? Number(f.employee_id) : false,
+            lines: lines.map((l) => ({ section_id: l.section_id, length: l.length, color_id: l.color_id, logo_id: l.logo_id || false, packs_text: l.packs_text, extra: l.extra })),
+        };
+        const doSave = () =>
+            this.run(async () => {
+                const res = await this.orm.call(API, "day_save", [payload, Boolean(confirm)]);
+                this.notification.add(
+                    confirm ? `${res.name} tasdiqlandi — tayyor mahsulot omborga o'tdi` : `${res.name} saqlandi (qoralama)`,
+                    { type: "success" }
+                );
+                this.closeSheet();
+                await this.refresh();
+            });
+        if (confirm) {
+            const body =
+                lines.map((l) => this.dayLineText(s, l)).join("; ") +
+                `. Jami ${this.num(t.packs, 0)} pachka, ${this.num(t.pcs, 0)} dona.` +
+                (noPowder.length ? ` Bo'yoq sarfi yozilmagan: ${noPowder.join(", ")}.` : "") +
+                " Tayyor mahsulot omborga o'tadi.";
+            this.confirm("Kunlik bo'yashni tasdiqlash", body, "Tasdiqlash", doSave);
+        } else {
+            doSave();
+        }
+    }
+    deleteDay() {
+        const f = this.state.sheet.f;
+        this.confirm("O'chirish", `${f.name} qoralamasi o'chiriladi.`, "O'chirish", () =>
+            this.run(async () => {
+                await this.orm.call(API, "day_action", [f.id, "delete"]);
+                this.notification.add(`${f.name} o'chirildi`, { type: "success" });
+                this.closeSheet();
+                await this.refresh();
+            })
+        );
+    }
+
+    // ---------------------------------------------------------------- STIKER SOZLAMALARI
+    get stikerBtnLabel() {
+        return this.state.data.sticker_summary.can_edit ? "Sozlash" : "Ko'rish";
+    }
+    openStikerSozlama() {
+        // orqaga — aynan shu sahifaning Materiallar bo'limiga (bo'lim sahifasidan ochilgan bo'lsa — o'sha bo'limga)
+        const back = { craf_stage: "boyash", craf_tab: "material" };
+        if (this.bolim) {
+            back.craf_bolim = this.bolim;
+        }
+        this.actionService.doAction("craf_sex.action_craf_stiker_sozlama", { additionalContext: { craf_from: "boyash", craf_back: back } });
+    }
+
     // ---------------------------------------------------------------- BO'YASH MATERIALLARI (ombordan olish)
     async openMatIssue() {
         await this.run(async () => {

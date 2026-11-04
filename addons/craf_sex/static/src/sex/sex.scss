@@ -254,6 +254,127 @@ $sx-tap: 44px;
         }
     }
 
+    // kunlik bo'yash: kartalar (daftardagidek) va forma qatorlari
+    .sx-days {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .sx-day {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        width: 100%;
+        padding: 10px 12px;
+        text-align: left;
+        color: inherit;
+        background-color: $o-view-background-color;
+        border: 1px solid $sx-line;
+        border-radius: 12px;
+        &.sx-day-btn {
+            border-style: dashed;
+        }
+    }
+    .sx-day-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+    .sx-day-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 0.95rem;
+    }
+    .sx-day-color {
+        flex: 0 0 auto;
+        font-size: 0.78rem;
+        color: $sx-muted;
+    }
+    .sx-day-powders {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+        margin-top: 2px;
+        font-size: 0.9rem;
+        > .sx-day-powder > .fa {
+            color: $sx-muted;
+        }
+    }
+    .sx-day-foot {
+        margin-top: 2px;
+        font-size: 0.78rem;
+        color: $sx-muted;
+    }
+    .sx-dline {
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border: 1px solid $sx-line;
+        border-radius: 12px;
+        background-color: $o-view-background-color;
+    }
+    .sx-dline-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        > select {
+            flex: 1 1 auto;
+            min-width: 0;
+            min-height: $sx-tap;
+            font-weight: 600;
+        }
+    }
+    .sx-dline-len {
+        flex: 0 0 auto;
+        > button {
+            min-height: $sx-tap;
+            padding: 0 10px;
+        }
+    }
+    .sx-dline-chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .sx-dline-k {
+        min-width: 44px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: $sx-muted;
+    }
+    .sx-chip {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid $sx-line;
+        border-radius: 18px;
+        background-color: $o-view-background-color;
+        color: inherit;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        &.active {
+            border-color: $primary;
+            background-color: $primary;
+            color: #fff;
+            font-weight: 600;
+        }
+    }
+    .sx-dline-qty {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+        .cl-field {
+            margin-bottom: 0;
+        }
+    }
+    .sx-addday {
+        min-height: $sx-tap;
+        margin-bottom: 4px;
+    }
+
     // bo'yash: sexdagi profil qatori va materiallar holati
     .sx-semi {
         width: 100%;
@@ -264,6 +385,48 @@ $sx-tap: 44px;
     }
     .sx-mat-group {
         margin-bottom: 8px;
+    }
+    // stiker normalari jadvali: telefonda o'z ichida yonga suriladi
+    .sx-rule-wrap {
+        overflow-x: auto;
+        border: 1px solid $sx-line;
+        border-radius: 12px;
+        background-color: $o-view-background-color;
+        margin-bottom: 8px;
+    }
+    .sx-rule-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+        th {
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: $sx-muted;
+            white-space: nowrap;
+            border-bottom: 1px solid $sx-line;
+        }
+        td {
+            padding: 7px 10px;
+            border-bottom: 1px solid $sx-line;
+            white-space: nowrap;
+        }
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+    }
+    .sx-rule-cell {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #3b5bdb;
+        background-color: rgba(59, 91, 219, 0.1);
+        &.sx-rule-2 {
+            color: #9a3412;
+            background-color: rgba(234, 88, 12, 0.12);
+        }
     }
     .sx-mat-status {
         font-size: 0.72rem;

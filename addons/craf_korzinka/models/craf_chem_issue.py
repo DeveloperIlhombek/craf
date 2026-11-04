@@ -46,9 +46,8 @@ class CrafChemIssue(models.Model):
     def _craf_chem_products(self, kind="kislota"):
         Product = self.env["product.product"]
         if kind == "boyash":
-            colors = self.env["craf.color"].search([("is_painted", "=", True), ("paint_tmpl_id", "!=", False)])
-            paints = colors.paint_tmpl_id.product_variant_ids | Product.search([("default_code", "in", PAINT_CODES)])
-            return paints.sorted("name") | Product.search([("default_code", "in", PACK_CODES)], order="default_code")
+            # bo'yoq (kukun) sarfi — kunlik bo'yash yozuvida (rang bo'yicha); bu yerda salofan va lenta
+            return Product.search([("default_code", "in", PACK_CODES)], order="default_code")
         products = Product
         for code in KIND_CODES.get(kind, CHEM_CODES):
             products |= self._craf_product(code)

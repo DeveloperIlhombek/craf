@@ -1,0 +1,196 @@
+// Craf → Stiker sozlamalari. Asosiy uslub Литейка / Sexlar sahifalaridan (o_craf_litey, o_craf_sex); bu yerda
+// faqat o'ziga xos qismlar (telefon birinchi).
+$ss-line: rgba(127, 127, 127, 0.22);
+$ss-muted: #63707a;
+$ss-high: #9a3412;
+$ss-med: #3b5bdb;
+
+.o_craf_litey.o_craf_stiker {
+    .ss-back {
+        margin-left: -8px;
+    }
+    .ss-tabs {
+        margin-top: 6px;
+        > button > .fa {
+            margin-right: 2px;
+        }
+    }
+    .ss-ro {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: $ss-muted;
+        white-space: nowrap;
+    }
+
+    // ro'yxat qatori (bosiladi — forma ochiladi)
+    .ss-row {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: none;
+        color: inherit;
+        &:disabled {
+            opacity: 1;
+            cursor: default;
+        }
+        &.ss-off {
+            opacity: 0.55;
+        }
+    }
+    .ss-go {
+        flex: 0 0 auto;
+        color: $ss-muted;
+        font-size: 1.1rem;
+        padding-left: 8px;
+    }
+    .ss-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        & + .ss-line {
+            margin-top: 4px;
+        }
+    }
+    .ss-k {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: $ss-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        margin-right: 2px;
+    }
+    .ss-chip {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        padding: 1px 8px;
+        border-radius: 10px;
+        border: 1px solid $ss-line;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+    .ss-chip-color {
+        background-color: rgba(127, 127, 127, 0.08);
+    }
+    .ss-chip-section {
+        border-style: dashed;
+    }
+    .ss-chip-more {
+        color: $ss-muted;
+        font-weight: 400;
+    }
+    .ss-chip-high {
+        color: $ss-high;
+        border-color: rgba(234, 88, 12, 0.35);
+        background-color: rgba(234, 88, 12, 0.1);
+    }
+    .ss-chip-med {
+        color: $ss-med;
+        border-color: rgba(59, 91, 219, 0.3);
+        background-color: rgba(59, 91, 219, 0.08);
+    }
+    .ss-chip-logo {
+        color: #12753a;
+        border-color: rgba(18, 117, 58, 0.35);
+        background-color: rgba(18, 117, 58, 0.08);
+    }
+    .ss-default {
+        margin: 12px 0 4px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background-color: rgba(127, 127, 127, 0.07);
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    .ss-group {
+        margin-bottom: 12px;
+    }
+    .ss-group-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        padding: 8px 2px 6px;
+        > .cl-muted {
+            font-size: 0.8rem;
+        }
+    }
+    .ss-details {
+        margin-top: 8px;
+        > summary {
+            cursor: pointer;
+            font-weight: 600;
+            padding: 6px 2px;
+        }
+    }
+
+    // forma: tanlash tugmalari
+    .ss-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .ss-pill,
+    .ss-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 6px 12px;
+        border: 1px solid $ss-line;
+        border-radius: 10px;
+        background-color: $o-view-background-color;
+        color: inherit;
+        font-size: 0.9rem;
+        text-align: left;
+        &.active {
+            border-color: $primary;
+            background-color: rgba($primary, 0.08);
+            font-weight: 600;
+            > .fa {
+                color: $primary;
+            }
+        }
+    }
+    .ss-checklist {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 6px;
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 2px;
+        margin-bottom: 4px;
+        > .ss-check {
+            width: 100%;
+            overflow-wrap: anywhere;
+        }
+    }
+    .ss-seg-wrap {
+        flex-wrap: wrap;
+        > button {
+            min-width: 0;
+            white-space: normal;
+        }
+    }
+    .ss-calc {
+        min-height: 44px;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+    .ss-why {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        font-size: 0.85rem;
+        color: $ss-muted;
+        > li + li {
+            margin-top: 2px;
+        }
+    }
+}

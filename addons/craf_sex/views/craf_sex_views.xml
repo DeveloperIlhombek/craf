@@ -40,6 +40,15 @@
               web_icon="craf_sex,static/description/icon.png" groups="craf_sex.group_craf_worker"/>
     <menuitem id="menu_craf_boyash_page" name="Bo'yash va qadoqlash" parent="menu_craf_boyash_root"
               action="action_craf_sex_boyash_own" sequence="1"/>
+    <!-- stiker sozlamalari: qoidalar (rang / profil → qalinlik, logo), normalar, turlar, logolar, tekshirish.
+         Bo'yash xodimi — faqat ko'rish (Materiallar bo'limidan ochadi); omborchi, direktor, administrator — CRUD -->
+    <record id="action_craf_stiker_sozlama" model="ir.actions.client">
+        <field name="name">Stiker sozlamalari</field>
+        <field name="tag">craf_stiker_sozlama</field>
+        <field name="path">craf-stiker-sozlama</field>
+    </record>
+    <menuitem id="menu_craf_stiker_sozlama" name="Stiker sozlamalari" parent="craf_stiker.menu_craf_stiker"
+              action="action_craf_stiker_sozlama" sequence="1"/>
     <menuitem id="menu_craf_sex_press" name="Press sahifasi" parent="craf_production.menu_craf_bolim_press"
               action="action_craf_sex_press" sequence="1"/>
     <menuitem id="menu_craf_sex_boyash" name="Bo'yash sahifasi" parent="craf_production.menu_craf_bolim_boyash"

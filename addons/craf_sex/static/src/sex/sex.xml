@@ -100,7 +100,7 @@
         <t t-set="f" t-value="s.f"/>
         <t t-call="craf_sex.Head">
             <t t-set="title" t-value="'Material olindi'"/>
-            <t t-set="sub" t-value="&quot;Ombordan olib ketilgan bo'yoq, salofan, lenta&quot;"/>
+            <t t-set="sub" t-value="&quot;Ombordan olib ketilgan salofan va lenta&quot;"/>
         </t>
         <div class="cl-sheet-body">
             <div class="cl-field-row">
@@ -111,7 +111,7 @@
                 </div>
             </div>
             <t t-foreach="matGroups" t-as="grp" t-key="grp.key">
-                <h3 class="cl-lines-head" t-esc="grp.title"/>
+                <h3 class="cl-lines-head" t-if="matGroup(s, grp.key).length" t-esc="grp.title"/>
                 <div class="sx-direct" t-foreach="matGroup(s, grp.key)" t-as="c" t-key="c.id">
                     <span><t t-esc="c.name"/><small class="d-block cl-muted"><t t-esc="c.code"/> · zavodda <t t-esc="num(c.avail, 2)"/> <t t-esc="c.uom"/></small></span>
                     <input type="text" inputmode="decimal" class="form-control" placeholder="0" t-model="f.qty[c.id]" t-att-aria-label="c.name + ', ' + c.uom"/>
@@ -163,6 +163,7 @@
             <t t-elif="s.type === 'issue'" t-call="craf_sex.SheetIssue"/>
             <t t-elif="s.type === 'paint'" t-call="craf_sex.SheetPaint"/>
             <t t-elif="s.type === 'matissue'" t-call="craf_sex.SheetMatIssue"/>
+            <t t-elif="s.type === 'pday'" t-call="craf_sex.SheetDay"/>
             <div class="cl-sheet-error" t-if="s.error" role="alert">
                 <i class="fa fa-exclamation-circle"/>
                 <div class="cl-sheet-error-text" t-esc="s.error"/>
@@ -253,8 +254,29 @@
 
     <!-- BO'YASH: ish -->
     <t t-name="craf_sex.IshBoyash">
+        <!-- bo'yash xodimining kunlik ishi — daftardagidek: profil, stiker, pachka; rang bo'yicha bo'yoq sarfi -->
+        <t t-if="d.day_drafts.length">
+            <h2 class="sx-h">Qoralama</h2>
+            <div class="sx-days">
+                <button class="sx-day sx-day-btn" t-foreach="d.day_drafts" t-as="day" t-key="day.id" t-on-click="() => this.openDay(day.id)">
+                    <t t-call="craf_sex.DayCard"/>
+                </button>
+            </div>
+        </t>
+        <div class="sx-h-row">
+            <h2 class="sx-h">Kunlik bo'yash <span class="cl-muted" t-esc="d.days.length"/></h2>
+            <button class="btn btn-link cl-link" t-on-click="() => this.openDay()"><i class="fa fa-plus"/> Yozish</button>
+        </div>
+        <div class="cl-empty sx-empty-card" t-if="!d.days.length">
+            <i class="fa fa-paint-brush"/>
+            <div>Bu davrda kunlik bo'yash yozilmagan.</div>
+            <button class="btn btn-primary mt-2" t-on-click="() => this.openDay()"><i class="fa fa-plus"/> Bugungi bo'yashni yozish</button>
+        </div>
+        <div class="sx-days" t-else="">
+            <div class="sx-day" t-foreach="d.days" t-as="day" t-key="day.id"><t t-call="craf_sex.DayCard"/></div>
+        </div>
         <t t-if="d.drafts.length">
-            <h2 class="sx-h">Ochiq smenalar</h2>
+            <h2 class="sx-h">Ochiq bo'yash smenalari</h2>
             <div class="cl-list">
                 <button class="cl-doc" t-foreach="d.drafts" t-as="c" t-key="c.id" t-on-click="() => this.openPaint(c.id)">
                     <t t-call="craf_sex.DocRow"/>
@@ -276,21 +298,99 @@
                 </div>
             </div>
         </t>
-        <t t-set="semis" t-value="semisToPaint"/>
-        <h2 class="sx-h">Bo'yashga tayyor profillar <span class="cl-muted" t-esc="semis.length"/></h2>
-        <p class="cl-note">Kimyoviy ishlovdan o'tgan bo'yalmagan profillar (<t t-esc="d.stock.location"/>). Profilni bosing — bo'yash smenasi ochiladi.</p>
-        <div class="cl-empty sx-empty-card" t-if="!semis.length"><i class="fa fa-paint-brush"/><div>Sexda bo'yalmagan profil yo'q.</div></div>
-        <div class="cl-list" t-else="">
-            <button class="cl-mat sx-semi" t-foreach="semis" t-as="r" t-key="r.product_id" t-on-click="() => this.openPaint(false, r.product_id)">
-                <span class="cl-mat-main">
-                    <span class="cl-mat-name" t-esc="r.name"/>
-                    <span class="cl-mat-meta"><t t-esc="r.code"/><t t-if="r.kg"> · <t t-esc="num(r.kg, 0)"/> kg</t></span>
-                </span>
-                <span class="cl-mat-right">
-                    <span class="cl-qty"><t t-esc="num(r.qty, 0)"/><small> dona</small></span>
-                    <span class="cl-flow cl-muted"><i class="fa fa-paint-brush"/> bo'yash</span>
-                </span>
-            </button>
+    </t>
+
+    <!-- kunlik yozuv kartasi: daftardagidek qatorlar -->
+    <t t-name="craf_sex.DayCard">
+        <span class="sx-day-head">
+            <b t-esc="day.date_label"/>
+            <span class="cl-muted" t-esc="day.name"/>
+            <span class="cl-state cl-st-draft ms-auto" t-if="day.state === 'draft'">Qoralama</span>
+        </span>
+        <span class="sx-day-line" t-foreach="day.lines" t-as="l" t-key="l_index">
+            <span t-esc="l.text"/>
+            <span class="sx-day-color" t-esc="l.color"/>
+        </span>
+        <span class="sx-day-powders" t-if="day.powders.length">
+            <span class="sx-day-powder" t-foreach="day.powders" t-as="p" t-key="p_index"><i class="fa fa-tint"/> <t t-esc="p.color"/> — <b><t t-esc="p.qty"/> kg</b></span>
+        </span>
+        <span class="sx-day-foot"><t t-esc="num(day.packs, 0)"/> pachka · <t t-esc="num(day.pcs, 0)"/> dona · <t t-esc="day.kg"/> kg<t t-if="day.who"> · <t t-esc="day.who"/></t></span>
+    </t>
+
+    <!-- KUNLIK BO'YASH: qatorlar (profil, uzunlik, rang, stiker, pachka) va rang bo'yicha bo'yoq sarfi -->
+    <t t-name="craf_sex.SheetDay">
+        <t t-set="f" t-value="s.f"/>
+        <t t-set="dt" t-value="dayTotals(s)"/>
+        <t t-call="craf_sex.Head">
+            <t t-set="title" t-value="f.id ? &quot;Kunlik bo'yash &quot; + f.name : &quot;Kunlik bo'yash&quot;"/>
+            <t t-set="sub" t-value="&quot;Qadoqlangan profillar (pachka) va bo'yoq sarfi&quot;"/>
+        </t>
+        <div class="cl-sheet-body">
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
+                <div class="cl-field" t-if="state.data.roles.own">
+                    <span>Mas'ul</span>
+                    <div class="sx-owner"><i class="fa fa-user-circle-o"/> <t t-esc="employeeName(s.o, f.employee_id)"/></div>
+                </div>
+                <label class="cl-field" t-else="">
+                    <span>Mas'ul</span>
+                    <select class="form-select" t-model="f.employee_id">
+                        <option value="">—</option>
+                        <option t-foreach="s.o.employees" t-as="e" t-key="e.id" t-att-value="e.id" t-att-selected="eq(f.employee_id, e.id)" t-esc="e.name"/>
+                    </select>
+                </label>
+            </div>
+
+            <h3 class="cl-lines-head">Qadoqlangan profillar <span class="cl-muted"><t t-esc="num(dt.packs, 0)"/> pachka · <t t-esc="num(dt.pcs, 0)"/> dona · <t t-esc="num(dt.kg, 0)"/> kg</span></h3>
+            <div class="sx-dline" t-foreach="f.lines" t-as="line" t-key="line.key">
+                <t t-set="li" t-value="dayLineInfo(s, line)"/>
+                <div class="sx-dline-top">
+                    <select class="form-select" aria-label="Profil" t-on-change="(ev) => this.setDaySection(s, line, ev.target.value)">
+                        <option value="">Profil…</option>
+                        <option t-foreach="daySections(s)" t-as="x" t-key="x.id" t-att-value="x.id" t-att-selected="eq(line.section_id, x.id)" t-esc="x.name"/>
+                    </select>
+                    <div class="cl-seg sx-dline-len" role="group" aria-label="Uzunlik" t-if="li.lengths.length">
+                        <button t-foreach="li.lengths" t-as="len" t-key="len" t-att-class="{ active: eq(line.length, len) }" t-on-click="() => line.length = len"><t t-esc="len"/> m</button>
+                    </div>
+                    <button class="cl-icon-btn cl-line-del" t-on-click="() => this.removeDayLine(s, line)" aria-label="Qatorni o'chirish"><i class="fa fa-trash-o"/></button>
+                </div>
+                <div class="sx-dline-chips" role="group" aria-label="Rang">
+                    <span class="sx-dline-k">Rang</span>
+                    <button t-foreach="s.o.colors" t-as="c" t-key="c.id" class="sx-chip" t-att-class="{ active: eq(line.color_id, c.id) }" t-on-click="() => line.color_id = c.id" t-esc="c.label"/>
+                </div>
+                <div class="sx-dline-chips" role="group" aria-label="Stiker">
+                    <span class="sx-dline-k">Stiker</span>
+                    <button t-foreach="s.o.logos" t-as="lg" t-key="lg.id" class="sx-chip" t-att-class="{ active: eq(line.logo_id, lg.id) }" t-on-click="() => line.logo_id = lg.id" t-esc="lg.name"/>
+                </div>
+                <div class="sx-dline-qty">
+                    <label class="cl-field"><span>Pachka</span><input type="text" inputmode="tel" class="form-control sx-big-input" t-model="line.packs_text" placeholder="41+39+44" aria-label="Pachka"/></label>
+                    <label class="cl-field"><span>+ dona</span><input type="text" inputmode="numeric" class="form-control" t-model="line.extra" placeholder="0" aria-label="Qo'shimcha dona"/></label>
+                </div>
+                <div class="cl-line-sum">
+                    <t t-if="li.product">
+                        <span class="d-block"><b t-esc="li.product.name"/></span>
+                        <t t-esc="num(li.packs, 0)"/> pachka × <t t-esc="li.perPack"/><t t-if="li.extra"> + <t t-esc="li.extra"/></t> = <b><t t-esc="num(li.pcs, 0)"/> dona</b> · <t t-esc="num(li.kg, 0)"/> kg
+                    </t>
+                    <span class="cl-bad d-block" t-if="li.badPacks">Pachka sonini raqam bilan yozing: 211 yoki 41+39+44</span>
+                    <span class="cl-bad d-block" t-if="li.missing" t-esc="li.missing"/>
+                    <span class="cl-warn d-block" t-if="li.short">Sexda bo'yalmagan profil <t t-esc="num(li.avail, 0)"/> dona bor (kerak <t t-esc="num(li.pcs, 0)"/>).</span>
+                </div>
+            </div>
+            <button class="btn btn-outline-primary w-100 sx-addday" t-on-click="() => this.addDayLine(s)"><i class="fa fa-plus"/> Profil qo'shish</button>
+
+            <h3 class="cl-lines-head">Bo'yoq (kukun) sarfi</h3>
+            <div class="cl-empty" t-if="!dt.colors.length">Qatorlarda rang tanlang.</div>
+            <div class="sx-direct" t-foreach="dt.colors" t-as="c" t-key="c.id">
+                <span><t t-esc="c.label"/><small class="d-block cl-muted">me'yor ~<t t-esc="num(c.norm, 1)"/> kg (<t t-esc="num(c.area, 0)"/> m²)<t t-if="c.powder"> · <t t-esc="c.powder"/>: <t t-esc="num(c.avail, 1)"/> kg</t></small></span>
+                <input type="text" inputmode="decimal" class="form-control" placeholder="kg" t-model="f.powders[c.id]" t-att-aria-label="c.label + ', kg'"/>
+            </div>
+            <p class="cl-hint">Stiker sarfi (CRAF, Alusam) avtomatik hisoblanadi. Tasdiqlanganda tayyor mahsulot darhol omborga o'tadi.</p>
+            <label class="cl-field"><span>Izoh</span><input type="text" class="form-control" t-model="f.note" placeholder="Ixtiyoriy"/></label>
+        </div>
+        <div class="cl-sheet-foot cl-foot-wrap">
+            <button class="btn btn-link cl-danger-link me-auto" t-if="f.id" t-on-click="deleteDay" t-att-disabled="state.busy">O'chirish</button>
+            <button class="btn btn-outline-primary" t-on-click="() => this.saveDay(false)" t-att-disabled="state.busy">Qoralama</button>
+            <button class="btn btn-primary cl-btn-lg" t-on-click="() => this.saveDay(true)" t-att-disabled="state.busy">Tasdiqlash</button>
         </div>
     </t>
 
@@ -315,7 +415,24 @@
                 </span>
             </div>
         </div>
-        <p class="cl-note">Bo'yoq, salofan va lenta ombordan olib ketilganda bir marta yoziladi va o'sha zahoti sarfga yechiladi. Stiker sarfi bo'yash smenasidan avtomatik. Pastda — qoldiqlar (faqat ko'rish).</p>
+        <p class="cl-note">Salofan va lenta ombordan olib ketilganda bir marta yoziladi va o'sha zahoti sarfga yechiladi. Bo'yoq (kukun) sarfi — kunlik bo'yash yozuvida, stiker — avtomatik. Pastda — qoldiqlar (faqat ko'rish).</p>
+        <!-- stiker sozlamalari: qoidalar (Antratsit → High 80 mic …), normalar, turlar — bo'yash xodimi faqat ko'radi,
+             omborchi, direktor va administrator sozlaydi (Stiker sozlamalari sahifasi) -->
+        <section class="sx-mat-group" t-if="d.sticker_summary and d.sticker_summary.norms !== undefined">
+            <div class="sx-h-row">
+                <h2 class="sx-h"><i class="fa fa-tags"/> Stiker sozlamalari</h2>
+                <button class="btn btn-link cl-link" t-on-click="openStikerSozlama"><i t-att-class="d.sticker_summary.can_edit ? 'fa fa-pencil' : 'fa fa-eye'"/> <t t-esc="stikerBtnLabel"/></button>
+            </div>
+            <div class="cl-list" t-if="d.sticker_summary.choices.length">
+                <div class="cl-mat" t-foreach="d.sticker_summary.choices" t-as="c" t-key="c_index">
+                    <span class="cl-mat-main"><span class="cl-mat-name"><i class="fa fa-random cl-muted"/> <t t-esc="c"/></span></span>
+                </div>
+            </div>
+            <p class="cl-hint">
+                <t t-esc="d.sticker_summary.sections"/> ta profilga norma, <t t-esc="d.sticker_summary.types"/> ta stiker turi.
+                Qoida mos kelmasa — Medium (50 mic). Stiker sarfi bo'yash smenasidan avtomatik: dona × uzunlik × tomon.
+            </p>
+        </section>
         <section class="sx-mat-group" t-foreach="d.materials" t-as="g" t-key="g.key">
             <h2 class="sx-h"><i t-att-class="'fa ' + g.icon"/> <t t-esc="g.title"/> <span class="cl-muted" t-esc="g.rows.length"/></h2>
             <p class="cl-hint" t-if="g.note" t-esc="g.note"/>

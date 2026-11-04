@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_craf_paint_day" model="ir.sequence">
+            <field name="name">Craf kunlik bo'yash</field>
+            <field name="code">craf.paint.day</field>
+            <field name="prefix">BK-%(y)s-</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+
+    <record id="craf_paint_day_view_list" model="ir.ui.view">
+        <field name="name">craf.paint.day.list</field>
+        <field name="model">craf.paint.day</field>
+        <field name="arch" type="xml">
+            <list string="Kunlik bo'yash" decoration-info="state == 'draft'" decoration-muted="state == 'cancel'">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="employee_id" optional="show" widget="many2one_avatar_employee"/>
+                <field name="packs_total" sum="Jami"/>
+                <field name="pcs_total" sum="Jami"/>
+                <field name="kg_total" sum="Jami"/>
+                <field name="powder_total" sum="Jami"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="craf_paint_day_view_form" model="ir.ui.view">
+        <field name="name">craf.paint.day.form</field>
+        <field name="model">craf.paint.day</field>
+        <field name="arch" type="xml">
+            <form string="Kunlik bo'yash">
+                <header>
+                    <button name="action_confirm" type="object" string="Tasdiqlash" class="btn-primary" icon="fa-check"
+                            invisible="state != 'draft'"
+                            confirm="Tasdiqlansa, har rang va stiker uchun bo'yash smenasi yaratiladi, tayyor mahsulot omborga o'tadi. Davom etasizmi?"/>
+                    <button name="action_cancel" type="object" string="Bekor qilish" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Qoralamaga" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted">Kunlik bo'yash va qadoqlash</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="employee_id" readonly="state != 'draft'" widget="many2one_avatar_employee"/>
+                        </group>
+                        <group>
+                            <field name="packs_total"/>
+                            <field name="pcs_total"/>
+                            <field name="kg_total"/>
+                            <field name="powder_total"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Qadoqlangan profillar" name="lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="section_id" options="{'no_create': True}"/>
+                                    <field name="length_m"/>
+                                    <field name="color_id" options="{'no_create': True}"/>
+                                    <field name="logo_id" options="{'no_create': True}"/>
+                                    <field name="packs_text" optional="hide"/>
+                                    <field name="packs" sum="Jami"/>
+                                    <field name="extra"/>
+                                    <field name="per_pack" optional="show"/>
+                                    <field name="pcs" sum="Jami"/>
+                                    <field name="kg" sum="Jami" optional="show"/>
+                                    <field name="product_id" optional="show"/>
+                                    <field name="semi_product_id" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Bo'yoq sarfi" name="powder">
+                            <field name="powder_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="color_id" options="{'no_create': True}"/>
+                                    <field name="product_id"/>
+                                    <field name="qty" sum="Jami"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Bo'yash smenalari" name="batches" invisible="not batch_ids">
+                            <field name="batch_ids"/>
+                        </page>
+                    </notebook>
+                    <field name="note" placeholder="Izoh…"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_craf_paint_day" model="ir.actions.act_window">
+        <field name="name">Kunlik bo'yash</field>
+        <field name="res_model">craf.paint.day</field>
+        <field name="view_mode">list,form</field>
+        <field name="path">craf-kunlik-boyash</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Kunlik bo'yash yozuvi yo'q</p>
+            <p>Bo'yash xodimi telefonda yozadi: profil, rang, stiker (CRAF, Alusam), pachka va bo'yoq sarfi.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_craf_paint_day" name="Kunlik bo'yash" parent="craf_production.menu_craf_bolim_boyash"
+              action="action_craf_paint_day" sequence="5"/>
+</odoo>

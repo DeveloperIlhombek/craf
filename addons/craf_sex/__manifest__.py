@@ -1,6 +1,6 @@
 {
     "name": "Craf: sexlar (Press, Kimyo, Bo'yash) va rollar",
-    "version": "19.0.1.19.0",
+    "version": "19.0.1.22.0",
     "summary": "Press, kimyoviy ishlov, bo'yash va qadoqlash — telefon uchun sahifa; direktor, omborchi, sex ishchisi rollari",
     "description": """
 Sexlar sahifasi (Craf → Sexlar, /odoo/craf-sex), telefon birinchi:
@@ -35,13 +35,14 @@ Sahifalar rol bo'yicha:
     "author": "Craf",
     "category": "Manufacturing",
     "license": "LGPL-3",
-    "depends": ["craf_litey", "craf_sotuv", "maintenance", "spreadsheet_dashboard"],
+    "depends": ["craf_litey", "craf_sotuv", "craf_stiker", "maintenance", "spreadsheet_dashboard"],
     "data": [
         "security/craf_sex_security.xml",
         "security/ir.model.access.csv",
         "data/craf_menu_access.xml",
         "data/craf_inventory_menus.xml",
         "views/craf_sex_views.xml",
+        "views/craf_paint_day_views.xml",
         "views/craf_c1_views.xml",
         "views/craf_role_menus.xml",
     ],
@@ -50,6 +51,9 @@ Sahifalar rol bo'yicha:
             "craf_sex/static/src/sex/sex.scss",
             "craf_sex/static/src/sex/sex.js",
             "craf_sex/static/src/sex/sex.xml",
+            "craf_sex/static/src/stiker/sozlama.scss",
+            "craf_sex/static/src/stiker/sozlama.js",
+            "craf_sex/static/src/stiker/sozlama.xml",
             "craf_sex/static/src/kunlik/kunlik_yakun.xml",
             "craf_sex/static/src/loader_nav/loader_nav.scss",
             "craf_sex/static/src/loader_nav/loader_nav.js",

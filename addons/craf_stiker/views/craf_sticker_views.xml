@@ -311,26 +311,82 @@
         </field>
     </record>
 
-    <!-- Rang normalari: stiker yopishqoqligi -->
-    <record id="craf_color_view_list_boyash_norm_stiker" model="ir.ui.view">
-        <field name="name">craf.color.list.boyash.norm.stiker</field>
-        <field name="model">craf.color</field>
-        <field name="inherit_id" ref="craf_paint.craf_color_view_list_boyash_norm"/>
+    <!-- Stiker qoidalari: rang va/yoki profil → qalinlik (yopishqoqlik), logo -->
+    <record id="craf_sticker_choice_view_list" model="ir.ui.view">
+        <field name="name">craf.sticker.choice.list</field>
+        <field name="model">craf.sticker.choice</field>
         <field name="arch" type="xml">
-            <field name="craf_powder_norm" position="after">
-                <field name="craf_sticker_adhesion" string="Stiker"/>
-            </field>
+            <list string="Stiker qoidalari" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="color_ids" widget="many2many_tags" placeholder="hamma rang"/>
+                <field name="section_ids" widget="many2many_tags" placeholder="hamma profil" optional="show"/>
+                <field name="adhesion"/>
+                <field name="logo_id" optional="show"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
         </field>
     </record>
 
-    <record id="craf_color_view_form_boyash_norm_stiker" model="ir.ui.view">
-        <field name="name">craf.color.form.boyash.norm.stiker</field>
-        <field name="model">craf.color</field>
-        <field name="inherit_id" ref="craf_paint.craf_color_view_form_boyash_norm"/>
+    <record id="craf_sticker_choice_view_form" model="ir.ui.view">
+        <field name="name">craf.sticker.choice.form</field>
+        <field name="model">craf.sticker.choice</field>
         <field name="arch" type="xml">
-            <field name="craf_powder_norm" position="after">
-                <field name="craf_sticker_adhesion"/>
-            </field>
+            <form string="Stiker qoidasi">
+                <sheet>
+                    <widget name="web_ribbon" title="Arxivda" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <span class="text-muted">Stiker qoidasi</span>
+                        <h1><field name="summary" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Agar (bo'sh — hammasi)">
+                            <field name="color_ids" widget="many2many_tags" options="{'no_create': True}"
+                                   placeholder="hamma rang"/>
+                            <field name="section_ids" widget="many2many_tags" options="{'no_create': True}"
+                                   placeholder="hamma profil"/>
+                        </group>
+                        <group string="Unda stiker">
+                            <field name="adhesion" placeholder="o'zgarmaydi"/>
+                            <field name="logo_id" options="{'no_create': True}" placeholder="o'zgarmaydi"/>
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Izoh…"/>
+                    <p class="text-muted small mt-3">Bir nechta qoida mos kelsa — aniqrog'i ustun (profil + rang &gt;
+                        faqat profil &gt; faqat rang &gt; hamma uchun). Qoida mos kelmasa: Medium (50 mic), logo — kesim
+                        seriyasi (ALUSAM, CRAF) yoki smenadagi logo. Profil normasida aniq stiker tanlangan bo'lsa — har
+                        doim o'sha.</p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="craf_sticker_choice_view_search" model="ir.ui.view">
+        <field name="name">craf.sticker.choice.search</field>
+        <field name="model">craf.sticker.choice</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="color_ids"/>
+                <field name="section_ids"/>
+                <field name="logo_id"/>
+                <filter name="high" string="High (80 mic)" domain="[('adhesion', '=', 'high')]"/>
+                <filter name="medium" string="Medium (50 mic)" domain="[('adhesion', '=', 'medium')]"/>
+                <separator/>
+                <filter name="archived" string="Arxivda" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_craf_sticker_choice" model="ir.actions.act_window">
+        <field name="name">Stiker qoidalari</field>
+        <field name="res_model">craf.sticker.choice</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Stiker qoidasini qo'shing</p>
+            <p>Masalan: Antratsit bo'yoq → High (80 mic) stiker. Shart — rang va/yoki profil, natija — qalinlik
+                va/yoki logo.</p>
         </field>
     </record>
 </odoo>

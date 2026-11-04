@@ -245,6 +245,12 @@ class CrafStickerRule(models.Model):
     _section_width_uniq = models.Constraint("UNIQUE(section_id, width_mm)",
                                             "Bu kesim uchun shu kenglikdagi norma allaqachon bor.")
 
+    @api.depends("section_id.name", "width_mm", "sides")
+    def _compute_display_name(self):
+        for rule in self:
+            rule.display_name = "%s · %s mm · %s tomon" % (rule.section_id.display_name or "?", rule.width_mm,
+                                                           rule.sides)
+
     @api.onchange("sticker_id")
     def _onchange_sticker_id(self):
         if self.sticker_id:
@@ -256,3 +262,129 @@ class CrafStickerRule(models.Model):
             if rule.sticker_id and rule.sticker_id.width_mm != rule.width_mm:
                 raise UserError("%s: tanlangan stiker kengligi %s mm, normada %s mm." % (
                     rule.section_id.name, rule.sticker_id.width_mm, rule.width_mm))
+
+    @api.constrains("width_mm")
+    def _check_width_positive(self):
+        for rule in self:
+            if rule.width_mm <= 0:
+                raise UserError("Stiker kengligi musbat bo'lishi kerak (40, 52, 68 mm).")
+
+    @api.model
+    def _craf_norm_section(self, section):
+        """Normasi olinadigan kesim: o'zining normasi bo'lmasa va brend kesim bo'lsa (L ALUSAM, T CRAF —
+        seriyasi logo nomi) — oddiy kesimniki (L, T): profil bir xil, faqat stiker boshqa."""
+        if not section or self.search_count([("section_id", "=", section.id)]):
+            return section
+        if section.profile_type and self.env["craf.sticker.logo"]._craf_for_section(section):
+            base = self.env["craf.profile.section"].search([
+                ("profile_type", "=", section.profile_type), ("id", "!=", section.id)]).filtered(
+                lambda s: not (s.series or "").strip())[:1]
+            if base:
+                return base
+        return section
+
+    @api.model
+    def _craf_stickers_for(self, section, color, default_logo):
+        """Profil (kesim) va rang uchun qaysi stikerlar ketadi — bo'yash smenasi ham, «Tekshirish» ham shu bilan.
+
+        [{norm, sticker, width, sides, adhesion, logo, adhesion_rule, logo_rule, series_logo, explicit}]
+        - kenglik va tomon — profil normasidan (bitta profilga bir nechta kenglik bo'lishi mumkin);
+        - qalinlik (yopishqoqlik) — stiker qoidasidan (masalan, Antratsit → High 80 mic), qoida bo'lmasa Medium;
+        - logo — stiker qoidasidan, bo'lmasa kesim seriyasidan (ALUSAM, CRAF), bo'lmasa smenadagi logodan;
+        - normada aniq stiker tanlangan bo'lsa — har doim o'sha."""
+        Sticker = self.env["craf.sticker"]
+        adhesion_rule, logo_rule = self.env["craf.sticker.choice"]._craf_match(section, color)
+        adhesion = adhesion_rule.adhesion or "medium"
+        series_logo = self.env["craf.sticker.logo"]._craf_for_section(section)
+        logo = logo_rule.logo_id or series_logo or default_logo
+        result = []
+        for norm in self.search([("section_id", "=", self._craf_norm_section(section).id)]):
+            sticker = norm.sticker_id
+            if not sticker and logo:
+                sticker = Sticker.search([("logo_id", "=", logo.id), ("adhesion", "=", adhesion),
+                                          ("width_mm", "=", norm.width_mm)], limit=1)
+            result.append({
+                "norm": norm, "sticker": sticker, "width": norm.width_mm, "sides": int(norm.sides),
+                "adhesion": sticker.adhesion if norm.sticker_id else adhesion,
+                "logo": sticker.logo_id if norm.sticker_id else logo,
+                "adhesion_rule": adhesion_rule, "logo_rule": logo_rule, "series_logo": series_logo,
+                "explicit": bool(norm.sticker_id),
+            })
+        return result
+
+
+class CrafStickerChoice(models.Model):
+    """Stiker tanlash qoidasi: qaysi rang va/yoki profil uchun qanday stiker — qalinlik (yopishqoqlik) va logo.
+
+    Masalan: «J306 Антрацит → High (80 mic)», «ALUSAM profillari → Alusam logo». Bir nechta qoida mos kelsa —
+    aniqrog'i ustun (profil + rang > faqat profil > faqat rang > hamma uchun), teng bo'lsa — tartib raqami kichigi.
+    Qoida mos kelmasa: qalinlik — Medium (50 mic), logo — kesim seriyasi yoki smenadagi logo."""
+    _name = "craf.sticker.choice"
+    _description = "Stiker tanlash qoidasi"
+    _order = "sequence, id"
+
+    sequence = fields.Integer("Tartib", default=10,
+                              help="Bir xil aniqlikdagi qoidalar mos kelsa — kichik raqamlisi ishlaydi.")
+    active = fields.Boolean("Faol", default=True)
+    color_ids = fields.Many2many("craf.color", "craf_sticker_choice_color_rel", "choice_id", "color_id",
+                                 string="Ranglar", domain=[("is_painted", "=", True)],
+                                 help="Bo'sh — hamma rang.")
+    section_ids = fields.Many2many("craf.profile.section", "craf_sticker_choice_section_rel", "choice_id",
+                                   "section_id", string="Profillar", help="Bo'sh — hamma profil.")
+    adhesion = fields.Selection(ADHESION, string="Qalinlik (yopishqoqlik)",
+                                help="Shu holatda qaysi stiker: Medium (50 mic) yoki High (80 mic). "
+                                     "Bo'sh — qalinlikni o'zgartirmaydi.")
+    logo_id = fields.Many2one("craf.sticker.logo", string="Logo", ondelete="restrict",
+                              help="Bo'sh — logoni o'zgartirmaydi (kesim seriyasi yoki smenadagi logo).")
+    note = fields.Char("Izoh")
+    summary = fields.Char("Qoida", compute="_compute_summary")
+
+    @api.depends("color_ids.name", "section_ids.name", "adhesion", "logo_id.name")
+    def _compute_summary(self):
+        labels = dict(ADHESION)
+        for rec in self:
+            cond = []
+            cond.append(", ".join(rec.color_ids.mapped("name")) if rec.color_ids else "hamma rang")
+            if rec.section_ids:
+                cond.append(", ".join(rec.section_ids.mapped("name")))
+            result = []
+            if rec.adhesion:
+                result.append(labels[rec.adhesion])
+            if rec.logo_id:
+                result.append("logo %s" % rec.logo_id.name)
+            rec.summary = "%s → %s" % (" · ".join(cond), ", ".join(result) or "—")
+
+    @api.depends("summary")
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = rec.summary
+
+    @api.constrains("adhesion", "logo_id")
+    def _check_result(self):
+        for rec in self:
+            if not rec.adhesion and not rec.logo_id:
+                raise UserError("Qoida natijasini tanlang: stiker qalinligi va/yoki logo.")
+
+    @api.constrains("color_ids", "section_ids", "active")
+    def _check_duplicate(self):
+        for rec in self.filtered("active"):
+            same = self.search([("id", "!=", rec.id)]).filtered(
+                lambda r: r.color_ids == rec.color_ids and r.section_ids == rec.section_ids)
+            if same:
+                raise UserError("Shu shartli qoida allaqachon bor: %s. Uni tahrirlang." % same[0].summary)
+
+    @api.model
+    def _craf_match(self, section, color):
+        """(qalinlik qoidasi, logo qoidasi) — shu profil va rang uchun eng aniq mos qoidalar."""
+        best = {}
+        for rule in self.search([]):
+            if rule.color_ids and color not in rule.color_ids:
+                continue
+            if rule.section_ids and section not in rule.section_ids:
+                continue
+            key = (-(2 * bool(rule.section_ids) + bool(rule.color_ids)), rule.sequence, rule.id)
+            for field in ("adhesion", "logo_id"):
+                if rule[field] and (field not in best or key < best[field][0]):
+                    best[field] = (key, rule)
+        empty = self.browse()
+        return best.get("adhesion", (None, empty))[1], best.get("logo_id", (None, empty))[1]

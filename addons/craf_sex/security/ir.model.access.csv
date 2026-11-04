@@ -1,3 +1,13 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_maintenance_equipment_craf_worker,maintenance.equipment craf worker,maintenance.model_maintenance_equipment,craf_sex.group_craf_worker,1,0,0,0
 access_maintenance_equipment_category_craf_worker,maintenance.equipment.category craf worker,maintenance.model_maintenance_equipment_category,craf_sex.group_craf_worker,1,0,0,0
+access_craf_sticker_rule_craf_accountant,craf.sticker.rule omborchi,craf_stiker.model_craf_sticker_rule,craf_sex.group_craf_accountant,1,1,1,1
+access_craf_sticker_choice_craf_accountant,craf.sticker.choice omborchi,craf_stiker.model_craf_sticker_choice,craf_sex.group_craf_accountant,1,1,1,1
+access_craf_sticker_craf_accountant,craf.sticker omborchi,craf_stiker.model_craf_sticker,craf_sex.group_craf_accountant,1,1,1,1
+access_craf_sticker_logo_craf_accountant,craf.sticker.logo omborchi,craf_stiker.model_craf_sticker_logo,craf_sex.group_craf_accountant,1,1,1,1
+access_craf_paint_day_user,craf.paint.day user,model_craf_paint_day,base.group_user,1,0,0,0
+access_craf_paint_day_mrp,craf.paint.day mrp,model_craf_paint_day,mrp.group_mrp_user,1,1,1,1
+access_craf_paint_day_line_user,craf.paint.day.line user,model_craf_paint_day_line,base.group_user,1,0,0,0
+access_craf_paint_day_line_mrp,craf.paint.day.line mrp,model_craf_paint_day_line,mrp.group_mrp_user,1,1,1,1
+access_craf_paint_day_powder_user,craf.paint.day.powder user,model_craf_paint_day_powder,base.group_user,1,0,0,0
+access_craf_paint_day_powder_mrp,craf.paint.day.powder mrp,model_craf_paint_day_powder,mrp.group_mrp_user,1,1,1,1
