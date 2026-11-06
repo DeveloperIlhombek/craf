@@ -30,6 +30,8 @@ class ResUsers(models.Model):
         Shunday xodim faqat o'z ilovasini ko'radi, bosh sahifasi majburiy, telefonda pastki panel bor.
         Boshqa modullar (masalan, craf_matritsa) o'z ish joyini qo'shadi."""
         return {
+            "press": {"menu": "craf_sex.menu_craf_press_root", "action": "craf_sex.action_craf_sex_press_own",
+                      "counts": ["craf.sex", "nav_counts"]},
             "kimyo": {"menu": "craf_sex.menu_craf_kimyo_root", "action": "craf_sex.action_craf_sex_kimyo",
                       "counts": ["craf.sex", "nav_counts"]},
             "boyash": {"menu": "craf_sex.menu_craf_boyash_root", "action": "craf_sex.action_craf_sex_boyash_own",
@@ -47,8 +49,9 @@ class ResUsers(models.Model):
 
     def _craf_own_nav(self, key):
         """Pastki panel bandlari (shaxsiy ilova)."""
-        from .craf_loader_nav import boyash_nav_items, kimyo_nav_items
-        return {"kimyo": kimyo_nav_items, "boyash": boyash_nav_items}.get(key, lambda env: [])(self.env)
+        from .craf_loader_nav import boyash_nav_items, kimyo_nav_items, press_nav_items
+        return {"press": press_nav_items, "kimyo": kimyo_nav_items, "boyash": boyash_nav_items}.get(
+            key, lambda env: [])(self.env)
 
     def _craf_is_kimyo_only(self):
         """Kimyo xodimi: faqat «Kimyo» ilovasi, pastki panel, bosh sahifa — kimyo sahifasi."""

@@ -599,7 +599,8 @@
         <!-- f, opts: sana, smena, mas'ul, uskuna -->
         <div class="cl-field-row">
             <label class="cl-field"><span>Sana</span><input type="date" class="form-control" t-model="f.date" t-att-max="state.data.today"/></label>
-            <div class="cl-field">
+            <!-- press: smena Kunduzgi / Tungi (craf.press.smena) alohida tanlanadi — raqamli smena ko'rinmaydi -->
+            <div class="cl-field" t-if="opts.shifts and opts.shifts.length">
                 <span>Smena</span>
                 <div class="cl-seg cl-seg-full" role="group">
                     <button t-foreach="opts.shifts" t-as="sh" t-key="sh.key" t-att-class="{ active: f.shift === sh.key }" t-on-click="() => f.shift = sh.key" t-esc="sh.key"/>
@@ -677,11 +678,20 @@
             <t t-set="sub" t-value="f.id ? 'Smena oxirida quyma sarfi, питак va brakni yozib tasdiqlang' : &quot;Korzinkalar smena davomida qo'shiladi&quot;"/>
         </t>
         <div class="cl-sheet-body">
+            <div class="cl-field" t-if="s.o.smenas.length">
+                <span>Smena</span>
+                <div class="cl-seg cl-seg-full" role="group">
+                    <button t-foreach="s.o.smenas" t-as="sm" t-key="sm.id" t-att-class="{ active: eq(f.smena_id, sm.id) }"
+                            t-on-click="() => this.pickSmena(f, sm)">
+                        <t t-esc="sm.name"/><small class="d-block" t-if="sm.time" t-esc="sm.time"/>
+                    </button>
+                </div>
+            </div>
             <t t-call="craf_sex.CommonFields"/>
             <label class="cl-field">
-                <span>Matritsa (profil kesimi)</span>
-                <select class="form-select" t-model="f.section_id" t-att-disabled="f.loads and f.loads.length">
-                    <option value="">Tanlang</option>
+                <span>Asosiy profil (ixtiyoriy — har korzinkada o'zi tanlanadi)</span>
+                <select class="form-select" t-model="f.section_id">
+                    <option value="">—</option>
                     <option t-foreach="s.o.sections" t-as="sc" t-key="sc.id" t-att-value="sc.id" t-att-selected="eq(f.section_id, sc.id)">
                         <t t-esc="sc.name"/> — <t t-esc="num(sc.kg_m, 3)"/> kg/m
                     </option>
@@ -716,11 +726,12 @@
                 <label class="cl-field"><span>Ish vaqti, soat</span><input type="text" inputmode="decimal" class="form-control" t-model="f.duration"/></label>
             </div>
             <div class="cl-field-row">
-                <label class="cl-field"><span>Press qoldig'i (питак), kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.rest_text" placeholder="0"/></label>
-                <label class="cl-field"><span>Brak profil, kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.scrap_text" placeholder="0"/></label>
+                <label class="cl-field"><span>Otxod (brak profil), kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.scrap_text" placeholder="0"/></label>
+                <label class="cl-field"><span>Питак, kg</span><input type="text" inputmode="tel" class="form-control" t-model="f.rest_text" placeholder="0"/></label>
             </div>
             <div class="sx-preview" t-if="pv.billet or pv.kg">
                 <div class="cl-kv"><span>Profil chiqdi</span><b><t t-esc="num(pv.kg, 1)"/> kg · <t t-esc="num(pv.pcs, 0)"/> dona</b></div>
+                <div class="cl-kv" t-if="pv.net"><span>Netto (ИТОГО), <t t-esc="pv.baskets"/> korzinka</span><b><t t-esc="num(pv.net, 1)"/> kg</b></div>
                 <div class="cl-kv" t-if="pv.billet"><span>Chiqish</span><b t-att-class="pv.yield &gt;= 80 ? 'cl-ok' : (pv.yield &gt;= 75 ? 'cl-warn' : 'cl-bad')"><t t-esc="num(pv.yield, 1)"/>%</b></div>
                 <div class="cl-kv cl-kv-total" t-if="pv.billet"><span>Hisobga olinmagan farq</span><b t-att-class="{ 'cl-bad': pv.loss &lt; -0.05 }"><t t-esc="num(pv.loss, 1)"/> kg</b></div>
             </div>
@@ -738,26 +749,60 @@
         <t t-set="bp" t-value="basketPreview(s)"/>
         <t t-call="craf_sex.Head">
             <t t-set="title" t-value="f.load_id ? 'Korzinka' : &quot;Korzinka to'ldirish&quot;"/>
-            <t t-set="sub" t-value="s.title + (s.sec ? ' · ' + s.sec.name : '')"/>
+            <t t-set="sub" t-value="s.title"/>
         </t>
         <div class="cl-sheet-body">
-            <label class="cl-field">
-                <span>Korzinka</span>
-                <select class="form-select" t-model="f.basket_id">
-                    <option t-foreach="s.baskets" t-as="b" t-key="b.id" t-att-value="b.id" t-att-selected="eq(f.basket_id, b.id)">
-                        <t t-esc="b.name"/><t t-if="b.tare"> — o'zi <t t-esc="num(b.tare, 1)"/> kg</t>
-                    </option>
-                </select>
-            </label>
+            <!-- daftardagi qator: Karzinka № (o'z og'irligi), Profil, KG 1 dona, Kryuchok, Palka, 6 m / 5 m, Profil +, Brutto -->
+            <div class="cl-field-row">
+                <label class="cl-field">
+                    <span>Korzinka №</span>
+                    <select class="form-select" t-model="f.basket_id" t-on-change="() => this.onBasketPick(s)">
+                        <option t-foreach="s.baskets" t-as="b" t-key="b.id" t-att-value="b.id" t-att-selected="eq(f.basket_id, b.id)" t-esc="b.name"/>
+                    </select>
+                </label>
+                <label class="cl-field"><span>Korzinka, kg</span><input type="text" inputmode="decimal" class="form-control" t-model="f.tare_text" placeholder="104"/></label>
+            </div>
+            <div class="cl-field-row">
+                <label class="cl-field">
+                    <span>Profil</span>
+                    <select class="form-select" t-model="f.section_id" t-on-change="() => this.onBasketSection(s)">
+                        <option value="">Tanlang</option>
+                        <option t-foreach="s.o.sections" t-as="sc" t-key="sc.id" t-att-value="sc.id" t-att-selected="eq(f.section_id, sc.id)" t-esc="sc.name"/>
+                    </select>
+                </label>
+                <label class="cl-field"><span>KG 1 dona (6 m)</span><input type="text" inputmode="decimal" class="form-control" t-model="f.piece_text"/></label>
+            </div>
             <div class="cl-field-row">
                 <label class="cl-field"><span>6 m, dona</span><input type="text" inputmode="numeric" class="form-control sx-big-input" t-model="f.qty_6" placeholder="0"/></label>
-                <label class="cl-field" t-if="!s.sec or s.sec.has5"><span>5 m, dona</span><input type="text" inputmode="numeric" class="form-control sx-big-input" t-model="f.qty_5" placeholder="0"/></label>
+                <label class="cl-field" t-if="bp.has5"><span>5 m, dona</span><input type="text" inputmode="numeric" class="form-control sx-big-input" t-model="f.qty_5" placeholder="0"/></label>
             </div>
-            <label class="cl-field"><span>Tortildi (korzinka bilan), kg</span><input type="text" inputmode="tel" class="form-control sx-big-input" t-model="f.gross_text" placeholder="ixtiyoriy"/></label>
+            <div class="cl-field-row">
+                <label class="cl-field"><span>Kryuchok, kg</span><input type="text" inputmode="decimal" class="form-control" t-model="f.hook_text"/></label>
+                <label class="cl-field"><span>Palka, kg</span><input type="text" inputmode="decimal" class="form-control" t-model="f.stick_text"/></label>
+            </div>
+            <button class="btn btn-link px-0" t-if="!s.extraOpen" t-on-click="() => this.toggleExtra(s)"><i class="fa fa-plus"/> Ikkinchi profil (Профил номи +)</button>
+            <t t-else="">
+                <t t-set="exs" t-value="basketSec(s, f.extra_section_id)"/>
+                <div class="cl-field-row">
+                    <label class="cl-field">
+                        <span>Ikkinchi profil</span>
+                        <select class="form-select" t-model="f.extra_section_id">
+                            <option value="">Tanlang</option>
+                            <option t-foreach="s.o.sections" t-as="sc" t-key="sc.id" t-att-value="sc.id" t-att-selected="eq(f.extra_section_id, sc.id)" t-esc="sc.name"/>
+                        </select>
+                    </label>
+                    <button class="cl-icon-btn align-self-end" t-on-click="() => this.toggleExtra(s)" aria-label="Ikkinchi profilni olib tashlash"><i class="fa fa-trash-o"/></button>
+                </div>
+                <div class="cl-field-row">
+                    <label class="cl-field"><span>6 m, dona</span><input type="text" inputmode="numeric" class="form-control" t-model="f.extra_qty_6" placeholder="0"/></label>
+                    <label class="cl-field" t-if="!exs or exs.has5"><span>5 m, dona</span><input type="text" inputmode="numeric" class="form-control" t-model="f.extra_qty_5" placeholder="0"/></label>
+                </div>
+            </t>
+            <label class="cl-field"><span>Brutto (korzinka bilan tortildi), kg</span><input type="text" inputmode="tel" class="form-control sx-big-input" t-model="f.gross_text" placeholder="ixtiyoriy"/></label>
             <div class="sx-preview">
-                <div class="cl-kv"><span>Jami</span><b t-att-class="{ 'cl-bad': bp.over }"><t t-esc="bp.pcs"/> dona<t t-if="bp.capacity"> / <t t-esc="bp.capacity"/></t></b></div>
+                <div class="cl-kv"><span>Jami</span><b><t t-esc="bp.pcs"/> dona</b></div>
                 <div class="cl-kv"><span>Nazariy og'irlik</span><b><t t-esc="num(bp.theory, 1)"/> kg</b></div>
-                <div class="cl-kv" t-if="bp.net"><span>Profillar (netto)</span><b><t t-esc="num(bp.net, 1)"/> kg</b></div>
+                <div class="cl-kv" t-if="bp.net"><span>Netto (brutto − korzinka − kryuchok − palka)</span><b><t t-esc="num(bp.net, 1)"/> kg</b></div>
                 <div class="cl-kv cl-kv-total" t-if="bp.net"><span>Farq</span><b t-att-class="Math.abs(bp.diff) &gt; bp.theory * 0.05 ? 'cl-warn' : ''"><t t-esc="signed(bp.diff, 1)"/> kg</b></div>
             </div>
         </div>
@@ -950,6 +995,7 @@
             <button class="btn btn-outline-primary" t-if="dd.actions.includes('basket')" t-on-click="() => this.docBasket(dd)"><i class="fa fa-plus"/> Korzinka</button>
             <button class="btn btn-primary" t-if="dd.actions.includes('to_stock')" t-on-click="() => this.docAction(dd, 'to_stock')">Omborga topshirish</button>
             <button class="btn btn-outline-primary" t-if="dd.actions.includes('edit')" t-on-click="() => this.docEdit(dd)">Tahrirlash</button>
+            <button class="btn btn-outline-primary" t-if="dd.actions.includes('reopen')" t-on-click="() => this.docAction(dd, 'reopen')">Tahrirlash</button>
             <button class="btn btn-primary" t-if="dd.actions.includes('done')" t-on-click="() => this.docAction(dd, 'done')">Tasdiqlash</button>
         </div>
     </t>

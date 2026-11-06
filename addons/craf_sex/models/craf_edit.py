@@ -7,6 +7,7 @@ o'zgardi (oldin → keyin); hujjatning o'z tarixida (chatter) ham ko'rinadi.
 Tasdiqlangan hujjat tahriri bitta tranzaksiyada: eski ombor harakatlari teskari harakat bilan bekor qilinadi va
 yangi qiymatlar bilan qayta tasdiqlanadi — biror tekshiruv o'tmasa, hech narsa o'zgarmaydi.
 """
+import json
 from datetime import timedelta
 
 from markupsafe import Markup
@@ -17,7 +18,8 @@ from odoo.exceptions import UserError
 from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
 
 EDIT_HOURS = 24
-EDIT_SECTIONS = [("kimyo", "Kimyoviy ishlov"), ("matritsa", "Matritsa"), ("boyash", "Bo'yash va qadoqlash")]
+EDIT_SECTIONS = [("press", "Press"), ("kimyo", "Kimyoviy ishlov"), ("matritsa", "Matritsa"),
+                 ("boyash", "Bo'yash va qadoqlash")]
 EDIT_KINDS = [("edit", "Tahrirlandi"), ("cancel", "O'chirildi")]
 MANAGER_GROUPS = ("craf_sex.group_craf_accountant", "craf_sex.group_craf_director", "base.group_system")
 
@@ -228,3 +230,51 @@ class CrafChemTreatmentEdit(models.Model):
         res = super().action_done()
         self.filtered(lambda r: r.state == "done" and not r.craf_entered_at).craf_entered_at = fields.Datetime.now()
         return res
+
+
+class CrafExtrusionShiftEdit(models.Model):
+    """Press smenasi (press xodimi, 2026-11-06): korzinkalar alohida saqlangani uchun tahrir ikki qadamda —
+    «Tahrirlash» smenani qoralamaga qaytaradi (ombor harakatlari teskari harakat bilan bekor qilinadi, oldingi
+    holat eslab qolinadi), xodim korzinkalarni tuzatib qayta tasdiqlaydi — shunda jurnalga yoziladi."""
+    _name = "craf.extrusion.shift"
+    _inherit = ["craf.extrusion.shift", "craf.edit.mixin"]
+
+    _craf_edit_section = "press"
+    _craf_edit_what = "Press smenasi"
+
+    craf_edit_before = fields.Text("Tahrirdan oldingi holat", copy=False, readonly=True)
+
+    def _craf_edit_snapshot(self):
+        res = {"Sana": self._craf_date_text(self.date), "Smena": self.smena_id.name or self.shift or "",
+               "Otxod (brak profil)": self._craf_qty_text(self.scrap_qty, "kg"),
+               "Питак": self._craf_qty_text(self.rest_qty, "kg"), "Izoh": self.note or ""}
+        for load in self.basket_load_ids.sorted("id"):
+            res["Korzinka %s" % load.basket_id.name] = "%s; brutto %s" % (
+                load.content or "", self._craf_qty_text(load.gross_kg, "kg"))
+        return res
+
+    def action_done(self):
+        res = super().action_done()
+        for rec in self.filtered(lambda r: r.state == "done"):
+            if not rec.craf_entered_at:
+                rec.craf_entered_at = fields.Datetime.now()
+            if rec.craf_edit_before:
+                before = json.loads(rec.craf_edit_before)
+                rec.craf_edit_before = False
+                rec._craf_log_edit(before)
+        return res
+
+    def _craf_edit_reopen(self):
+        """Tasdiqlangan smenani tahrirlash uchun qoralamaga qaytaradi (24 soat / rahbar)."""
+        self.ensure_one()
+        self._craf_check_edit()
+        before = self._craf_edit_snapshot()
+        self.action_reopen()
+        self.craf_edit_before = json.dumps(before, ensure_ascii=False)
+        return True
+
+    def unlink(self):
+        # tahrirga ochilgan smena o'chirilsa — jurnalda «O'chirildi»
+        for rec in self.filtered(lambda r: r.craf_edit_before):
+            rec._craf_log_edit(json.loads(rec.craf_edit_before), kind="cancel")
+        return super().unlink()

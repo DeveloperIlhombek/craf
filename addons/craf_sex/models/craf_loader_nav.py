@@ -19,6 +19,17 @@ def loader_nav_items(env):
     ]
 
 
+def press_nav_items(env):
+    # press xodimi: ochiq smena va korzinkalar / hujjatlar / sexdagi qoldiq
+    ctx = {"craf_stage": "press"}
+    return [
+        {"key": "ish", "label": "Smena", "icon": "fa-cogs", "tab": "ish", "tag": "craf_sex", "context": ctx},
+        {"key": "hujjat", "label": "Hujjatlar", "icon": "fa-list-ul", "tab": "hujjat", "tag": "craf_sex",
+         "context": ctx},
+        {"key": "qoldiq", "label": "Qoldiq", "icon": "fa-archive", "tab": "qoldiq", "tag": "craf_sex", "context": ctx},
+    ]
+
+
 def kimyo_nav_items(env):
     # kimyo sahifasining o'z varaqlari (Ish / Hujjatlar / Qoldiq) — telefonda pastki panelda
     ctx = {"craf_stage": "kimyo"}

@@ -84,9 +84,12 @@ class CrafSex(models.AbstractModel):
     @api.model
     def nav_counts(self):
         """Telefondagi pastki panel belgisi: kimyo — kutayotgan korzinkalar, bo'yash — sexdagi bo'yalmagan profillar."""
-        if self.env.user._craf_own_app() == "boyash":
+        own = self.env.user._craf_own_app()
+        if own == "boyash":
             semis = [r for r in self._stock("boyash")["rows"] if r["kind"] == "semi" and r["qty"] > 0]
             return {"ish": len(semis)}
+        if own == "press":  # ochiq (tasdiqlanmagan) smenalar
+            return {"ish": self.env["craf.extrusion.shift"].search_count([("state", "=", "draft")])}
         return {"ish": self.env["craf.basket.load"].search_count(
             [("state", "=", "press"), ("shift_state", "=", "done")])}
 
@@ -210,7 +213,9 @@ class CrafSex(models.AbstractModel):
             "date_label": rec.date.strftime("%d.%m.%Y"), "state": rec.state,
             "state_label": STATE_LABELS.get(rec.state, rec.state), "c1": rec.c1_state,
             "who": rec.employee_id.sudo().name or "", "equipment": rec.equipment_id.sudo().name or "",
-            "shift": dict(SHIFTS).get(rec.shift, ""),
+            # press: Kunduzgi / Tungi smena nomi (bo'lsa), qolganlarda — 1/2/3-smena
+            "shift": (rec.smena_id.name if "smena_id" in rec._fields and rec.smena_id else
+                      dict(SHIFTS).get(rec.shift, "")),
         }
         res.update(getattr(self, "_card_%s" % stage)(rec))
         return res
@@ -218,7 +223,8 @@ class CrafSex(models.AbstractModel):
     def _card_press(self, rec):
         loads = rec.basket_load_ids
         return {
-            "title": " · ".join(x for x in [rec.equipment_id.sudo().name, rec.section_id.name] if x) or "Press smenasi",
+            "title": " · ".join(x for x in [rec.smena_id.name, rec.equipment_id.sudo().name, rec.section_id.name]
+                                if x) or "Press smenasi",
             "sub": "%s dona · %s kg" % (_q(rec.output_pcs), _q(rec.output_kg)) if rec.state == "done" else
             "%s ta korzinka · %s dona" % (len(loads), _q(sum(loads.mapped("pcs_total")))),
             "metric": "chiqish %s%%" % fmt(rec.yield_pct, 1) if rec.state == "done" and rec.yield_pct else "",
@@ -322,9 +328,14 @@ class CrafSex(models.AbstractModel):
                     quantities[line.target_product_id] = quantities.get(line.target_product_id, 0) - line.qty
         products = [{"id": p.id, "name": p.name, "qty": q, "length": p.craf_length_m}
                     for p, q in quantities.items() if q]
+        extra = load.extra_line_ids[:1]
         return {
             "id": load.id, "basket_id": load.basket_id.id, "basket": load.basket_id.name,
             "content": load.content or "", "section": load.section_id.name or "",
+            "section_id": load.section_id.id or False, "piece_kg": load.piece_kg, "hook": load.hook_kg,
+            "stick": load.stick_kg, "tare": load.tare_kg,
+            "extra_section_id": extra.section_id.id or False, "extra_qty_6": extra.qty_6 or "",
+            "extra_qty_5": extra.qty_5 or "",
             "qty_6": load.qty_6, "qty_5": load.qty_5, "pcs": load.pcs_total,
             "gross": load.gross_kg, "net": load.net_kg, "theory": round(load.kg_theory, 1),
             "kg": round(load.net_kg or load.kg_theory, 1), "diff": round(load.kg_diff, 1),
@@ -406,17 +417,24 @@ class CrafSex(models.AbstractModel):
                 "direct": [i for i in items if i["sale_ok"]],
             })
         billets = self.env["product.product"].search([("default_code", "in", ("XA-09", "XA-02"))], order="default_code desc")
+        smenas = self.env["craf.press.smena"].search([])
         return {
             "today": fields.Date.to_string(fields.Date.context_today(self)),
             "presses": self._equipment("press"),
             "sections": sections,
             "employees": self._employees(),
-            "shifts": [{"key": k, "label": v} for k, v in SHIFTS],
+            # Kunduzgi / Tungi smena bo'lsa — raqamli smena (1/2/3) tanlanmaydi
+            "shifts": [] if smenas else [{"key": k, "label": v} for k, v in SHIFTS],
             "billets": [{"id": b.id, "name": b.name, "code": b.default_code,
                          "avail": round(b.with_context(location=press_loc.id).qty_available, 1) if press_loc else 0.0}
                         for b in billets],
             "baskets": [{"id": b.id, "name": b.name, "tare": b.tare_kg, "capacity": b.capacity}
                         for b in self.env["craf.basket"].search([("state", "=", "empty")], order="name")],
+            # daftardagi smena (Kunduzgi / Tungi) — ish vaqti, press va mas'ul smenadan
+            "smenas": [{"id": s.id, "name": s.name, "time": s.time_text or "", "duration": s.duration,
+                        "equipment_id": s.equipment_id.id or False}
+                       for s in smenas],
+            "my_employee": self._own_employee(),
         }
 
     @api.model
@@ -429,7 +447,7 @@ class CrafSex(models.AbstractModel):
         return {
             "id": rec.id, "name": rec.name, "state": rec.state, "date": fields.Date.to_string(rec.date),
             "equipment_id": rec.equipment_id.id or False, "section_id": rec.section_id.id or False,
-            "shift": rec.shift, "employee_id": rec.employee_id.id or False,
+            "shift": rec.shift, "employee_id": rec.employee_id.id or False, "smena_id": rec.smena_id.id or False,
             "billet_product_id": rec.billet_product_id.id or False,
             "billet_text": _q(rec.billet_qty, 1) if rec.billet_qty else "",
             "rest_text": _q(rec.rest_qty, 1) if rec.rest_qty else "",
@@ -444,15 +462,14 @@ class CrafSex(models.AbstractModel):
         rec = Shift.browse(int(vals["id"])).exists() if vals.get("id") else Shift
         if vals.get("id"):
             self._check_draft(rec)
+        # matritsa (asosiy profil) ixtiyoriy: har korzinka o'z profilini oladi, tasdiqda eng ko'p chiqqani olinadi
         section = self.env["craf.profile.section"].browse(int(vals.get("section_id") or 0)).exists()
-        if not section:
-            raise UserError("Matritsani (profil kesimini) tanlang.")
-        if rec and rec.basket_load_ids and rec.section_id != section:
-            raise UserError("Smenada korzinkalar bor — matritsani o'zgartirib bo'lmaydi. Yangi smena oching.")
+        smena = self.env["craf.press.smena"].browse(int(vals.get("smena_id") or 0)).exists()
         header = {
             "date": vals.get("date") or fields.Date.context_today(self),
-            "equipment_id": int(vals["equipment_id"]) if vals.get("equipment_id") else False,
-            "section_id": section.id,
+            "equipment_id": int(vals["equipment_id"]) if vals.get("equipment_id") else (smena.equipment_id.id or False),
+            "section_id": section.id or False,
+            "smena_id": smena.id or False,
             "shift": vals.get("shift") or "1",
             "employee_id": int(vals["employee_id"]) if vals.get("employee_id") else self._own_employee(),
             "billet_qty": self._num(vals.get("billet_text"), "Quyma sarfi"),
@@ -492,13 +509,32 @@ class CrafSex(models.AbstractModel):
         qty_6, qty_5 = self._int(vals.get("qty_6")), self._int(vals.get("qty_5"))
         if not qty_6 and not qty_5:
             raise UserError("Korzinkadagi dona sonini yozing (6 m yoki 5 m).")
+        Section = self.env["craf.profile.section"]
+        # daftardagidek: har korzinka — o'z profili (tanlanmasa, smena matritsasi)
+        section = Section.browse(int(vals.get("section_id") or 0)).exists() or load.section_id or shift.section_id
+        if not section:
+            raise UserError("Profilni tanlang.")
         data = {
             "basket_id": int(vals.get("basket_id") or 0) or load.basket_id.id,
+            "section_id": section.id,
             "qty_6": qty_6, "qty_5": qty_5,
-            "gross_kg": self._num(vals.get("gross_text"), "Tortilgan og'irlik"),
+            "gross_kg": self._num(vals.get("gross_text"), "Brutto"),
         }
+        for key, field, label in (("piece_text", "piece_kg", "KG 1 dona"), ("hook_text", "hook_kg", "Kryuchok"),
+                                  ("stick_text", "stick_kg", "Palka"), ("tare_text", "tare_kg", "Korzinka og'irligi")):
+            if vals.get(key) not in (None, ""):
+                data[field] = self._num(vals.get(key), label)
         if not data["basket_id"]:
             raise UserError("Korzinkani tanlang.")
+        # «Профил номи +» — shu korzinkadagi ikkinchi profil
+        extra_section = Section.browse(int(vals.get("extra_section_id") or 0)).exists()
+        e6, e5 = self._int(vals.get("extra_qty_6")), self._int(vals.get("extra_qty_5"))
+        extra = [Command.clear()]
+        if extra_section and (e6 or e5):
+            extra.append(Command.create({"section_id": extra_section.id, "qty_6": e6, "qty_5": e5}))
+        elif extra_section:
+            raise UserError("Ikkinchi profil (%s) donasini yozing yoki uni olib tashlang." % extra_section.name)
+        data["extra_line_ids"] = extra
         if load:
             load.write(data)
         else:
@@ -1296,12 +1332,14 @@ class CrafSex(models.AbstractModel):
                               "qty": "%s dona" % load.pcs_total,
                               "note": "%s kg (nazariy %s)" % (_q(load.net_kg or load.kg_theory, 1), _q(load.kg_theory, 1))})
             for line in rec.line_ids.filtered(lambda l: l.pcs):
-                if line.product_id in rec.basket_load_ids.product_6_id | rec.basket_load_ids.product_5_id:
+                loads = rec.basket_load_ids
+                if line.product_id in (loads.product_6_id | loads.product_5_id | loads.extra_line_ids.product_6_id
+                                       | loads.extra_line_ids.product_5_id):
                     continue
                 lines.append({"name": line.product_id.name, "qty": "%s dona" % line.pcs,
                               "note": "%s kg → %s" % (_q(line.kg, 1), line.location_dest_id.name or "")})
             outputs = [("Quyma sarfi", "%s kg" % _q(rec.billet_qty, 1)), ("Profil", "%s kg" % _q(rec.output_kg, 1)),
-                       ("Питак", "%s kg" % _q(rec.rest_qty, 1)), ("Brak", "%s kg" % _q(rec.scrap_qty, 1)),
+                       ("Питак", "%s kg" % _q(rec.rest_qty, 1)), ("Otxod (brak profil)", "%s kg" % _q(rec.scrap_qty, 1)),
                        ("Chiqish", "%s%%" % fmt(rec.yield_pct, 1)), ("Farq", "%s kg" % _q(rec.loss_qty, 1))]
         elif stage == "kimyo":
             for load in rec.load_ids:
@@ -1345,7 +1383,7 @@ class CrafSex(models.AbstractModel):
                 self._H._local(rec.c1_date) if rec.c1_date else "", (", " + rec.c1_user_id.name) if rec.c1_user_id else "")))
         roles = self._roles()
         packs = self.env["craf.pack"].search_count([("origin", "=", rec.name)]) if rec.state == "done" else 0
-        edit = rec._craf_edit_info() if stage == "kimyo" and rec.state == "done" else False
+        edit = rec._craf_edit_info() if stage in ("kimyo", "press") and rec.state == "done" else False
         actions = []
         if rec.state == "draft":
             actions += ["edit", "done", "cancel", "delete"]
@@ -1361,7 +1399,8 @@ class CrafSex(models.AbstractModel):
             if roles["accountant"]:
                 actions.append("c1_undo" if rec.c1_state == "done" else "c1")
             if edit and edit["can"]:
-                actions += ["edit", "void"]
+                # press: «Tahrirlash» smenani qoralamaga qaytaradi (korzinkalar alohida tuzatiladi)
+                actions += ["reopen"] if stage == "press" else ["edit", "void"]
         if not roles["own"]:
             actions.append("open")
         return {
@@ -1370,7 +1409,7 @@ class CrafSex(models.AbstractModel):
             "meta": meta, "lines": lines, "outputs": outputs, "actions": actions, "packs": packs,
             "c1": rec.c1_state, "note": rec.note or "",
             "loads": card.get("loads", []), "section_id": card.get("section_id") or False,
-            "edit": edit, "history": rec._craf_edit_history() if stage == "kimyo" else [],
+            "edit": edit, "history": rec._craf_edit_history() if stage in ("kimyo", "press") else [],
         }
 
     @api.model
@@ -1388,6 +1427,13 @@ class CrafSex(models.AbstractModel):
             if stage != "kimyo":
                 raise UserError("Bu amal faqat kimyoviy ishlov uchun.")
             return self._chem_cancel(rec)
+        elif action == "reopen":
+            if stage != "press" or rec.state != "done":
+                raise UserError("Bu amal faqat tasdiqlangan press smenasi uchun.")
+            since = self._last_move_id()
+            self._H._check_lock(self._touched_products(rec), self._H._moment(rec.date), rec.name)
+            rec._craf_edit_reopen()
+            self._edit_guard(since)
         elif action == "delete":
             if rec.state not in ("draft", "cancel"):
                 raise UserError("Faqat qoralama yoki bekor qilingan hujjat o'chiriladi.")

@@ -367,18 +367,31 @@ export class CrafSex extends Component {
                 f = await this.orm.call(API, "press_load", [id]);
             } else {
                 const last = this.state.data.docs.find((d) => d.equipment) || {};
+                // smena soatga qarab: 8:00–20:00 — kunduzgi, aks holda tungi
+                const hour = new Date().getHours();
+                const smena = o.smenas.find((x) => (hour >= 8 && hour < 20 ? /kun/i : /tun/i).test(x.name)) || o.smenas[0] || {};
                 f = {
-                    id: false, date: o.today, equipment_id: (o.presses[0] || {}).id || false, section_id: false,
-                    shift: "1", employee_id: false, billet_product_id: (o.billets[0] || {}).id || false,
-                    billet_text: "", rest_text: "", scrap_text: "", duration: 11, note: "", direct: [], loads: [],
+                    id: false, date: o.today, equipment_id: smena.equipment_id || (o.presses[0] || {}).id || false,
+                    section_id: false, smena_id: smena.id || false,
+                    shift: "1", employee_id: o.my_employee || false, billet_product_id: (o.billets[0] || {}).id || false,
+                    billet_text: "", rest_text: "", scrap_text: "", duration: smena.duration || 11, note: "", direct: [], loads: [],
                 };
                 const eq = o.presses.find((p) => p.name === last.equipment);
-                if (eq) {
+                if (eq && !smena.equipment_id) {
                     f.equipment_id = eq.id;
                 }
             }
             this.openSheet({ type: "press", o, f, sectionQuery: "" });
         });
+    }
+    pickSmena(f, sm) {
+        f.smena_id = sm.id;
+        if (sm.duration) {
+            f.duration = sm.duration;
+        }
+        if (sm.equipment_id) {
+            f.equipment_id = sm.equipment_id;
+        }
     }
     sectionOf(f) {
         return (this.opts.press && this.opts.press.sections.find((s) => s.id === Number(f.section_id))) || null;
@@ -400,9 +413,11 @@ export class CrafSex extends Component {
         const sec = this.sectionOf(f);
         let kg = 0;
         let pcs = 0;
+        let net = 0; // daftardagi «ИТОГО» — korzinkalar nettosi
         for (const l of f.loads || []) {
             kg += l.net || l.theory;
             pcs += l.pcs;
+            net += l.net || 0;
         }
         if (sec) {
             for (const r of f.direct) {
@@ -417,18 +432,18 @@ export class CrafSex extends Component {
         const rest = parseSum(f.rest_text) || 0;
         const scrap = parseSum(f.scrap_text) || 0;
         return {
-            kg, pcs, billet,
+            kg, pcs, billet, net, baskets: (f.loads || []).length,
             yield: billet ? (kg / billet) * 100 : 0,
             loss: billet ? billet - kg - rest - scrap : 0,
         };
     }
     async savePress(confirm) {
         const f = this.state.sheet.f;
-        if (!f.section_id) {
-            this.state.sheet.error = "Matritsani (profil kesimini) tanlang.";
+        if (confirm && !(f.loads && f.loads.length) && !f.direct.some((r) => r.pcs)) {
+            this.state.sheet.error = "Avval korzinkalarni yozing — chiqqan profil yo'q.";
             return;
         }
-        for (const [label, text] of [["Quyma sarfi", f.billet_text], ["Питак", f.rest_text], ["Brak", f.scrap_text]]) {
+        for (const [label, text] of [["Quyma sarfi", f.billet_text], ["Питак", f.rest_text], ["Otxod", f.scrap_text]]) {
             if (text && Number.isNaN(parseSum(text))) {
                 this.state.sheet.error = `${label}: raqam va + bilan yozing, masalan 930+925`;
                 return;
@@ -437,7 +452,9 @@ export class CrafSex extends Component {
         const doSave = () =>
             this.run(async () => {
                 const res = await this.orm.call(API, "press_save", [
-                    { ...f, section_id: Number(f.section_id), equipment_id: f.equipment_id ? Number(f.equipment_id) : false,
+                    { ...f, section_id: f.section_id ? Number(f.section_id) : false,
+                      smena_id: f.smena_id ? Number(f.smena_id) : false,
+                      equipment_id: f.equipment_id ? Number(f.equipment_id) : false,
                       employee_id: f.employee_id ? Number(f.employee_id) : false },
                     Boolean(confirm),
                 ]);
@@ -449,8 +466,10 @@ export class CrafSex extends Component {
             const p = this.pressPreview(f);
             this.confirm(
                 "Smenani tasdiqlash",
-                `Quyma ${this.num(p.billet)} kg → profil ${this.num(p.kg)} kg (${this.num(p.pcs, 0)} dona), chiqish ${this.num(p.yield)}%. ` +
-                    "Tasdiqlansa, quyma Press sexidan yechiladi, profillar kimyoga (korzinkalarda) va qadoqlashga o'tadi.",
+                (p.billet
+                    ? `Quyma ${this.num(p.billet)} kg → profil ${this.num(p.kg)} kg (${this.num(p.pcs, 0)} dona), chiqish ${this.num(p.yield)}%. `
+                    : `${p.baskets} ta korzinka, ${this.num(p.pcs, 0)} dona, netto ${this.num(p.net, 1)} kg. `) +
+                    "Tasdiqlansa, profillar korzinkalarda kimyoga kutadi, otxod va питак Liteykaga o'tadi.",
                 "Tasdiqlash",
                 doSave
             );
@@ -463,31 +482,95 @@ export class CrafSex extends Component {
     async openBasket(shift, load = null) {
         await this.run(async () => {
             const o = await this.options("press");
-            const sec = o.sections.find((x) => x.id === shift.section_id) || null;
-            const f = load
-                ? { load_id: load.id, basket_id: load.basket_id, qty_6: load.qty_6 || "", qty_5: load.qty_5 || "", gross_text: load.gross ? String(load.gross) : "" }
-                : { load_id: false, basket_id: (o.baskets[0] || {}).id || false, qty_6: "", qty_5: "", gross_text: "" };
+            const str = (v) => (v || v === 0 ? String(v) : "");
+            let f;
+            if (load) {
+                f = {
+                    load_id: load.id, basket_id: load.basket_id, section_id: load.section_id || shift.section_id || false,
+                    qty_6: load.qty_6 || "", qty_5: load.qty_5 || "", gross_text: str(load.gross || ""),
+                    piece_text: str(load.piece_kg), hook_text: str(load.hook), stick_text: str(load.stick),
+                    tare_text: str(load.tare), extra_section_id: load.extra_section_id || false,
+                    extra_qty_6: load.extra_qty_6 || "", extra_qty_5: load.extra_qty_5 || "",
+                };
+            } else {
+                // daftardagidek: profil, KG 1 dona, kryuchok va palka — oxirgi korzinkadan
+                const prev = (shift.loads || []).filter((l) => l.section_id).slice(-1)[0];
+                const secId = (prev && prev.section_id) || shift.section_id || false;
+                const sec0 = o.sections.find((x) => x.id === secId);
+                const b0 = o.baskets[0] || {};
+                f = {
+                    load_id: false, basket_id: b0.id || false, section_id: secId, qty_6: "", qty_5: "", gross_text: "",
+                    piece_text: prev ? str(prev.piece_kg) : sec0 ? str(sec0.kg6) : "",
+                    hook_text: prev ? str(prev.hook) : "28", stick_text: prev ? str(prev.stick) : "6",
+                    tare_text: str(b0.tare || ""), extra_section_id: false, extra_qty_6: "", extra_qty_5: "",
+                };
+            }
             const baskets = [...o.baskets];
             if (load && !baskets.find((b) => b.id === load.basket_id)) {
-                baskets.unshift({ id: load.basket_id, name: load.basket, tare: load.gross - load.net, capacity: 0 });
+                baskets.unshift({ id: load.basket_id, name: load.basket, tare: load.tare, capacity: 0 });
             }
-            this.openSheet({ type: "basket", o, f, shift, sec, baskets, title: shift.name });
+            this.openSheet({ type: "basket", o, f, shift, baskets, title: shift.name, extraOpen: Boolean(f.extra_section_id) });
         });
+    }
+    basketSec(s, id) {
+        return s.o.sections.find((x) => x.id === Number(id)) || null;
+    }
+    onBasketPick(s) {
+        // korzinka almashsa — uning o'z og'irligi
+        const b = s.baskets.find((x) => x.id === Number(s.f.basket_id));
+        if (b && b.tare) {
+            s.f.tare_text = String(b.tare);
+        }
+    }
+    onBasketSection(s) {
+        // profil almashsa — katalogdagi 1 dona (6 m) og'irligi
+        const sec = this.basketSec(s, s.f.section_id);
+        if (sec) {
+            s.f.piece_text = String(sec.kg6);
+        }
     }
     basketPreview(s) {
         const f = s.f;
-        const b = s.baskets.find((x) => x.id === Number(f.basket_id)) || { tare: 0, capacity: 0 };
-        const sec = s.sec || { kg6: 0, kg5: 0 };
-        const pcs = toInt(f.qty_6) + toInt(f.qty_5);
-        const theory = toInt(f.qty_6) * sec.kg6 + toInt(f.qty_5) * sec.kg5;
+        const sec = this.basketSec(s, f.section_id) || { kg6: 0, kg5: 0, has5: true };
+        const piece = parseSum(f.piece_text) || sec.kg6 || 0;
+        let pcs = toInt(f.qty_6) + toInt(f.qty_5);
+        let theory = toInt(f.qty_6) * piece + toInt(f.qty_5) * piece * (5 / 6);
+        const ex = s.extraOpen ? this.basketSec(s, f.extra_section_id) : null;
+        if (ex) {
+            pcs += toInt(f.extra_qty_6) + toInt(f.extra_qty_5);
+            theory += toInt(f.extra_qty_6) * ex.kg6 + toInt(f.extra_qty_5) * ex.kg5;
+        }
         const gross = parseSum(f.gross_text) || 0;
-        const net = gross ? gross - (b.tare || 0) : 0;
-        return { pcs, theory, net, diff: net ? net - theory : 0, tare: b.tare || 0, capacity: b.capacity || 0, over: b.capacity && pcs > b.capacity };
+        const tare = parseSum(f.tare_text) || 0;
+        const hook = parseSum(f.hook_text) || 0;
+        const stick = parseSum(f.stick_text) || 0;
+        const net = gross ? gross - tare - hook - stick : 0;
+        return { pcs, theory, net, diff: net ? net - theory : 0, tare, hook, stick, has5: sec.has5 };
+    }
+    toggleExtra(s) {
+        s.extraOpen = !s.extraOpen;
+        if (!s.extraOpen) {
+            Object.assign(s.f, { extra_section_id: false, extra_qty_6: "", extra_qty_5: "" });
+        }
     }
     async saveBasket() {
         const s = this.state.sheet;
+        if (!s.f.section_id) {
+            s.error = "Profilni tanlang.";
+            return;
+        }
+        for (const [label, text] of [["Brutto", s.f.gross_text], ["KG 1 dona", s.f.piece_text], ["Korzinka", s.f.tare_text],
+                                     ["Kryuchok", s.f.hook_text], ["Palka", s.f.stick_text]]) {
+            if (text && Number.isNaN(parseSum(text))) {
+                s.error = `${label}: raqam bilan yozing`;
+                return;
+            }
+        }
         await this.run(async () => {
-            const res = await this.orm.call(API, "basket_save", [{ ...s.f, shift_id: s.shift.id, basket_id: Number(s.f.basket_id) }]);
+            const res = await this.orm.call(API, "basket_save", [{
+                ...s.f, shift_id: s.shift.id, basket_id: Number(s.f.basket_id), section_id: Number(s.f.section_id),
+                extra_section_id: s.extraOpen && s.f.extra_section_id ? Number(s.f.extra_section_id) : false,
+            }]);
             this.notification.add(`${res.basket}: ${res.content}`, { type: "success" });
             this.closeSheet();
             await this.refresh();
@@ -1117,6 +1200,7 @@ export class CrafSex extends Component {
             delete: ["O'chirish", `${d.name} butunlay o'chiriladi.`, "O'chirish"],
             void: ["O'chirish", `${d.name} o'chiriladi: ombor harakatlari qaytariladi, korzinkalar yana kimyoga kutadi. Bu tahrirlash jurnaliga yoziladi.`, "O'chirish"],
             to_stock: ["Omborga topshirish", `${d.name}: bo'yalgan profillar Qadoqlashdan Tayyor mahsulot omboriga o'tadi.`, "Topshirish"],
+            reopen: ["Tahrirlash", `${d.name} qoralamaga qaytadi: ombor harakatlari bekor qilinadi. Korzinkalarni tuzatib, smenani qayta tasdiqlang — o'zgarish tahrirlash jurnaliga yoziladi.`, "Tahrirlash"],
         };
         const run = () =>
             this.run(async () => {
@@ -1130,6 +1214,7 @@ export class CrafSex extends Component {
                     done: "tasdiqlandi", cancel: "bekor qilindi", draft: "qoralamaga qaytdi", delete: "o'chirildi", void: "o'chirildi",
                     c1: "1C ga kiritildi deb belgilandi", c1_undo: "1C belgisi olib tashlandi",
                     to_stock: `omborga topshirildi (${res.picking || ""})`,
+                    reopen: "tahrirlash uchun qoralamaga qaytdi",
                 }[action];
                 this.notification.add(`${res.name} ${done}`, { type: "success" });
                 this.closeSheet();
@@ -1147,7 +1232,7 @@ export class CrafSex extends Component {
     }
     docBasket(d) {
         this.closeSheet();
-        this.openBasket({ id: d.id, name: d.name, title: d.title, section_id: d.section_id });
+        this.openBasket({ id: d.id, name: d.name, title: d.title, section_id: d.section_id, loads: d.loads || [] });
     }
     docEdit(d) {
         this.closeSheet();

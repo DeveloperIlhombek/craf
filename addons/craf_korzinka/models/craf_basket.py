@@ -305,10 +305,7 @@ class CrafBasketLoad(models.Model):
         for load in self:
             if min(load.qty_6, load.qty_5) < 0:
                 raise ValidationError("Dona soni manfiy bo'lishi mumkin emas.")
-            cap = load.basket_id.capacity
-            if cap and load.pcs_total > cap:
-                raise ValidationError("%s korzinkaga ko'pi bilan %s dona sig'adi (kiritildi: %s)." % (
-                    load.basket_id.name, cap, load.pcs_total))
+            # sig'im (dona) cheklanmaydi: kichik profil (Крышка) korzinkaga 350+ dona sig'adi (2026-11-06)
             if load.qty_5 and not load.product_5_id:
                 raise ValidationError("%s profilining 5 m varianti katalogda yo'q." % load.section_id.name)
 
