@@ -1,6 +1,6 @@
 {
     "name": "Craf: diller portali",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Diller o'zi buyurtma beradi (/diller, telefon uchun), sotuvchi tasdiqlaydi — mavjud yuklash, "
                "hisob-faktura va qarz oqimiga tushadi",
     "description": """

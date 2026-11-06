@@ -1,3 +1,4 @@
+import json
 import logging
 
 from odoo import api, fields, models
@@ -31,12 +32,27 @@ class CrafDillerNotice(models.Model):
 
     @api.model
     def _craf_push(self, dealer, title, body, order=None, photos=None):
-        """Bildirishnoma yoziladi; Telegram alohida (cron) yuboriladi — yuklovchini kuttirmaydi."""
+        """Bildirishnoma yoziladi; telefonga (veb-push) darhol navbatga, Telegram alohida (cron) — yuklovchini
+        kuttirmaydi."""
+        self._craf_web_push(dealer, title, body)
         return self.sudo().create({
             "partner_id": dealer.id, "title": title, "body": body, "order_id": order.id if order else False,
             "attachment_ids": [(6, 0, photos.ids)] if photos else False,
             "tg_state": "pending" if self._craf_chats(dealer) else "none",
         })
+
+    @api.model
+    def _craf_web_push(self, dealer, title, body):
+        """Diller loginlarining bildirishnomaga ruxsat bergan qurilmalari (/diller ilovasi)."""
+        devices = self.env["mail.push.device"].sudo().search([("partner_id", "child_of", dealer.id)])
+        if not devices:
+            return 0
+        payload = json.dumps({"title": title, "options": {
+            "body": (body or "")[:400], "icon": "/diller/icon/192.png", "tag": "craf-diller",
+            "renotify": True, "vibrate": [200, 100, 200], "data": {"url": "/diller"}}})
+        self.env["mail.push"].sudo().create([{"mail_push_device_id": d.id, "payload": payload} for d in devices])
+        self.env.ref("mail.ir_cron_web_push_notification").sudo()._trigger()
+        return len(devices)
 
     @api.model
     def _cron_send(self):

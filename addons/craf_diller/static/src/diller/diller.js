@@ -620,6 +620,36 @@ class Finance extends Component {
     }
 }
 
+// ------------------------------------------------------------------ telefonga bildirishnoma (veb-push)
+// iPhone'da faqat «Bosh ekranga qo'shish» bilan o'rnatilgan ilovada (iOS 16.4+) ishlaydi.
+function pushState() {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+        const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+        return ios && !standalone ? "ios" : "unsupported";
+    }
+    return Notification.permission;
+}
+
+function b64ToBytes(b64) {
+    const pad = "=".repeat((4 - (b64.length % 4)) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+async function pushSubscribe() {
+    const reg = await navigator.serviceWorker.register("/diller/sw.js", { scope: "/diller" });
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    const previous = localStorage.getItem("craf_diller_push_endpoint");
+    if (!sub) {
+        const { key } = await api("push_key");
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
+    }
+    await api("push_register", { subscription: sub.toJSON(), previous });
+    localStorage.setItem("craf_diller_push_endpoint", sub.endpoint);
+}
+
 class More extends Component {
     static props = [];
     static template = xml`
@@ -642,12 +672,19 @@ class More extends Component {
                     <div class="d-grow"><t t-esc="r.name"/><div class="d-muted"><t t-esc="r.order"/> · <t t-esc="r.reason"/></div></div>
                     <span class="d-end" t-esc="r.state_label"/></div>
             </div>
+            <div class="d-card" t-if="st.push !== 'granted'"><b>Telefonga bildirishnoma</b>
+                <p class="d-muted" t-if="st.push === 'default'">Buyurtma holati va zavod xabarlari ilova yopiq bo'lsa ham telefonga keladi.</p>
+                <p class="d-muted" t-elif="st.push === 'denied'">Bloklangan. Telefon sozlamalarida (Chrome → Sayt sozlamalari → Bildirishnomalar) shu saytga ruxsat bering.</p>
+                <p class="d-muted" t-elif="st.push === 'ios'">iPhone: Safari'da «Ulashish» → «Bosh ekranga qo'shish», keyin bosh ekrandagi ilovadan oching.</p>
+                <p class="d-muted" t-else="">Bu brauzer bildirishnomani qo'llamaydi.</p>
+                <button t-if="st.push === 'default'" class="d-btn d-block" t-on-click="enablePush">Bildirishnomani yoqish</button>
+            </div>
             <button t-if="!me.telegram" class="d-btn d-block" t-on-click="telegram">Telegram ulash</button>
             <a class="d-btn d-block" style="margin-top:8px" href="/web/session/logout?redirect=/diller/login">Chiqish</a>
         </div>`;
     setup() {
         this.me = S.me;
-        this.st = useState({ stats: null, returns: [] });
+        this.st = useState({ stats: null, returns: [], push: pushState() });
         onWillStart(() => guard(async () => {
             this.st.stats = await api("stats");
             this.st.returns = await api("returns");
@@ -662,6 +699,15 @@ class More extends Component {
     }
     open(id) {
         S.page = { kind: "order", id };
+    }
+    enablePush() {
+        guard(async () => {
+            this.st.push = await Notification.requestPermission();
+            if (this.st.push === "granted") {
+                await pushSubscribe();
+                toast("Bildirishnoma yoqildi.");
+            }
+        });
     }
     telegram() {
         guard(async () => {
@@ -775,4 +821,8 @@ if (document.readyState === "loading") {
 }
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/diller/sw.js", { scope: "/diller" }).catch(() => {});
+    // ruxsat bor bo'lsa — obunani har ochilishda yangilab qo'yamiz (brauzer uni almashtirishi mumkin)
+    if (pushState() === "granted") {
+        pushSubscribe().catch(() => {});
+    }
 }

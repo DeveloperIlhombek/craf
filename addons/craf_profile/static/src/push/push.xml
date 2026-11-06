@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="craf_profile.PushBanner">
+        <div t-if="show" class="craf-push-banner" role="note">
+            <i t-att-class="state.perm === 'denied' ? 'fa fa-bell-slash' : 'fa fa-bell'"/>
+            <div class="craf-push-text">
+                <t t-if="state.perm === 'default'">
+                    <b>Xabarlar telefonga kelsin</b>
+                    <span>Bildirishnomani yoqing — ilova yopiq bo'lsa ham sizga tegishli xabar keladi.</span>
+                </t>
+                <t t-elif="state.perm === 'denied'">
+                    <b>Bildirishnoma bloklangan</b>
+                    <span>Telefon sozlamalarida (Chrome → Sayt sozlamalari → Bildirishnomalar) shu saytga ruxsat bering.</span>
+                </t>
+                <t t-else="">
+                    <b>iPhone: avval ilovani o'rnating</b>
+                    <span>Safari'da «Ulashish» → «Bosh ekranga qo'shish», keyin bosh ekrandagi ilovadan oching.</span>
+                </t>
+            </div>
+            <button t-if="state.perm === 'default'" class="btn btn-primary btn-sm" t-on-click="onEnable">Yoqish</button>
+            <button class="btn btn-link btn-sm craf-push-close" t-on-click="onClose" aria-label="Yopish" title="Keyinroq">
+                <i class="fa fa-times"/>
+            </button>
+        </div>
+    </t>
+</templates>

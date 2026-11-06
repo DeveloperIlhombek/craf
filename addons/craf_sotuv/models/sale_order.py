@@ -104,7 +104,7 @@ class SaleOrder(models.Model):
         if cancelled:
             cancelled.write({"craf_load_state": "cancel"})
             cancelled._craf_notify("cancel", "Buyurtma bekor qilindi", ", ".join(
-                "%s · %s" % (o.name, o.partner_id.name) for o in cancelled))
+                "%s · %s" % (o.name, o.partner_id.name) for o in cancelled), to_loaders=True)
         return res
 
     def _craf_open_pickings(self):
@@ -137,9 +137,9 @@ class SaleOrder(models.Model):
                 order._craf_to_queue()
         return True
 
-    def _craf_notify(self, kind, title, message, users=None, to_loaders=False, ntype="info", push=False):
-        """Bus: sahifalar yangilanadi; kerakli foydalanuvchilarga qisqa xabar. push=True — ilova yopiq
-        bo'lsa ham telefonga bildirishnoma (veb-push)."""
+    def _craf_notify(self, kind, title, message, users=None, to_loaders=False, ntype="info", push=True):
+        """Bus: sahifalar yangilanadi; kerakli foydalanuvchilarga qisqa xabar va telefonga bildirishnoma
+        (veb-push, ilova yopiq bo'lsa ham). push=False — faqat ilova ichida."""
         group = self.env.ref("craf_sotuv.group_craf_loader", raise_if_not_found=False)
         everyone = group.sudo().all_user_ids.filtered(lambda u: not u.share) if group else self.env["res.users"]
         targets = users if users is not None else (everyone if to_loaders else self.env["res.users"])
@@ -147,7 +147,9 @@ class SaleOrder(models.Model):
             user._bus_send("simple_notification", {"title": title, "message": message, "type": ntype,
                                                    "sticky": False})
         if push:
-            (targets - self.env.user)._craf_web_push(title, message, tag="craf-%s-%s" % (kind, "-".join(map(str, self.ids))))
+            tag = "craf-%s-%s" % (kind, "-".join(map(str, self.ids)))
+            for user in (targets - self.env.user):
+                user._craf_web_push(title, message, tag=tag, model=user._craf_push_home())
         if everyone:
             everyone._bus_send("craf_sotuv_update", {"kind": kind, "order_ids": self.ids})
 

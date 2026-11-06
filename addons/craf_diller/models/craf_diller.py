@@ -19,7 +19,7 @@ from .craf_diller_return import REASONS, STATES as RETURN_STATES
 API = {
     "init", "catalog", "search", "favorite", "submit", "update", "cancel", "truck", "request", "repeat",
     "orders", "order", "stats", "notices", "notices_seen", "telegram", "finance",
-    "return_info", "return_save", "returns",
+    "return_info", "return_save", "returns", "push_key", "push_register",
 }
 MAX_PHOTOS = 5
 EPS = 1e-6
@@ -488,6 +488,23 @@ class CrafDiller(models.AbstractModel):
             "id": n.id, "title": n.title, "body": n.body or "", "time": self._time(n.create_date),
             "order_id": n.order_id.id or False, "new": n.id > seen,
         } for n in notices]}
+
+    # ------------------------------------------------------------------ telefonga bildirishnoma (veb-push)
+    def _api_push_key(self, user, dealer):
+        """Brauzer obunasi uchun VAPID ochiq kaliti (Odoo veb-push bilan bir xil)."""
+        return {"key": self.env["mail.push.device"].sudo().get_web_push_vapid_public_key()}
+
+    def _api_push_register(self, user, dealer, subscription=None, previous=None):
+        """Diller qurilmasini yozadi (Odoo `mail.push.device`, hamkor — shu login)."""
+        sub = dict(subscription or {})
+        if not sub.get("endpoint") or not sub.get("keys"):
+            raise UserError("Obuna ma'lumoti yo'q.")
+        kw = {"endpoint": sub["endpoint"], "keys": sub["keys"], "expirationTime": sub.get("expirationTime"),
+              "vapid_public_key": self.env["mail.push.device"].sudo().get_web_push_vapid_public_key()}
+        if previous and previous != sub["endpoint"]:
+            kw["previousEndpoint"] = previous
+        self.env["mail.push.device"].with_user(user).sudo().register_devices(**kw)
+        return True
 
     def _api_notices_seen(self, user, dealer):
         last = self.env["craf.diller.notice"].sudo().search([("partner_id", "=", dealer.id)], limit=1)

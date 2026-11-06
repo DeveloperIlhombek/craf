@@ -24,6 +24,25 @@ self.addEventListener("fetch", (e) => {
             {headers: {"Content-Type": "text/html; charset=utf-8"}})));
     }
 });
+self.addEventListener("push", (e) => {
+    let n = {};
+    try { n = e.data.json(); } catch (err) { n = {title: "Craf", options: {body: e.data ? e.data.text() : ""}}; }
+    const options = Object.assign({icon: "/diller/icon/192.png", badge: "/diller/icon/192.png"}, n.options || {});
+    e.waitUntil(self.registration.showNotification(n.title || "Craf", options));
+});
+self.addEventListener("notificationclick", (e) => {
+    e.notification.close();
+    const url = (e.notification.data && e.notification.data.url) || "/diller";
+    e.waitUntil(self.clients.matchAll({type: "window", includeUncontrolled: true}).then((list) => {
+        for (const c of list) {
+            if (c.url.includes("/diller") && "focus" in c) {
+                c.postMessage({type: "craf-notice"});
+                return c.focus();
+            }
+        }
+        return self.clients.openWindow(url);
+    }));
+});
 """
 
 

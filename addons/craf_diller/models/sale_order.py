@@ -91,6 +91,7 @@ class SaleOrder(models.Model):
         for user in users.sudo():
             user._bus_send("simple_notification", {"title": title, "message": message, "type": "warning",
                                                    "sticky": True})
+            user._craf_web_push(title, message, tag="craf-diller-%s" % self.id, model="sale.order", res_id=self.id)
 
     # ------------------------------------------------------------------ bildirishnoma
     def _craf_push(self, title, body, photos=None):
