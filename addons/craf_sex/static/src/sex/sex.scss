@@ -480,6 +480,14 @@ $sx-tap: 44px;
             position: sticky;
             bottom: 72px;
             z-index: 6;
+            // xato xabari siqilmasin (ilgari ingichka chiziq bo'lib qolardi) — to'liq, tugmalar ustida
+            flex: 0 0 auto;
+            max-height: none;
+            overflow: visible;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+            // ostidagi matn ko'rinmasin: sahifa foni + och qizil qatlam
+            background-color: $o-view-background-color;
+            background-image: linear-gradient(rgba(196, 49, 75, 0.1), rgba(196, 49, 75, 0.1));
         }
     }
     .sx-back {
