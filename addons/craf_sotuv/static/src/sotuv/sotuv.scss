@@ -1177,6 +1177,73 @@ $cs-orange-bg: #fff1e0;
         border-radius: $cs-radius;
         overflow: hidden;
     }
+    // berilgan yuklash tahriri
+    .cs-given-head {
+        margin-top: 18px;
+    }
+    .cs-given {
+        border-left: 4px solid $cs-ok;
+        &.cs-given-locked {
+            border-left-color: $cs-border;
+            opacity: 0.8;
+        }
+    }
+    .cs-given-badge {
+        flex: 0 0 auto;
+        align-self: flex-start;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background-color: $cs-ok-bg;
+        color: $cs-ok;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+        &.cs-given-badge-off {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: $cs-muted;
+        }
+    }
+    .cs-trip-label {
+        margin-top: 12px;
+    }
+    .cs-trip-row {
+        padding: 10px 12px;
+        border-top: 1px solid $cs-border;
+        &:first-child {
+            border-top: 0;
+        }
+        .cs-qty {
+            margin-top: 8px;
+        }
+        &.cs-trip-changed {
+            background-color: $cs-orange-bg;
+        }
+    }
+    .cs-trip-diff {
+        margin-top: 6px;
+        color: $cs-orange;
+        font-size: 0.85rem;
+    }
+    .cs-trip-history {
+        margin-top: 12px;
+    }
+    .cs-trip-hist {
+        padding: 6px 0;
+        border-top: 1px dashed $cs-border;
+        &:first-of-type {
+            border-top: 0;
+        }
+    }
+    .cs-trip-hist-line {
+        font-size: 0.85rem;
+        overflow-wrap: anywhere;
+    }
+    .cs-trip-btns {
+        margin-top: 12px;
+        .btn {
+            flex: 1 1 0;
+        }
+    }
     .cs-ldl {
         display: flex;
         align-items: stretch;
@@ -1268,7 +1335,7 @@ $cs-orange-bg: #fff1e0;
         padding: 6px 8px;
         border: 2px solid $cs-border;
         border-radius: 10px;
-        background-color: #fff;
+        background-color: $o-view-background-color;
         font-size: 0.75rem;
         font-weight: 700;
         line-height: 1;

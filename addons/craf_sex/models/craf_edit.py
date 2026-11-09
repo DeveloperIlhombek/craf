@@ -19,7 +19,7 @@ from odoo.addons.craf_production.models.craf_production_mixin import EPS, fmt
 
 EDIT_HOURS = 24
 EDIT_SECTIONS = [("press", "Press"), ("kimyo", "Kimyoviy ishlov"), ("matritsa", "Matritsa"),
-                 ("boyash", "Bo'yash va qadoqlash")]
+                 ("boyash", "Bo'yash va qadoqlash"), ("yuklash", "Yuklash")]
 EDIT_KINDS = [("edit", "Tahrirlandi"), ("cancel", "O'chirildi")]
 MANAGER_GROUPS = ("craf_sex.group_craf_accountant", "craf_sex.group_craf_director", "base.group_system")
 
@@ -278,3 +278,27 @@ class CrafExtrusionShiftEdit(models.Model):
         for rec in self.filtered(lambda r: r.craf_edit_before):
             rec._craf_log_edit(json.loads(rec.craf_edit_before), kind="cancel")
         return super().unlink()
+
+
+class CrafLoadTripEdit(models.Model):
+    """Yuklovchi bergan yuklash tahriri (4 soat, craf_sotuv) — omborchi va direktor ham har doim tahrirlaydi;
+    har tahrir «Tahrirlash jurnali»ga yoziladi."""
+    _inherit = "craf.load.trip"
+
+    def _craf_trip_manager_groups(self):
+        return super()._craf_trip_manager_groups() + list(MANAGER_GROUPS)
+
+    def _craf_trip_log(self, before, changes, manager):
+        res = super()._craf_trip_log(before, changes, manager)
+        self.env["craf.edit.log"].sudo().create({
+            "section": "yuklash",
+            "kind": "edit",
+            "what": "Berilgan yuklash",
+            "res_model": "sale.order",
+            "res_id": self.order_id.id,
+            "res_name": "%s — %s" % (self.name, self.partner_id.name or ""),
+            "changes": "\n".join(changes),
+            "by_manager": manager,
+            "entered_at": self.date,
+        })
+        return res

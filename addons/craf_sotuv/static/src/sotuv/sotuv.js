@@ -58,7 +58,7 @@ export class CrafSotuv extends Component {
         this.canScan = isBarcodeScannerSupported();
         this.state = useState({
             tab: "new",
-            load: { queue: null, current: null, edit: null, scan: "", result: null, finish: false, busy: false, photoBusy: false },
+            load: { queue: null, given: [], trip: null, current: null, edit: null, scan: "", result: null, finish: false, busy: false, photoBusy: false },
             photoView: null,
             salesFilter: "all",
             init: null,
@@ -139,7 +139,7 @@ export class CrafSotuv extends Component {
         if (this.state.tab === "load") {
             if (this.state.load.current && !this.state.load.busy && !this.state.load.edit) {
                 await this.reloadCurrent();
-            } else if (!this.state.load.current) {
+            } else if (!this.state.load.current && !this.state.load.trip) {
                 await this.loadQueue();
             }
         } else if (this.state.tab === "sales" && this.state.sales) {
@@ -954,7 +954,100 @@ export class CrafSotuv extends Component {
     async loadQueue() {
         const q = await this.orm.call(MODEL, "load_queue", []);
         this.state.load.queue = q.orders;
+        this.state.load.given = q.given || [];
         this.state.init.queue_count = q.count;
+    }
+    // ------------------------------------------------------------------ berilgan yuklashni tahrirlash (4 soat)
+    _tripState(t) {
+        return {
+            data: t,
+            truck: t.truck || "",
+            busy: false,
+            rows: t.lines.map((l) => {
+                const per = l.product.per_pack || 0;
+                const pcs = Math.max(Math.round(l.qty), 0);
+                return {
+                    line_id: l.line_id,
+                    location_id: l.location_id,
+                    location: l.location,
+                    product: l.product,
+                    per,
+                    orig: pcs,
+                    orig_text: l.qty_text,
+                    ordered_text: l.ordered_text,
+                    packs: per ? Math.floor(pcs / per) : 0,
+                    extra: per ? pcs - Math.floor(pcs / per) * per : pcs,
+                };
+            }),
+        };
+    }
+    async openTrip(id) {
+        try {
+            const t = await this.orm.call(MODEL, "given_trip", [id]);
+            this.state.load.trip = this._tripState(t);
+            this.state.load.result = null;
+            this.state.load.current = null;
+            this.state.tab = "load";
+        } catch (e) {
+            this.notification.add(this.errorText(e), { type: "danger" });
+            await this.loadQueue();
+        }
+    }
+    tripPcs(row) {
+        return (Number(row.packs) || 0) * row.per + (Number(row.extra) || 0);
+    }
+    tripRowText(row) {
+        return packsText(this.tripPcs(row), row.per);
+    }
+    tripDiffText(row) {
+        return packsText(Math.abs(this.tripPcs(row) - row.orig), row.per);
+    }
+    tripDirty() {
+        const t = this.state.load.trip;
+        return t.rows.some((r) => this.tripPcs(r) !== r.orig) || (t.truck || "") !== (t.data.truck || "");
+    }
+    onTripQty(row, field, ev) {
+        const v = parseInt(ev.target.value, 10);
+        row[field] = Number.isFinite(v) && v > 0 ? v : 0;
+    }
+    stepTrip(row, field, delta) {
+        row[field] = Math.max(0, (Number(row[field]) || 0) + delta);
+    }
+    onTripTruck(ev) {
+        this.state.load.trip.truck = this.normTruck(ev.target.value);
+        ev.target.value = this.state.load.trip.truck;
+    }
+    resetTrip() {
+        this.state.load.trip = this._tripState(this.state.load.trip.data);
+    }
+    async saveTrip() {
+        const t = this.state.load.trip;
+        if (!t || t.busy) {
+            return;
+        }
+        if (!this.tripDirty()) {
+            this.notification.add("O'zgarish yo'q", { type: "info" });
+            return;
+        }
+        t.busy = true;
+        try {
+            const rows = t.rows.map((r) => ({
+                line_id: r.line_id, location_id: r.location_id, packs: Number(r.packs) || 0, extra: Number(r.extra) || 0,
+            }));
+            const res = await this.orm.call(MODEL, "given_save", [t.data.id, rows, t.truck]);
+            this.state.load.trip = this._tripState(res);
+            this.state.sales = null;
+            this.state.stock = null;
+            this.notification.add(res.changed ? `${res.name}: tahrir saqlandi` : "O'zgarish yo'q",
+                { type: res.changed ? "success" : "info" });
+        } catch (e) {
+            this.notification.add(this.errorText(e), { type: "danger" });
+            t.busy = false;
+        }
+    }
+    closeTrip() {
+        this.state.load.trip = null;
+        this.loadQueue();
     }
     async openLoad(card) {
         // faqat ko'rish — holat «Qabul qilish» bosilganda o'zgaradi
@@ -962,6 +1055,7 @@ export class CrafSotuv extends Component {
             const res = await this.orm.call(MODEL, "load_order", [card.id]);
             this.state.load.current = res;
             this.state.load.result = null;
+            this.state.load.trip = null;
             this.state.load.edit = null;
             this.state.load.finish = false;
             this.state.load.scan = "";
@@ -1338,6 +1432,7 @@ export class CrafSotuv extends Component {
             this.state.stock = null;
             const q = await this.orm.call(MODEL, "load_queue", []);
             this.state.load.queue = q.orders;
+            this.state.load.given = q.given || [];
             this.state.init.queue_count = q.count;
         } catch (e) {
             this.notification.add(this.errorText(e), { type: "danger" });

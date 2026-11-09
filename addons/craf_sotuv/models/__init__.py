@@ -3,6 +3,7 @@ from . import (
     craf_pack,
     craf_sotuv,
     craf_return,
+    craf_load_trip,
     craf_sotuv_alias,
     craf_kunlik_hisobot,
     res_company,

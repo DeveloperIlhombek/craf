@@ -306,6 +306,7 @@
     <t t-name="craf_sotuv.TabLoad">
         <t t-set="L" t-value="state.load"/>
         <t t-if="L.result" t-call="craf_sotuv.LoadResult"/>
+        <t t-elif="L.trip" t-call="craf_sotuv.TripEdit"/>
         <t t-elif="L.current" t-call="craf_sotuv.LoadDetail"/>
         <t t-else="">
             <div class="cs-loading" t-if="!L.queue"><i class="fa fa-spinner fa-spin"/> Yuklanmoqda…</div>
@@ -347,8 +348,115 @@
                         </button>
                     </t>
                 </div>
+                <t t-if="L.given.length">
+                    <div class="cs-list-head cs-given-head">
+                        <span><i class="fa fa-check-circle"/> <b>Berilganlar</b> — <t t-esc="state.init.is_seller ? 'oxirgi 24 soat' : 'berilgandan keyin 4 soat ichida tahrirlash mumkin'"/></span>
+                    </div>
+                    <div class="cs-orders">
+                        <t t-foreach="L.given" t-as="g" t-key="g.id">
+                            <button class="cs-card cs-qcard cs-given" t-att-class="{ 'cs-given-locked': !g.edit.can }" t-on-click="() => this.openTrip(g.id)">
+                                <div class="cs-qcard-top">
+                                    <div class="cs-qcard-who">
+                                        <div class="cs-qcard-name" t-esc="g.partner"/>
+                                        <div class="cs-sale-meta"><t t-esc="g.name"/> · <t t-esc="g.day"/> <t t-esc="g.time"/><t t-if="!g.is_mine"> · <t t-esc="g.loader"/></t></div>
+                                    </div>
+                                    <span class="cs-given-badge" t-if="g.edit.can and !g.edit.manager"><i class="fa fa-pencil"/> <t t-esc="g.edit.left_short"/></span>
+                                    <span class="cs-given-badge cs-given-badge-off" t-elif="!g.edit.can"><i class="fa fa-lock"/></span>
+                                </div>
+                                <div class="cs-truck-badge" t-if="g.truck"><i class="fa fa-truck"/> <t t-esc="g.truck"/></div>
+                                <div class="cs-qcard-lines">
+                                    <t t-foreach="g.lines.slice(0, 3)" t-as="l" t-key="l_index">
+                                        <div class="cs-qcard-line"><span t-esc="l.product"/><b t-esc="l.text"/></div>
+                                    </t>
+                                    <div class="cs-sale-meta" t-if="g.lines.length > 3">… yana <t t-esc="g.lines.length - 3"/> qator</div>
+                                </div>
+                                <div class="cs-sale-meta" t-if="g.edit_count"><i class="fa fa-history"/> <t t-esc="g.edit_count"/> marta tahrirlangan</div>
+                            </button>
+                        </t>
+                    </div>
+                </t>
             </t>
         </t>
+    </t>
+
+    <!-- berilgan yuklashni tahrirlash: yuklovchi 4 soat ichida, rahbar har doim -->
+    <t t-name="craf_sotuv.TripEdit">
+        <t t-set="T" t-value="state.load.trip"/>
+        <t t-set="d" t-value="T.data"/>
+        <t t-set="can" t-value="d.edit.can"/>
+        <div class="cs-ld cs-trip">
+            <div class="cs-ld-head">
+                <button class="btn cs-icon-btn" t-on-click="closeTrip" aria-label="Ortga"><i class="fa fa-arrow-left"/></button>
+                <div class="cs-ld-title">
+                    <div class="cs-qcard-name" t-esc="d.partner"/>
+                    <div class="cs-sale-meta"><t t-esc="d.name"/> · berildi <t t-esc="d.day"/> <t t-esc="d.time"/> · <t t-esc="d.loader"/></div>
+                </div>
+            </div>
+            <div class="cs-ld-state cs-ld-state-mine" t-if="can and !d.edit.manager">
+                <i class="fa fa-pencil"/>
+                <span>Tahrirlash mumkin: yana <b t-esc="d.edit.left"/> (<t t-esc="d.edit.until"/> gacha)</span>
+            </div>
+            <div class="cs-ld-state cs-ld-state-mine" t-elif="can">
+                <i class="fa fa-pencil"/>
+                <span>Rahbar sifatida tahrirlaysiz — muddat cheklanmagan</span>
+            </div>
+            <div class="cs-ld-state cs-ld-state-other" t-else="">
+                <i class="fa fa-lock"/>
+                <span t-esc="d.edit.reason"/>
+            </div>
+            <div class="cs-truck-row cs-truck-row-ld" t-if="can">
+                <label class="cs-truck-label" for="cs_trip_truck"><i class="fa fa-truck"/></label>
+                <input type="text" id="cs_trip_truck" class="form-control cs-truck" list="cs_trucks"
+                       placeholder="Mashina raqami" autocapitalize="characters"
+                       t-att-value="T.truck" t-on-change="onTripTruck"/>
+            </div>
+            <div class="cs-truck-badge" t-elif="d.truck"><i class="fa fa-truck"/> <t t-esc="d.truck"/></div>
+            <div class="cs-label cs-trip-label">Har mahsulotdan qancha berildi</div>
+            <div class="cs-ld-lines">
+                <t t-foreach="T.rows" t-as="row" t-key="row.line_id + '-' + row.location_id">
+                    <t t-set="pcs" t-value="tripPcs(row)"/>
+                    <div class="cs-trip-row" t-att-class="{ 'cs-trip-changed': pcs !== row.orig }">
+                        <div class="cs-ldl-name"><t t-esc="row.product.name"/> <span class="cs-product-code" t-esc="row.product.code"/></div>
+                        <div class="cs-sale-meta"><t t-esc="row.location"/> · buyurtma <t t-esc="row.ordered_text"/> · berilgan edi <b t-esc="row.orig_text || '0'"/></div>
+                        <div class="cs-qty" t-if="can">
+                            <div class="cs-stepper" t-if="row.per">
+                                <button class="btn" t-on-click="() => this.stepTrip(row, 'packs', -1)" aria-label="Kamaytirish">−</button>
+                                <input type="number" inputmode="numeric" min="0" class="form-control" t-att-value="row.packs"
+                                       t-on-change="(ev) => this.onTripQty(row, 'packs', ev)" aria-label="Pachka"/>
+                                <button class="btn" t-on-click="() => this.stepTrip(row, 'packs', 1)" aria-label="Ko'paytirish">+</button>
+                                <span class="cs-unit">pachka</span>
+                            </div>
+                            <div class="cs-extra">
+                                <span class="cs-plus" t-if="row.per">+</span>
+                                <input type="number" inputmode="numeric" min="0" class="form-control" t-att-value="row.extra"
+                                       t-on-change="(ev) => this.onTripQty(row, 'extra', ev)" aria-label="Dona"/>
+                                <span class="cs-unit">dona</span>
+                            </div>
+                        </div>
+                        <div class="cs-trip-diff" t-if="pcs !== row.orig">
+                            <t t-if="pcs &lt; row.orig"><i class="fa fa-arrow-down"/> endi <t t-esc="tripRowText(row)"/> — <b>kam: <t t-esc="tripDiffText(row)"/></b>, omborga qaytadi</t>
+                            <t t-else=""><i class="fa fa-arrow-up"/> endi <t t-esc="tripRowText(row)"/> — <b>ko'p: <t t-esc="tripDiffText(row)"/></b>, ombordan qo'shimcha ayriladi</t>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            <t t-call="craf_sotuv.PhotoStrip"><t t-set="photos" t-value="d.photos"/></t>
+            <div class="cs-card cs-trip-history" t-if="d.history.length">
+                <div class="cs-label"><i class="fa fa-history"/> Tahrirlar tarixi</div>
+                <t t-foreach="d.history" t-as="h" t-key="h_index">
+                    <div class="cs-trip-hist">
+                        <div class="cs-sale-meta"><b t-esc="h.date"/> · <t t-esc="h.who"/><t t-if="h.manager"> (rahbar)</t></div>
+                        <t t-foreach="h.changes" t-as="c" t-key="c_index"><div class="cs-trip-hist-line" t-esc="c"/></t>
+                    </div>
+                </t>
+            </div>
+            <div class="cs-ldl-editor-btns cs-trip-btns" t-if="can">
+                <button class="btn btn-light cs-big" t-att-disabled="T.busy or !tripDirty()" t-on-click="resetTrip">Bekor</button>
+                <button class="btn btn-primary cs-big" t-att-disabled="T.busy or !tripDirty()" t-on-click="saveTrip">
+                    <i t-att-class="T.busy ? 'fa fa-spinner fa-spin' : 'fa fa-check'"/> Saqlash
+                </button>
+            </div>
+        </div>
     </t>
 
     <t t-name="craf_sotuv.LoadDetail">
@@ -587,6 +695,7 @@
             </div>
             <div class="cs-sale-meta">Mahsulot ombordan ayrildi.</div>
             <div class="cs-result-btns">
+                <button class="btn btn-light cs-big" t-if="r.trip_id" t-on-click="() => this.openTrip(r.trip_id)"><i class="fa fa-pencil"/> Tahrirlash (4 soat)</button>
                 <button class="btn btn-primary cs-big" t-on-click="closeResult"><i class="fa fa-list"/> Navbatga</button>
             </div>
         </div>

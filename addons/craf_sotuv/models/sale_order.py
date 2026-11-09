@@ -264,6 +264,15 @@ class SaleOrder(models.Model):
         })
         done_moves = loaded.filtered(lambda m: m.state == "done")
         photos = self.sudo().craf_trip_photo_ids
+        # har «Berildi» — alohida yuklash (yuklovchi 4 soat ichida tahrirlay oladi)
+        self.env["craf.load.trip"].sudo().create({
+            "order_id": self.id,
+            "user_id": self.env.user.id,
+            "date": now,
+            "truck": self.craf_truck,
+            "move_ids": [(6, 0, done_moves.ids)],
+            "photo_ids": [(6, 0, photos.ids)],
+        })
         self.message_post(body=Markup("<b>Berildi</b> (%s, mashina %s): %s%s") % (
             self.env.user.name, self.craf_truck,
             "; ".join("%s — %s %s" % (m.product_id.display_name, m.location_id._craf_sale_label(),
