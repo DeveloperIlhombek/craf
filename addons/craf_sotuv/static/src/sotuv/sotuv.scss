@@ -1256,7 +1256,39 @@ $cs-orange-bg: #fff1e0;
     }
     .cs-ldl-edit {
         align-self: center;
-        margin-right: 4px;
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        min-width: 64px;
+        min-height: 56px;
+        margin: 6px 8px 6px 0;
+        padding: 6px 8px;
+        border: 2px solid $cs-border;
+        border-radius: 10px;
+        background-color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        .fa {
+            font-size: 1.2rem;
+        }
+        &.cs-ldl-edit-open {
+            border-color: currentColor;
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+    }
+    .cs-ldl-editor-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .cs-ldl-more-locs {
+        padding-left: 0;
     }
     .cs-ldl-editor {
         border-top: 1px dashed $cs-border;

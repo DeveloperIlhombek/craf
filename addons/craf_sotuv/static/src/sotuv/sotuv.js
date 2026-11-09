@@ -1089,16 +1089,37 @@ export class CrafSotuv extends Component {
             packs: per ? Math.floor(pcs / per) : 0,
             extra: per ? Math.round(pcs - Math.floor(pcs / per) * per) : Math.round(pcs),
         });
+        const ed = this.state.load.edit;
+        if (ed && ed.move_id === line.move_id) {
+            this.state.load.edit = null; // qayta bosilsa — yopiladi
+            return;
+        }
         this.state.load.edit = {
             move_id: line.move_id,
             per,
+            all: false,
             rows: line.stock.map((s) => ({
                 location_id: s.location_id,
                 label: s.label,
                 onhand_text: s.onhand_text,
+                // odatda faqat asosiy joy; boshqa joydan yuklangani bo'lsa u ham ko'rinadi
+                shown: Boolean(s.primary || s.qty),
                 ...split(anyAlloc ? s.qty : s.primary ? line.demand : 0),
             })),
         };
+        if (!this.state.load.edit.rows.some((r) => r.shown)) {
+            this.state.load.edit.all = true;
+        }
+    }
+    editAsOrdered(line) {
+        const e = this.state.load.edit;
+        const per = e.per;
+        for (const r of e.rows) {
+            const s = line.stock.find((x) => x.location_id === r.location_id);
+            const pcs = s && s.primary ? line.demand : 0;
+            r.packs = per ? Math.floor(pcs / per) : 0;
+            r.extra = per ? Math.round(pcs - Math.floor(pcs / per) * per) : Math.round(pcs);
+        }
     }
     onEditQty(row, field, ev) {
         const v = parseInt(ev.target.value, 10);
@@ -1110,7 +1131,9 @@ export class CrafSotuv extends Component {
     editTotal() {
         const e = this.state.load.edit;
         const pcs = e.rows.reduce((s, r) => s + (Number(r.packs) || 0) * e.per + (Number(r.extra) || 0), 0);
-        return { pcs, text: packsText(pcs, e.per) };
+        const line = (this.state.load.current?.lines_open || []).find((l) => l.move_id === e.move_id);
+        const diff = line ? Math.abs(pcs - line.demand) : 0;
+        return { pcs, text: packsText(pcs, e.per), diffText: packsText(diff, e.per) };
     }
     async saveEdit() {
         const e = this.state.load.edit;
@@ -1118,6 +1141,11 @@ export class CrafSotuv extends Component {
         const res = await this._loadCall("load_set", [this.state.load.current.id, e.move_id, rows]);
         if (res) {
             this.state.load.edit = null;
+        }
+    }
+    showAllLocs() {
+        if (this.state.load.edit) {
+            this.state.load.edit.all = true;
         }
     }
     cancelEdit() {

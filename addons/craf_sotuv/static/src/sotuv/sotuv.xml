@@ -419,14 +419,20 @@
                                 <span t-if="line.packs.length and state.init.settings.use_scan"><i class="fa fa-qrcode"/> <t t-esc="line.packs.length"/></span>
                             </div>
                         </div>
-                        <button class="btn cs-icon-btn cs-ldl-edit" t-if="mode === 'mine'" t-on-click="() => this.editLoad(line)" aria-label="Miqdorni o'zgartirish">
+                        <button class="btn cs-ldl-edit" t-if="mode === 'mine'" t-on-click="() => this.editLoad(line)"
+                                t-att-class="{ 'cs-ldl-edit-open': state.load.edit and state.load.edit.move_id === line.move_id }"
+                                aria-label="Qancha yuklanganini yozish">
                             <i class="fa fa-pencil"/>
+                            <span>Miqdor</span>
                         </button>
                     </div>
                     <div class="cs-ldl-editor" t-if="state.load.edit and state.load.edit.move_id === line.move_id">
                         <t t-set="ed" t-value="state.load.edit"/>
-                        <div class="cs-label">Qaysi joydan qancha yuklandi</div>
-                        <t t-foreach="ed.rows" t-as="row" t-key="row.location_id">
+                        <div class="cs-ldl-editor-head">
+                            <div class="cs-label">Qancha yuklandi? <span class="cs-sale-meta">kam yoki ko'p bo'lishi mumkin</span></div>
+                            <button class="btn btn-link btn-sm" t-on-click="() => this.editAsOrdered(line)">Buyurtmadagidek</button>
+                        </div>
+                        <t t-foreach="ed.rows.filter((r) => ed.all or r.shown)" t-as="row" t-key="row.location_id">
                             <div class="cs-alloc">
                                 <div class="cs-alloc-head">
                                     <b t-esc="row.label"/>
@@ -449,9 +455,15 @@
                                 </div>
                             </div>
                         </t>
+                        <button class="btn btn-link btn-sm cs-ldl-more-locs" t-if="!ed.all and ed.rows.some((r) => !r.shown)"
+                                t-on-click="showAllLocs">
+                            <i class="fa fa-plus"/> Boshqa joydan ham yuklandi
+                        </button>
                         <t t-set="et" t-value="editTotal()"/>
                         <div class="cs-alloc-total" t-att-class="et.pcs === line.demand ? 'cs-alloc-ok' : 'cs-alloc-diff'">
                             Jami: <b t-esc="et.text"/> · buyurtma <t t-esc="line.demand_text"/>
+                            <t t-if="et.pcs and et.pcs &lt; line.demand"> · <b>kam: <t t-esc="et.diffText"/></b></t>
+                            <t t-if="et.pcs &gt; line.demand"> · <b>ko'p: <t t-esc="et.diffText"/></b></t>
                         </div>
                         <div class="cs-ldl-editor-btns">
                             <button class="btn btn-light" t-on-click="cancelEdit">Bekor</button>
