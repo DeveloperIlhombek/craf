@@ -223,7 +223,8 @@ class CrafKunlikHisobot(models.AbstractModel):
                 "uom": self._uom(product),
                 **{k: round(v, 2) for k, v in d.items()},
                 "min_qty": min_qty,
-                "low": bool(min_qty) and d["closing"] < min_qty,
+                "track": product.craf_track_low,
+                "low": product.craf_track_low and bool(min_qty) and d["closing"] < min_qty,
                 "kg_per_pc": product.craf_kg_per_pc,
             })
         return rows

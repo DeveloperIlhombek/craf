@@ -152,6 +152,7 @@
                         <th class="text-end" title="Sanash va inventarizatsiya tuzatishlari">Tuzatish</th>
                         <th class="text-end">Oxirgi</th>
                         <th class="text-end">Min</th>
+                        <th class="text-center" title="Kam qolishi kuzatiladi: yoqilsa kam qolgan / tugagan ro'yxatida va Telegram xabarlarida ko'rinadi">Kuzatish</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,6 +172,11 @@
                         <td class="text-end cl-adj" t-esc="fmt(r.tuzatish + r.boshqa)"/>
                         <td class="text-end fw-bold" t-esc="fmt(r.closing)"/>
                         <td class="text-end cl-muted" t-esc="fmt(r.min_qty, 0)"/>
+                        <td class="text-center" t-on-click="(ev) => this.onTrackCell(r, ev, d.is_manager)">
+                                <div class="form-check form-switch d-inline-block mb-0" t-att-title="r.track !== false ? 'Kuzatiladi' : 'Kuzatilmaydi'">
+                                    <input class="form-check-input" type="checkbox" t-att-checked="r.track !== false" t-att-disabled="!d.is_manager" style="pointer-events: none;"/>
+                                </div>
+                        </td>
                     </tr>
                 </tbody>
                 <tfoot>
@@ -265,6 +271,7 @@
                         <span class="cl-mat-meta">
                             <t t-if="r.avg">~<t t-esc="num(r.avg)"/> <t t-esc="r.uom"/>/kun</t><t t-else="">sarf yo'q</t>
                             · min <t t-if="r.min_qty" t-esc="num(r.min_qty, 0)"/><t t-else="">—</t>
+                            <t t-if="r.track === false"> · <i class="fa fa-bell-slash"/> kuzatilmaydi</t>
                         </span>
                         <span class="cl-gauge" t-if="fcLevel(r) !== null"><span t-att-style="'width:' + fcLevel(r) + '%'"/></span>
                     </span>
@@ -290,6 +297,7 @@
                             <th class="text-end" title="Minimal qoldiqqa tushguncha">Minimalgacha</th>
                             <th class="text-end">Tugash sanasi</th>
                             <th>Holat</th>
+                            <th class="text-center" title="Kam qolishi kuzatiladi: yoqilsa kam qolgan / tugagan ro'yxatida va Telegram xabarlarida ko'rinadi">Kuzatish</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -311,6 +319,11 @@
                             <td class="text-end" t-esc="r.min_qty ? fcDays(r.days_to_min) : '—'"/>
                             <td class="text-end" t-esc="r.end_date ? dmy(r.end_date) : '—'"/>
                             <td><span class="cl-st" t-att-class="fcStatus(r).cls" t-esc="fcStatus(r).label"/></td>
+                            <td class="text-center" t-on-click="(ev) => this.onTrackCell(r, ev, fc.is_manager)">
+                                <div class="form-check form-switch d-inline-block mb-0" t-att-title="r.track !== false ? 'Kuzatiladi' : 'Kuzatilmaydi'">
+                                    <input class="form-check-input" type="checkbox" t-att-checked="r.track !== false" t-att-disabled="!fc.is_manager" style="pointer-events: none;"/>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -588,6 +601,12 @@
                 <small class="cl-muted">Qoldiq shundan kamaysa, bo'lim mas'ullariga eslatma boradi. 0 — kuzatilmaydi.</small>
             </label>
             <p class="cl-muted mb-0" t-else="">Minimal qoldiq: <t t-esc="r.min_qty ? num(r.min_qty, 0) + ' ' + r.uom : 'yozilmagan'"/>. O'zgartirishni ombor mudiri qiladi.</p>
+            <div class="form-check form-switch mt-3 mb-0">
+                <input class="form-check-input" type="checkbox" id="cl_track_low" t-att-checked="r.track !== false"
+                       t-att-disabled="!state.fc.is_manager or state.busy" t-on-change="() => this.toggleTrack(r)"/>
+                <label class="form-check-label" for="cl_track_low"><b>Kam qolishi kuzatiladi</b></label>
+                <div><small class="cl-muted">Yoqilgan bo'lsa — kam qolsa yoki tugasa «Kam qolgan» ro'yxatida, eslatma va Telegram xabarlarida ko'rinadi.</small></div>
+            </div>
         </div>
         <div class="cl-sheet-foot">
             <button class="btn btn-outline-secondary" t-on-click="() => this.forecastMaterial(r)">Batafsil</button>
@@ -608,6 +627,11 @@
                 <span class="cl-big-num" t-att-class="{ 'cl-bad': row.on_hand &lt; -0.0005 }"><t t-esc="num(row.on_hand, 2)"/></span>
                 <span class="cl-big-unit"><t t-esc="row.uom"/> hozir zavodda</span>
                 <span class="cl-big-min" t-if="row.min_qty" t-att-class="{ 'cl-warn': row.low }">minimal <t t-esc="num(row.min_qty)"/></span>
+            </div>
+            <div class="form-check form-switch mb-3" t-if="state.data.is_manager">
+                <input class="form-check-input" type="checkbox" id="cl_track_low_m" t-att-checked="row.track !== false"
+                       t-att-disabled="state.busy" t-on-change="() => this.toggleTrack(row)"/>
+                <label class="form-check-label" for="cl_track_low_m">Kam qolishi kuzatiladi <small class="cl-muted">(ro'yxat, eslatma va Telegram)</small></label>
             </div>
             <div class="cl-section">
                 <h3>Qayerda</h3>

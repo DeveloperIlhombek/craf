@@ -236,7 +236,7 @@ export class CrafLitey extends Component {
             if (filter === "aux" && r.kind !== "aux") {
                 return false;
             }
-            if (filter === "low" && !(r.low || r.negative)) {
+            if (filter === "low" && !(r.low || (r.negative && r.track))) {
                 return false;
             }
             if (filter === "active" && !MOVE_KINDS.some((k) => Math.abs(r[k]) > 0.0005)) {
@@ -251,7 +251,7 @@ export class CrafLitey extends Component {
         this.state.filter = "all";
     }
     get alertCount() {
-        return this.state.data.movement.filter((r) => r.low || r.negative).length;
+        return this.state.data.movement.filter((r) => r.low || (r.negative && r.track)).length;
     }
     level(r) {
         // Qoldiq darajasi: minimal qoldiqning 3 barobari = to'la. Minimal belgilanmagan bo'lsa — ko'rsatilmaydi.
@@ -344,6 +344,36 @@ export class CrafLitey extends Component {
             }
             this.closeSheet();
             this.notification.add(`${s.r.name}: minimal qoldiq saqlandi.`, { type: "success" });
+        });
+    }
+    onTrackCell(r, ev, canEdit) {
+        // jadval katagi: qator bosilishi (material oynasi) ochilmasin
+        ev.stopPropagation();
+        if (canEdit && !this.state.busy) {
+            this.toggleTrack(r);
+        }
+    }
+    async toggleTrack(r, ev) {
+        // «Kuzatiladi» switch: o'chirilsa material kam qolgan / tugagan ro'yxatida va Telegramda ko'rinmaydi
+        if (ev) {
+            ev.stopPropagation();
+        }
+        const value = !(r.track !== false);
+        await this.run(async () => {
+            this.state.fc = await this.orm.call(API, "set_track_low", [r.product_id, value]);
+            const row = this.state.data.movement.find((m) => m.product_id === r.product_id);
+            if (row) {
+                row.track = value;
+                row.low = value && Boolean(row.min_qty) && row.closing < row.min_qty;
+            }
+            const sheet = this.state.sheet;
+            if (sheet && sheet.r && sheet.r.product_id === r.product_id) {
+                sheet.r = this.state.fc.rows.find((x) => x.product_id === r.product_id) || sheet.r;
+            }
+            this.notification.add(
+                value ? `${r.name}: kam qolishi kuzatiladi.` : `${r.name}: endi kuzatilmaydi — ro'yxat va Telegramda ko'rinmaydi.`,
+                { type: value ? "success" : "info" }
+            );
         });
     }
     forecastMaterial(r) {

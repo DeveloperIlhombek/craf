@@ -161,6 +161,7 @@
             </field>
             <field name="qty_available" position="after">
                 <field name="craf_min_qty"/>
+                <field name="craf_track_low" string="Kuzatiladi" widget="boolean_toggle"/>
             </field>
             <field name="uom_id" position="attributes">
                 <attribute name="readonly">1</attribute>
@@ -175,6 +176,7 @@
         <field name="arch" type="xml">
             <field name="craf_name_1c" position="after">
                 <field name="craf_min_qty"/>
+                <field name="craf_track_low" widget="boolean_toggle"/>
             </field>
         </field>
     </record>

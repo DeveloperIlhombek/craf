@@ -419,6 +419,11 @@ class CrafTelegram(models.AbstractModel):
             if not r["min_qty"]:
                 continue
             tmpl = Tmpl.browse(r.get("tmpl_id") or r["product"].product_tmpl_id.id)
+            if not tmpl.craf_track_low:
+                # kuzatish o'chirildi — «tiklandi» xabarisiz jim yopiladi
+                if tmpl.craf_tg_alert:
+                    tmpl.craf_tg_alert = False
+                continue
             name = r.get("name") or tmpl.name
             is_bad = r["status"] in ("low", "out", "neg")
             if is_bad and not tmpl.craf_tg_alert:

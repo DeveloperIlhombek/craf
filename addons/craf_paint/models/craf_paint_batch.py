@@ -238,7 +238,7 @@ class CrafPaintBatch(models.Model):
             spent = used.get(product.id, 0.0)
             avg = spent / period
             min_qty = product.craf_min_qty or 0.0
-            status, days_left = self._craf_forecast_status(qty, avg, min_qty, warn)
+            status, days_left = self._craf_forecast_status(qty, avg, min_qty, warn, product.craf_track_low)
             rows[product.id] = {
                 "product": product, "qty": qty, "in_sex": in_sex.get(product.id, 0.0), "min_qty": min_qty,
                 "used": spent, "avg": avg, "period": period, "days_left": days_left,

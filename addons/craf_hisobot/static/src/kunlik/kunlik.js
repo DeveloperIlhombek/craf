@@ -78,6 +78,16 @@ export class CrafKunlik extends Component {
             { onClose: () => this.load() }
         );
     }
+    async toggleTrack(row, ev) {
+        ev.stopPropagation();
+        const value = !row.track;
+        await this.orm.write("product.product", [row.product_id], { craf_track_low: value });
+        this.notification.add(
+            value ? `${row.name}: kam qolishi kuzatiladi` : `${row.name}: endi kuzatilmaydi (ro'yxat va Telegramda ko'rinmaydi)`,
+            { type: value ? "success" : "info" }
+        );
+        await this.load();
+    }
     openProduct(row) {
         this.actionService.doAction({
             type: "ir.actions.act_window",

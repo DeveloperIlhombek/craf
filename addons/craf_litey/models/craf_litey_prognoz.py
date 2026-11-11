@@ -52,7 +52,10 @@ class CrafLiteyHisobot(models.AbstractModel):
             avg = used / period
             days_left = qty / avg if avg > 1e-9 and qty > 0 else None
             days_to_min = (qty - min_qty) / avg if avg > 1e-9 and min_qty and qty > min_qty else None
-            if qty < -1e-6:
+            track = product.craf_track_low
+            if not track:
+                status = "ok" if avg > 1e-9 else "idle"  # kuzatilmaydi — kam / tugagan deb belgilanmaydi
+            elif qty < -1e-6:
                 status = "neg"
             elif qty < 1e-6 and avg > 1e-9:
                 status = "out"  # tugagan, lekin sarflanadi
@@ -70,7 +73,7 @@ class CrafLiteyHisobot(models.AbstractModel):
                 "code": product.default_code or "", "name": product.name,
                 "full_name": product.name, "uom": self._uom(product),
                 "kind": "aux" if product.craf_not_metal else "metal",
-                "qty": round(qty, 3), "min_qty": min_qty,
+                "qty": round(qty, 3), "min_qty": min_qty, "track": track,
                 "used": round(used, 2), "avg": round(avg, 3), "active_days": active_days,
                 "days_left": round(days_left, 1) if days_left is not None else None,
                 "days_to_min": round(days_to_min, 1) if days_to_min is not None else None,
@@ -119,6 +122,17 @@ class CrafLiteyHisobot(models.AbstractModel):
         if qty < 0:
             raise UserError("Minimal qoldiq manfiy bo'lishi mumkin emas.")
         product.product_tmpl_id.sudo().craf_min_qty = qty  # huquq _check_editor da tekshirildi
+        return self.get_forecast()
+
+    @api.model
+    def set_track_low(self, product_id, value):
+        """«Kuzatiladi» switch: o'chirilsa material kam qolgan / tugagan ro'yxatida, eslatma va Telegramda
+        ko'rinmaydi (ochiq eslatmasi darhol yopiladi)."""
+        self._check_editor()
+        product = self.env["product.product"].browse(int(product_id)).exists()
+        if not product or product.craf_litey_seq <= 0:
+            raise UserError("Material topilmadi.")
+        product.product_tmpl_id.sudo().craf_track_low = bool(value)  # huquq _check_editor da tekshirildi
         return self.get_forecast()
 
     # ------------------------------------------------------------------ eslatma

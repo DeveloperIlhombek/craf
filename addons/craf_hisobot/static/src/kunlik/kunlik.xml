@@ -110,6 +110,7 @@
                                         <th class="text-end d-none d-md-table-cell">Boshqa</th>
                                         <th class="text-end">Oxirgi</th>
                                         <th class="text-end d-none d-sm-table-cell">Min.</th>
+                                        <th class="text-center" title="Kam qolishi kuzatiladi: yoqilsa kam qolgan / tugagan ro'yxatida va Telegram xabarlarida ko'rinadi">Kuzatish</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -129,8 +130,13 @@
                                             <t t-esc="fmtQty(r.closing)"/>
                                         </td>
                                         <td class="text-end text-muted d-none d-sm-table-cell" t-esc="fmt(r.min_qty, 0)"/>
+                                        <td class="text-center" t-on-click="(ev) => this.toggleTrack(r, ev)">
+                                            <div class="form-check form-switch d-inline-block mb-0" t-att-title="r.track ? 'Kuzatiladi' : 'Kuzatilmaydi'">
+                                                <input class="form-check-input" type="checkbox" t-att-checked="r.track" style="pointer-events: none;"/>
+                                            </div>
+                                        </td>
                                     </tr>
-                                    <tr t-if="!rawRows.length"><td colspan="8" class="text-muted">Ko'rsatiladigan qator yo'q</td></tr>
+                                    <tr t-if="!rawRows.length"><td colspan="9" class="text-muted">Ko'rsatiladigan qator yo'q</td></tr>
                                 </tbody>
                             </table>
                         </div>

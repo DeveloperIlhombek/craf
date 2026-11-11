@@ -272,12 +272,14 @@ class CrafLiteyHisobot(models.AbstractModel):
             opening = closing[(dfrom - timedelta(days=1), pid)]
             close = closing[(dto, pid)]
             min_qty = product.craf_min_qty
+            track = product.craf_track_low
             movement.append({
                 "product_id": pid, "code": product.default_code or "", "name": product.name,
                 "excel_name": product.craf_litey_name or product.name, "uom": self._uom(product),
                 "opening": round(opening, 2), "closing": round(close, 2),
                 **{k: round(v, 2) for k, v in row.items()},
-                "min_qty": min_qty, "low": bool(min_qty) and close < min_qty, "negative": close < -1e-6,
+                "min_qty": min_qty, "track": track, "low": track and bool(min_qty) and close < min_qty,
+                "negative": close < -1e-6,
                 "on_hand": round(on_hand.get(pid, 0.0), 3), "locs": by_loc.get(pid, []),
                 **self._material_info(product),
             })

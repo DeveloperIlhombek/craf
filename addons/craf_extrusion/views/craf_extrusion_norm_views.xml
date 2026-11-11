@@ -163,6 +163,7 @@
                 <field name="craf_press_qty"/>
                 <field name="craf_press_in_press" optional="show"/>
                 <field name="craf_min_qty" string="Minimal"/>
+                <field name="craf_track_low" string="Kuzatiladi" widget="boolean_toggle"/>
                 <field name="craf_press_used" string="Sarf (davr), kg" optional="show"/>
                 <field name="craf_press_period" optional="hide"/>
                 <field name="craf_press_avg" string="Kuniga, kg"/>
@@ -220,6 +221,7 @@
                         <footer class="pt-1 text-muted small">
                             <span>Press sexida <field name="craf_press_in_press"/> kg</span>
                             <span class="ms-auto" t-if="record.craf_min_qty.raw_value">minimal <field name="craf_min_qty"/></span>
+                            <span class="ms-3 d-flex align-items-center" title="Kam qolishi kuzatiladi">kuzatish <field name="craf_track_low" widget="boolean_toggle" class="ms-1"/></span>
                         </footer>
                     </t>
                 </templates>

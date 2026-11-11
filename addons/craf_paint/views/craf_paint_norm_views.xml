@@ -130,6 +130,7 @@
                 <field name="craf_boyash_qty"/>
                 <field name="craf_boyash_in_sex" optional="show"/>
                 <field name="craf_min_qty" string="Minimal"/>
+                <field name="craf_track_low" string="Kuzatiladi" widget="boolean_toggle"/>
                 <field name="craf_boyash_used" string="Sarf (davr)" optional="hide"/>
                 <field name="craf_boyash_avg" string="Kuniga"/>
                 <field name="craf_boyash_days_text"/>
@@ -183,6 +184,7 @@
                         <footer class="pt-1 text-muted small">
                             <span t-if="record.craf_min_qty.raw_value">minimal <field name="craf_min_qty"/></span>
                             <span class="ms-auto"><field name="craf_boyash_end_date"/></span>
+                            <span class="ms-3 d-flex align-items-center" title="Kam qolishi kuzatiladi">kuzatish <field name="craf_track_low" widget="boolean_toggle" class="ms-1"/></span>
                         </footer>
                     </t>
                 </templates>

@@ -78,11 +78,14 @@ class CrafProductionMixin(models.AbstractModel):
 
     # ---------------------------------------------------------------- prognoz va eslatma
     @api.model
-    def _craf_forecast_status(self, qty, avg, min_qty, warn):
-        """Material holati: qoldiq, o'rtacha kunlik sarf, minimal qoldiq va ogohlantirish kunlari bo'yicha."""
+    def _craf_forecast_status(self, qty, avg, min_qty, warn, track=True):
+        """Material holati: qoldiq, o'rtacha kunlik sarf, minimal qoldiq va ogohlantirish kunlari bo'yicha.
+        track=False (mahsulotda «Kam qolishi kuzatiladi» o'chirilgan) — hech qachon kam / tugagan emas."""
         days_left = qty / avg if avg > EPS and qty > 0 else None
         days_to_min = (qty - min_qty) / avg if avg > EPS and min_qty and qty > min_qty else None
-        if qty < -EPS:
+        if not track:
+            status = "ok" if avg > EPS else "idle"
+        elif qty < -EPS:
             status = "neg"
         elif qty < EPS and avg > EPS:
             status = "out"  # tugagan, lekin sarflanadi

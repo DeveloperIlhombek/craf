@@ -647,7 +647,8 @@ class CrafSotuv(models.AbstractModel):
                 "type": tmpl.craf_section_id.profile_type or "",
                 "qty": qty, "free": free, "text": packs_text(qty, per) if qty >= 0 else "%s dona" % int(qty),
                 "kg": round(qty * (tmpl.craf_kg_per_pc or 0.0), 1),
-                "low": bool(min_qty) and qty < min_qty, "negative": qty < 0, "per_pack": per,
+                "low": tmpl.craf_track_low and bool(min_qty) and qty < min_qty, "negative": qty < 0,
+                "per_pack": per,
             })
         rows.sort(key=lambda r: (r["type"], r["code"], r["name"]))
         return {

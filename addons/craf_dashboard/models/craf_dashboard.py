@@ -110,7 +110,8 @@ class CrafDashboard(models.AbstractModel):
     @api.model
     def _low_stock(self, limit=6):
         Tmpl = self.env["product.template"]
-        products = Tmpl.search([("sale_ok", "=", True), ("craf_section_id", "!=", False), ("is_storable", "=", True)])
+        products = Tmpl.search([("sale_ok", "=", True), ("craf_section_id", "!=", False), ("is_storable", "=", True),
+                                ("craf_track_low", "=", True)])
         rows = sorted(products, key=lambda t: t.qty_available)[:limit]
         return [{
             "id": t.id,
