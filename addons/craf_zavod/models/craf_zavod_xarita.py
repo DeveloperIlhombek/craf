@@ -21,10 +21,12 @@ CHAIN = [
     ("supplier", "Литейка"),
     ("Литейка", "Press sexi"),
     ("Press sexi", "Bo'yash sexi"),
-    ("Bo'yash sexi", "Qadoqlash"),
-    ("Qadoqlash", "Tayyor mahsulot ombori"),
+    ("Bo'yash sexi", "Tayyor mahsulot ombori"),
     ("Tayyor mahsulot ombori", "customer"),
 ]
+# Xaritada bitta blok: «Qadoqlash» joyi «Bo'yash sexi» bilan birga ko'rsatiladi (ombor joylari o'zgarmaydi)
+MERGE = {"Qadoqlash": "Bo'yash sexi"}
+DISPLAY = {"Bo'yash sexi": "Bo'yash va qadoqlash"}
 LABELS = {
     ("supplier", "Литейка"): "kirim",
     ("supplier", "Xom-ashyo ombori"): "kirim",
@@ -33,7 +35,7 @@ LABELS = {
     ("Press sexi", "Kimyoviy ishlov"): "korzinka",
     ("Kimyoviy ishlov", "Bo'yash sexi"): "profil",
     ("Bo'yash sexi", "Qadoqlash"): "bo'yalgan",
-    ("Bo'yash sexi", "Tayyor mahsulot ombori"): "bo'yalgan",
+    ("Bo'yash sexi", "Tayyor mahsulot ombori"): "bo'yalgan · pachka",
     ("Qadoqlash", "Tayyor mahsulot ombori"): "pachka",
     ("Tayyor mahsulot ombori", "customer"): "sotuv",
     ("Press sexi", "Литейка"): "otxod / pitak",
@@ -92,6 +94,16 @@ class CrafZavodXarita(models.AbstractModel):
         return nodes
 
     @api.model
+    def _craf_merge(self, locations):
+        """MERGE dagi joylarni xaritadan olib tashlaydi: {birlashgan joy id: asosiy blok id}."""
+        by_name = {loc.name: loc for loc in locations}
+        merged = {}
+        for src, dst in MERGE.items():
+            if src in by_name and dst in by_name:
+                merged[by_name[src].id] = by_name[dst].id
+        return locations.filtered(lambda l: l.id not in merged), merged
+
+    @api.model
     def _craf_kg(self, product, qty, kg_uom):
         if kg_uom and product.uom_id == kg_uom:
             return qty
@@ -107,14 +119,15 @@ class CrafZavodXarita(models.AbstractModel):
             locations = Location.search([("craf_map_show", "=", True), ("usage", "=", "internal")],
                                         order="craf_map_sequence, id")
         kg_uom = self.env.ref("uom.product_uom_kgm", raise_if_not_found=False)
+        locations, merged = self._craf_merge(locations)
 
-        # ichki joy → xaritadagi eng yaqin ota joy
+        # ichki joy → xaritadagi eng yaqin ota joy (birlashtirilgan joy — asosiy blokka)
         zone_of = {}
         for loc in Location.search([("usage", "=", "internal")]):
             p = loc
-            while p and p.id not in locations.ids:
+            while p and p.id not in locations.ids and p.id not in merged:
                 p = p.location_id
-            zone_of[loc.id] = p.id if p else None
+            zone_of[loc.id] = merged.get(p.id, p.id) if p else None
 
         # --- qoldiq
         by_loc = {loc.id: {} for loc in locations}
@@ -216,7 +229,7 @@ class CrafZavodXarita(models.AbstractModel):
             st = stats.get(loc.id, {})
             zones.append({
                 "id": loc.id,
-                "name": loc.name,
+                "name": DISPLAY.get(loc.name, loc.name),
                 "full_name": loc.complete_name,
                 "kind": loc.craf_map_kind or "process",
                 "hidden": not loc.craf_map_show,
@@ -291,14 +304,19 @@ class CrafZavodXarita(models.AbstractModel):
             return []
         start, _label = self._craf_period(period)
         kg_uom = self.env.ref("uom.product_uom_kgm", raise_if_not_found=False)
+        all_locs = self.env["stock.location"].search([("usage", "=", "internal"), ("craf_map_kind", "!=", False)])
+        _visible, merged = self._craf_merge(all_locs)
+        zones = zone | self.env["stock.location"].browse([k for k, v in merged.items() if v == zone.id])
+        inside = self.env["stock.location"].search([("id", "child_of", zones.ids)])
         moves = self.env["stock.move"].search([
             ("state", "=", "done"), ("date", ">=", start),
-            "|", ("location_id", "child_of", zone.id), ("location_dest_id", "child_of", zone.id)],
+            "|", ("location_id", "in", inside.ids), ("location_dest_id", "in", inside.ids),
+            "!", "&", ("location_id", "in", inside.ids), ("location_dest_id", "in", inside.ids)],
             order="date desc, id desc", limit=int(limit))
         tz = pytz.timezone(self.env.user.tz or "Asia/Tashkent")
         res = []
         for m in moves:
-            incoming = m.location_dest_id.parent_path.startswith(zone.parent_path)
+            incoming = m.location_dest_id in inside
             other = m.location_id if incoming else m.location_dest_id
             res.append({
                 "id": m.id,
