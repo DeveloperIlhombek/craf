@@ -69,7 +69,7 @@
                                         <span t-if="zone.active" class="o_craf_live_dot me-1"/><t t-esc="zone.name"/>
                                     </div>
                                     <div class="o_craf_mzone_kg text-nowrap" t-attf-style="color: {{kindColors[zone.kind]}};">
-                                        <t t-esc="fmt(num('z_' + zone.id))"/> kg
+                                        <t t-esc="kgText(num('z_' + zone.id))"/>
                                     </div>
                                 </div>
                                 <div class="d-flex justify-content-between gap-2 small text-muted">
@@ -90,7 +90,7 @@
                             <div class="o_craf_mflow">
                                 <span class="o_craf_dot" t-attf-style="background: {{flowColor(f)}};"/>
                                 <span class="text-truncate"><t t-esc="nodeName(f.from)"/> → <t t-esc="nodeName(f.to)"/></span>
-                                <span class="ms-auto text-nowrap fw-bold"><t t-esc="short(f.kg)"/> kg</span>
+                                <span class="ms-auto text-nowrap fw-bold"><t t-esc="kgText(f.kg)"/></span>
                             </div>
                         </t>
                     </div>
@@ -179,17 +179,17 @@
                                     <circle t-if="zone.active and !state.edit" t-att-cx="zone.x + zone.w - 22" t-att-cy="zone.y + 26" r="6"
                                             class="o_craf_pulse" t-att-fill="kindColors[zone.kind]"/>
                                     <text t-att-x="zone.x + 20" t-att-y="zone.y + 76" class="o_craf_zone_big" t-att-fill="kindColors[zone.kind]">
-                                        <t t-esc="short(num('z_' + zone.id))"/><tspan class="o_craf_zone_unit"> kg</tspan>
+                                        <t t-esc="short(num('z_' + zone.id))"/><tspan class="o_craf_zone_unit"> <t t-esc="unitOf(zone.kg_total)"/></tspan>
                                     </text>
                                     <t t-foreach="zoneLines(zone)" t-as="line" t-key="line_index">
                                         <text t-att-x="zone.x + 20" t-att-y="zone.y + 104 + line_index * 20" class="o_craf_zone_line"><t t-esc="line"/></text>
                                     </t>
                                     <g class="o_craf_badges">
                                         <text t-if="zone.in_kg" t-att-x="zone.x + 20" t-att-y="zone.y + zone.h - 16" class="o_craf_in">
-                                            ▲ +<t t-esc="short(zone.in_kg)"/> kg
+                                            ▲ +<t t-esc="kgText(zone.in_kg)"/>
                                         </text>
                                         <text t-if="zone.out_kg" t-att-x="zone.x + (zone.in_kg ? 120 : 20)" t-att-y="zone.y + zone.h - 16" class="o_craf_out">
-                                            ▼ −<t t-esc="short(zone.out_kg)"/> kg
+                                            ▼ −<t t-esc="kgText(zone.out_kg)"/>
                                         </text>
                                     </g>
                                     <g t-if="zone.baskets" class="o_craf_basket_badge">
@@ -216,7 +216,7 @@
                                     </text>
                                     <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 76" text-anchor="middle" class="o_craf_zone_title"><t t-esc="vn.name"/></text>
                                     <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 112" text-anchor="middle" class="o_craf_virtual_kg">
-                                        <t t-esc="short(num('v_' + vn.id))"/> kg
+                                        <t t-esc="kgText(num('v_' + vn.id))"/>
                                     </text>
                                     <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 136" text-anchor="middle" class="o_craf_zone_line">
                                         <t t-esc="vn.id === 'supplier' ? 'kirim' : 'sotuv'"/> · <t t-esc="state.periodLabel"/>
@@ -236,7 +236,7 @@
                                         <text t-att-x="g.mx" t-att-y="g.my - 17" text-anchor="middle" class="o_craf_pill_label"><t t-esc="flow.label"/></text>
                                         <rect t-att-x="g.mx - pillWidth(flow) / 2" t-att-y="g.my - 11" t-att-width="pillWidth(flow)" height="22" rx="11"
                                               t-att-stroke="flowColor(flow)"/>
-                                        <text t-att-x="g.mx" t-att-y="g.my + 4" text-anchor="middle"><t t-esc="short(flow.kg)"/> kg</text>
+                                        <text t-att-x="g.mx" t-att-y="g.my + 4" text-anchor="middle"><t t-esc="kgText(flow.kg)"/></text>
                                     </g>
                                     <text t-else="" t-att-x="g.mx" t-att-y="g.my - 6" text-anchor="middle" class="o_craf_flow_idle_label"><t t-esc="flow.label"/></text>
                                 </g>

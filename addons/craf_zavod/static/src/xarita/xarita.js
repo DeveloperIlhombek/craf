@@ -343,11 +343,11 @@ export class CrafZavodXarita extends Component {
         return `${flow.from}-${flow.to}`;
     }
     pillWidth(flow) {
-        const text = `${this.short(flow.kg)} kg`;
+        const text = this.kgText(flow.kg);
         return Math.max(48, text.length * 7.2 + 16);
     }
     flowText(flow) {
-        return flow.kg ? `${flow.label} · ${this.short(flow.kg)} kg` : flow.label;
+        return flow.kg ? `${flow.label} · ${this.kgText(flow.kg)}` : flow.label;
     }
 
     // ------------------------------------------------------------------ formatlash
@@ -363,6 +363,14 @@ export class CrafZavodXarita extends Component {
             return `${this.fmt(value / 1e3, 1)} t`;
         }
         return this.fmt(value);
+    }
+    unitOf(value) {
+        // «short» 10 000 dan katta qiymatni «t» / «mln» bilan yozadi — u holda «kg» qo'shilmaydi
+        return Math.abs(value || 0) >= 1e4 ? "" : "kg";
+    }
+    kgText(value) {
+        const unit = this.unitOf(value);
+        return unit ? `${this.short(value)} ${unit}` : this.short(value);
     }
     num(key) {
         return this.disp[key] ?? 0;
