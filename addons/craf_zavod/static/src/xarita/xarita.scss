@@ -153,7 +153,7 @@
         .o_craf_table td { padding-top: 0.25rem; padding-bottom: 0.25rem; }
     }
     @media (min-width: 1200px) {
-        .o_craf_kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        .o_craf_kpis { grid-template-columns: repeat(7, minmax(0, 1fr)); }
         .o_craf_panel { flex: 0 0 400px; max-height: calc(100vh - 230px); overflow-y: auto; }
     }
 }

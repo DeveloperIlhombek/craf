@@ -20,7 +20,8 @@ from odoo.exceptions import AccessError
 CHAIN = [
     ("supplier", "Литейка"),
     ("Литейка", "Press sexi"),
-    ("Press sexi", "Bo'yash sexi"),
+    ("Press sexi", "Kimyoviy ishlov"),
+    ("Kimyoviy ishlov", "Bo'yash sexi"),
     ("Bo'yash sexi", "Tayyor mahsulot ombori"),
     ("Tayyor mahsulot ombori", "customer"),
 ]
@@ -33,7 +34,8 @@ LABELS = {
     ("Литейка", "Press sexi"): "stalba",
     ("Press sexi", "Bo'yash sexi"): "profil",
     ("Press sexi", "Kimyoviy ishlov"): "korzinka",
-    ("Kimyoviy ishlov", "Bo'yash sexi"): "profil",
+    ("Kimyoviy ishlov", "Bo'yash sexi"): "ishlangan profil",
+    ("Xom-ashyo ombori", "Kimyoviy ishlov"): "kimyo",
     ("Bo'yash sexi", "Qadoqlash"): "bo'yalgan",
     ("Bo'yash sexi", "Tayyor mahsulot ombori"): "bo'yalgan · pachka",
     ("Qadoqlash", "Tayyor mahsulot ombori"): "pachka",
@@ -54,7 +56,7 @@ KPIS = [
 ]
 VIRTUAL = {
     "supplier": {"name": "Ta'minotchilar", "kind": "external", "icon": "fa-truck", "x": 30, "y": 90, "w": 190, "h": 190},
-    "customer": {"name": "Mijozlar", "kind": "external", "icon": "fa-users", "x": 670, "y": 430, "w": 230, "h": 190},
+    "customer": {"name": "Mijozlar", "kind": "external", "icon": "fa-users", "x": 990, "y": 430, "w": 220, "h": 190},
 }
 PERIODS = {"today": 1, "7": 7, "30": 30}
 ICP_KEY = "craf_zavod.virtual_layout"
@@ -113,11 +115,10 @@ class CrafZavodXarita(models.AbstractModel):
     @api.model
     def get_map_data(self, top_limit=12, period="today", **kwargs):
         Location = self.env["stock.location"]
-        locations = Location.search([("usage", "=", "internal"), ("craf_map_kind", "!=", False)],
-                                    order="craf_map_sequence, id")
-        if not locations:
-            locations = Location.search([("craf_map_show", "=", True), ("usage", "=", "internal")],
-                                        order="craf_map_sequence, id")
+        # xaritadagi bloklar: ko'rsatilganlar + standart sxemadagilar (yashirilgan bo'lsa ham — tartiblashda qaytariladi)
+        from ..hooks import LAYOUT
+        locations = Location.search([("usage", "=", "internal"), "|", ("craf_map_show", "=", True),
+                                     ("name", "in", list(LAYOUT) + list(MERGE))], order="craf_map_sequence, id")
         kg_uom = self.env.ref("uom.product_uom_kgm", raise_if_not_found=False)
         locations, merged = self._craf_merge(locations)
 
@@ -304,7 +305,7 @@ class CrafZavodXarita(models.AbstractModel):
             return []
         start, _label = self._craf_period(period)
         kg_uom = self.env.ref("uom.product_uom_kgm", raise_if_not_found=False)
-        all_locs = self.env["stock.location"].search([("usage", "=", "internal"), ("craf_map_kind", "!=", False)])
+        all_locs = self.env["stock.location"].search([("usage", "=", "internal"), ("name", "in", list(MERGE) + list(MERGE.values()))])
         _visible, merged = self._craf_merge(all_locs)
         zones = zone | self.env["stock.location"].browse([k for k, v in merged.items() if v == zone.id])
         inside = self.env["stock.location"].search([("id", "child_of", zones.ids)])

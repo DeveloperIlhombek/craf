@@ -376,6 +376,10 @@ export class CrafZavodXarita extends Component {
             .join(" · ");
     }
     zoneLines(zone) {
+        if (zone.queue) {
+            // Kimyoviy ishlov: ombor qoldig'i emas — ishlovni kutayotgan korzinkalar
+            return [zone.note, zone.pcs_total ? `${this.shortQty(zone.pcs_total)} dona profil` : ""].filter(Boolean);
+        }
         const lines = [`${zone.product_count} xil mahsulot`];
         const units = this.unitsText(zone);
         if (units) {

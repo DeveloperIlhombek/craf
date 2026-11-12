@@ -1,6 +1,6 @@
 {
     "name": "Craf Zavod xaritasi",
-    "version": "19.0.1.2.0",
+    "version": "19.0.1.3.0",
     "summary": "Zavodning jonli xaritasi: har bir bo'limdagi qoldiq va real oqimlar animatsiyasi",
     "description": """
 Craf -> Zavod xaritasi sahifasi (real ma'lumot):
@@ -10,6 +10,7 @@ Craf -> Zavod xaritasi sahifasi (real ma'lumot):
 - Blokni bosganda: davrdagi kirim/chiqim, ishlab chiqarish, sarf, mahsulotlar (qidiruv), oxirgi harakatlar
 - «Tartiblash»: bloklarni surish va yashirish (ombor menejeri), joyi saqlanadi
 - «Bo'yash sexi» va «Qadoqlash» xaritada bitta blok — «Bo'yash va qadoqlash»
+- Press va Bo'yash orasida «Kimyoviy ishlov»: kutayotgan korzinkalar, kimyodan o'tgan profil (craf_korzinka)
 """,
     "author": "Craf",
     "category": "Manufacturing",

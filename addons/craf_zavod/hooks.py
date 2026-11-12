@@ -1,13 +1,13 @@
 # Standart sxema (real oqim tartibida): nomi bo'yicha joylashuvlarni xaritaga qo'yadi.
 # (tartib, tur, x, y, eni, bo'yi, ko'rsatish) — keyin xaritadagi «Tartiblash» rejimida surib o'zgartiriladi.
 LAYOUT = {
-    "Литейка": (10, "process", 330, 90, 230, 190, True),
-    "Press sexi": (20, "process", 670, 90, 230, 190, True),
-    "Kimyoviy ishlov": (25, "process", 670, 700, 230, 170, False),
-    "Bo'yash sexi": (30, "process", 1010, 90, 540, 190, True),
-    "Qadoqlash": (40, "process", 1350, 700, 200, 170, False),  # xaritada Bo'yash bilan bitta blok
-    "Tayyor mahsulot ombori": (50, "finished", 1010, 430, 540, 190, True),
-    "Xom-ashyo ombori": (60, "raw", 330, 430, 230, 190, True),
+    "Литейка": (10, "process", 330, 90, 220, 190, True),
+    "Press sexi": (20, "process", 660, 90, 220, 190, True),
+    "Kimyoviy ishlov": (25, "process", 990, 90, 220, 190, True),
+    "Bo'yash sexi": (30, "process", 1320, 90, 380, 190, True),
+    "Qadoqlash": (40, "process", 1320, 760, 200, 170, False),  # xaritada Bo'yash bilan bitta blok
+    "Tayyor mahsulot ombori": (50, "finished", 1320, 430, 380, 190, True),
+    "Xom-ashyo ombori": (60, "raw", 660, 430, 220, 190, True),
     "Chiqindi": (70, "waste", 30, 430, 190, 190, True),
 }
 
