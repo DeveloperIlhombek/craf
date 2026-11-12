@@ -276,68 +276,51 @@ export class CrafZavodXarita extends Component {
         const p = this.anchor(a, b);
         const q = this.anchor(b, a);
         const reverse = this.state.flows.some((f) => f.from === flow.to && f.to === flow.from);
-        const dist = Math.hypot(q.x - p.x, q.y - p.y);
+        // o'z yo'nalishiga nisbatan bir xil tomonga (o'ngga) surilsa — qarama-qarshi oqimlar ikki yonga ajraladi
+        const base = reverse ? 44 : 0;
+        const others = this.nodes.filter((n) => n !== a && n !== b);
+        // egilish variantlari: avval to'g'ri (yoki qarama-qarshi oqim uchun yon), keyin yuqori/past yoylar
+        const offs = [base, base - 80, base + 80, base - 140, base + 140, base - 200, base + 200];
+        let best = null;
+        for (const off of offs) {
+            const geom = this.bezier(p, q, off);
+            const hits = others.filter((n) => geom.pts.some((pt) => this.inRect(pt, n, 6))).length;
+            if (!best || hits < best.hits) {
+                best = { ...geom, hits };
+            }
+            if (!hits) {
+                break;
+            }
+        }
+        return best;
+    }
+    bezier(p, q, off) {
+        const dist = Math.hypot(q.x - p.x, q.y - p.y) || 1;
         const k = Math.max(40, dist * 0.4);
-        // qarama-qarshi oqimlar bir-birining ustiga tushmasin: biri yon tomonga egiladi
-        let off = 0;
-        if (reverse) {
-            off = String(flow.from) < String(flow.to) ? 26 : -26;
-        }
-        // yo'lda boshqa blok bo'lsa — yoy bo'lib ustidan (yoki chetidan) aylanib o'tadi
-        const blocked = this.nodes.some((n) => n !== a && n !== b && this.segHitsRect(p, q, n, 12));
-        if (blocked) {
-            const nx = -(q.y - p.y) / (dist || 1);
-            const ny = (q.x - p.x) / (dist || 1);
-            // yuqoriga (y kamayadigan) tomonga egilsin
-            const sign = ny > 0 ? -1 : ny < 0 ? 1 : nx > 0 ? -1 : 1;
-            off = sign * Math.min(140, 60 + dist * 0.12);
-        }
-        const ox = (-(q.y - p.y) / (dist || 1)) * off;
-        const oy = ((q.x - p.x) / (dist || 1)) * off;
-        const p1 = { x: p.x + ox * 0.6, y: p.y + oy * 0.6 };
-        const q1 = { x: q.x + ox * 0.6, y: q.y + oy * 0.6 };
+        const ox = (-(q.y - p.y) / dist) * off;
+        const oy = ((q.x - p.x) / dist) * off;
+        const p1 = { x: p.x + ox * 0.35, y: p.y + oy * 0.35 };
+        const q1 = { x: q.x + ox * 0.35, y: q.y + oy * 0.35 };
         const c1 = { x: p1.x + p.nx * k + ox, y: p1.y + p.ny * k + oy };
         const c2 = { x: q1.x + q.nx * k + ox, y: q1.y + q.ny * k + oy };
-        const d = `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} C${c1.x.toFixed(1)},${c1.y.toFixed(1)} ${c2.x.toFixed(1)},${c2.y.toFixed(1)} ${q1.x.toFixed(1)},${q1.y.toFixed(1)}`;
-        // egri chiziq o'rtasi (t = 0.5)
-        const mx = 0.125 * p1.x + 0.375 * c1.x + 0.375 * c2.x + 0.125 * q1.x;
-        const my = 0.125 * p1.y + 0.375 * c1.y + 0.375 * c2.y + 0.125 * q1.y;
-        return { d, mx, my };
-    }
-    segHitsRect(p, q, r, pad = 0) {
-        // kesma (p→q) to'rtburchakni kesib o'tadimi (Liang–Barsky)
-        const x0 = r.x - pad;
-        const y0 = r.y - pad;
-        const x1 = r.x + r.w + pad;
-        const y1 = r.y + r.h + pad;
-        const dx = q.x - p.x;
-        const dy = q.y - p.y;
-        let t0 = 0;
-        let t1 = 1;
-        const checks = [
-            [-dx, p.x - x0],
-            [dx, x1 - p.x],
-            [-dy, p.y - y0],
-            [dy, y1 - p.y],
-        ];
-        for (const [pp, qq] of checks) {
-            if (pp === 0) {
-                if (qq < 0) {
-                    return false;
-                }
-                continue;
-            }
-            const t = qq / pp;
-            if (pp < 0) {
-                t0 = Math.max(t0, t);
-            } else {
-                t1 = Math.min(t1, t);
-            }
-            if (t0 > t1) {
-                return false;
-            }
+        const at = (t) => {
+            const u = 1 - t;
+            return {
+                x: u * u * u * p1.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * q1.x,
+                y: u * u * u * p1.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * q1.y,
+            };
+        };
+        const pts = [];
+        for (let i = 1; i < 12; i++) {
+            pts.push(at(i / 12));
         }
-        return true;
+        const m = at(0.5);
+        const f = (v) => v.toFixed(1);
+        const d = `M${f(p1.x)},${f(p1.y)} C${f(c1.x)},${f(c1.y)} ${f(c2.x)},${f(c2.y)} ${f(q1.x)},${f(q1.y)}`;
+        return { d, mx: m.x, my: m.y, pts };
+    }
+    inRect(pt, r, pad = 0) {
+        return pt.x > r.x - pad && pt.x < r.x + r.w + pad && pt.y > r.y - pad && pt.y < r.y + r.h + pad;
     }
     flowKey(flow) {
         return `${flow.from}-${flow.to}`;
@@ -375,10 +358,21 @@ export class CrafZavodXarita extends Component {
     num(key) {
         return this.disp[key] ?? 0;
     }
+    shortQty(value) {
+        const v = Math.abs(value || 0);
+        if (v >= 1e6) {
+            return `${this.fmt(value / 1e6, 1)} mln`;
+        }
+        if (v >= 1e4) {
+            return `${this.fmt(value / 1e3, 1)} ming`;
+        }
+        return this.fmt(value);
+    }
     unitsText(zone) {
         return zone.units
+            .filter((u) => Math.abs(u.qty) >= 0.5)
             .slice(0, 2)
-            .map((u) => `${this.short(u.qty)} ${u.uom}`)
+            .map((u) => `${this.shortQty(u.qty)} ${u.uom}`)
             .join(" · ");
     }
     zoneLines(zone) {

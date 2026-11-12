@@ -118,12 +118,12 @@
                                     <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
                                 </filter>
                                 <t t-foreach="kinds" t-as="k" t-key="k">
-                                    <marker t-att-id="'crafArrow_' + k" viewBox="0 0 10 10" refX="8" refY="5"
-                                            markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                                    <marker t-att-id="'crafArrow_' + k" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse"
+                                            markerWidth="14" markerHeight="14" orient="auto-start-reverse">
                                         <path d="M0 0L10 5L0 10z" t-att-fill="kindColors[k]"/>
                                     </marker>
                                 </t>
-                                <marker id="crafArrow_idle" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                <marker id="crafArrow_idle" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto">
                                     <path d="M0 0L10 5L0 10z" fill="#cbd5e1"/>
                                 </marker>
                                 <t t-foreach="nodes" t-as="n" t-key="n.id">
@@ -270,7 +270,7 @@
                             <div class="row g-2 text-center mb-3">
                                 <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(num('z_' + z.id))"/></div><div class="small text-muted">kg (nazariy)</div></div></div>
                                 <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="z.product_count"/></div><div class="small text-muted">xil mahsulot</div></div></div>
-                                <t t-foreach="z.units.slice(0, 2)" t-as="u" t-key="u.uom">
+                                <t t-foreach="z.units.filter((u) => u.qty >= 0.5 or u.qty &lt;= -0.5).slice(0, 2)" t-as="u" t-key="u.uom">
                                     <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(u.qty)"/></div><div class="small text-muted" t-esc="u.uom"/></div></div>
                                 </t>
                                 <div class="col-6" t-if="z.packs_total"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(z.packs_total)"/></div><div class="small text-muted">to'liq pachka</div></div></div>
