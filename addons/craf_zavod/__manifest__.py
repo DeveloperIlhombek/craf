@@ -1,19 +1,20 @@
 {
     "name": "Craf Zavod xaritasi",
-    "version": "19.0.1.0.1",
-    "summary": "Zavodning 2D sxematik xaritasi: har bir nuqtadagi jonli qoldiq",
+    "version": "19.0.1.1.0",
+    "summary": "Zavodning jonli xaritasi: har bir bo'limdagi qoldiq va real oqimlar animatsiyasi",
     "description": """
-Craf -> Zavod xaritasi sahifasi:
-- Ombor joylashuvlari zavod sxemasida bloklar ko'rinishida
-- Har bir blokda jonli qoldiq: kg, шт, pachka, mahsulotlar soni
-- Ishlab chiqarish oqimi strelkalar bilan
-- Blokni bosganda o'sha joydagi mahsulotlar ro'yxati
-Bloklarning joyi va o'lchami joylashuv kartochkasida (Zavod xaritasi bo'limi) o'zgartiriladi.
+Craf -> Zavod xaritasi sahifasi (real ma'lumot):
+- Bloklar — ombor joylashuvlari: jonli qoldiq (kg, dona/rulon, pachka), to'lish darajasi, korzinkalar
+- Oqimlar — tanlangan davrdagi (bugun / 7 / 30 kun) bajarilgan ombor harakatlaridan: kirim, stalba,
+  profil, bo'yalgan, sotuv, otxod, shlak; chiziq qalinligi va zarrachalar tezligi miqdorga mos
+- KPI: kirim, stalba, press, bo'yash, sotuv, to'la korzinkalar
+- Blokni bosganda: davrdagi kirim/chiqim, ishlab chiqarish, sarf, mahsulotlar (qidiruv), oxirgi harakatlar
+- «Tartiblash»: bloklarni surish va yashirish (ombor menejeri), joyi saqlanadi
 """,
     "author": "Craf",
     "category": "Manufacturing",
     "license": "LGPL-3",
-    "depends": ["craf_profile", "stock"],
+    "depends": ["craf_profile", "stock", "mrp"],
     "data": [
         "views/stock_location_views.xml",
         "views/craf_zavod_menus.xml",

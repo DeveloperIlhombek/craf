@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="craf_zavod.Xarita">
-        <div class="o_action o_craf_xarita h-100 d-flex flex-column">
+        <div t-att-class="'o_action o_craf_xarita h-100 d-flex flex-column' + (state.edit ? ' o_craf_editing' : '') + (reducedMotion ? ' o_craf_still' : '')">
+            <!-- ======================= sarlavha ======================= -->
             <div class="o_craf_xarita_header d-flex flex-wrap align-items-center gap-2 gap-md-3 px-3 px-md-4 py-2 py-md-3 border-bottom">
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 min-w-0">
                     <h2 class="mb-0">Zavod xaritasi</h2>
                     <div class="text-muted small">
-                        Har bir nuqtadagi jonli qoldiq · oxirgi yangilanish <t t-esc="state.updated"/>
+                        <span class="o_craf_live_dot"/> Jonli qoldiq va real oqim · <t t-esc="state.periodLabel"/> · yangilandi <t t-esc="state.updated"/>
                     </div>
                 </div>
-                <div class="d-none d-md-flex flex-wrap gap-3 small">
-                    <t t-foreach="kinds" t-as="k" t-key="k">
-                        <span class="d-inline-flex align-items-center gap-1">
-                            <span class="o_craf_dot" t-attf-style="background: {{kindColors[k]}};"/>
-                            <t t-esc="kindLabels[k]"/>
-                        </span>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Davr">
+                    <t t-foreach="periods" t-as="p" t-key="p.key">
+                        <button type="button" class="btn" t-att-class="state.period === p.key ? 'btn-primary' : 'btn-outline-secondary'"
+                                t-on-click="() => this.setPeriod(p.key)" t-esc="p.label"/>
                     </t>
                 </div>
-                <div class="form-check form-switch mb-0">
+                <div class="form-check form-switch mb-0 d-none d-sm-block">
                     <input class="form-check-input" type="checkbox" id="craf_xarita_auto"
                            t-att-checked="state.auto" t-on-change="toggleAuto"/>
                     <label class="form-check-label small" for="craf_xarita_auto">Avto (30 s)</label>
@@ -28,130 +27,340 @@
                     <button type="button" class="btn" t-att-class="state.mview === 'scheme' ? 'btn-primary' : 'btn-outline-secondary'"
                             t-on-click="() => this.setMobileView('scheme')"><i class="fa fa-sitemap me-1"/>Sxema</button>
                 </div>
-                <button class="btn btn-primary" t-on-click="() => this.load()" title="Yangilash">
+                <t t-if="state.canEdit">
+                    <button t-if="state.edit" class="btn btn-sm btn-outline-secondary d-none d-md-inline-block" t-on-click="cancelEdit">Bekor</button>
+                    <button class="btn btn-sm d-none d-md-inline-block" t-att-class="state.edit ? 'btn-success' : 'btn-outline-secondary'"
+                            t-on-click="toggleEdit" title="Bloklarni surish va yashirish">
+                        <i t-att-class="'fa me-1 ' + (state.edit ? 'fa-check' : 'fa-arrows')"/>
+                        <t t-esc="state.edit ? (state.dirty ? 'Saqlash' : 'Tayyor') : 'Tartiblash'"/>
+                    </button>
+                </t>
+                <button class="btn btn-primary btn-sm" t-on-click="() => this.load()" title="Yangilash">
                     <i class="fa fa-refresh"/><span class="d-none d-sm-inline ms-1">Yangilash</span>
                 </button>
             </div>
 
-            <div class="o_content flex-grow-1 overflow-auto d-flex flex-wrap gap-3 p-2 p-md-3">
-                <!-- Telefon: zonalar ro'yxati (jarayon tartibida) -->
-                <div t-att-class="'o_craf_mlist w-100 ' + (state.mview === 'list' ? 'd-md-none' : 'd-none')">
-                    <t t-foreach="state.zones" t-as="zone" t-key="zone.id">
-                        <div t-att-class="'o_craf_mzone' + (zone.id === state.selectedId ? ' o_selected' : '')"
-                             t-attf-style="border-left-color: {{kindColors[zone.kind]}};" role="button"
-                             t-on-click="() => this.select(zone, true)">
-                            <div class="d-flex align-items-baseline justify-content-between gap-2">
-                                <div class="fw-bold text-truncate" t-esc="zone.name"/>
-                                <div class="o_craf_mzone_kg text-nowrap" t-attf-style="color: {{kindColors[zone.kind]}};">
-                                    <t t-esc="fmt(zone.kg_total)"/> kg
+            <div class="o_content flex-grow-1 overflow-auto p-2 p-md-3">
+                <!-- ======================= KPI ======================= -->
+                <div class="o_craf_kpis mb-3">
+                    <t t-foreach="state.kpis" t-as="k" t-key="k.key">
+                        <div t-att-class="'o_craf_kpi' + (k.value ? ' o_on' : '')">
+                            <div class="o_craf_kpi_icon"><i t-att-class="'fa ' + k.icon"/></div>
+                            <div class="min-w-0">
+                                <div class="o_craf_kpi_label text-truncate" t-esc="k.label"/>
+                                <div class="o_craf_kpi_value">
+                                    <t t-esc="k.unit === 'kg' ? short(num('k_' + k.key)) : fmt(num('k_' + k.key))"/>
+                                    <small t-esc="kpiUnit(k)"/>
                                 </div>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2 small text-muted">
-                                <span class="text-truncate"><t t-esc="kindLabels[zone.kind]"/> · <t t-esc="zone.product_count"/> xil</span>
-                                <span t-if="zone.pcs_total" class="text-nowrap">
-                                    <t t-esc="fmt(zone.pcs_total)"/> шт<t t-if="zone.packs_total"> · <t t-esc="fmt(zone.packs_total)"/> pachka</t>
-                                </span>
-                            </div>
-                            <div class="o_craf_mbar">
-                                <div t-attf-style="width: {{(ratio(zone) * 100).toFixed(1)}}%; background: {{kindColors[zone.kind]}};"/>
                             </div>
                         </div>
                     </t>
                 </div>
-                <div t-att-class="'o_craf_map flex-grow-1 rounded border p-2 ' + (state.mview === 'list' ? 'd-none d-md-block' : 'o_craf_map_scroll')">
-                    <div t-if="!state.zones.length and !state.loading" class="p-5 text-center text-muted">
-                        Xaritada ko'rsatiladigan joylashuv yo'q. Joylashuv kartochkasida "Xaritada ko'rsatish" ni yoqing.
+
+                <div class="d-flex flex-wrap gap-3">
+                    <!-- ======================= telefon: ro'yxat ======================= -->
+                    <div t-att-class="'o_craf_mlist w-100 ' + (state.mview === 'list' ? 'd-md-none' : 'd-none')">
+                        <t t-foreach="visibleZones" t-as="zone" t-key="zone.id">
+                            <div t-att-class="'o_craf_mzone' + (zone.id === state.selectedId ? ' o_selected' : '')"
+                                 t-attf-style="border-left-color: {{kindColors[zone.kind]}};" role="button"
+                                 t-on-click="() => this.select(zone, true)">
+                                <div class="d-flex align-items-baseline justify-content-between gap-2">
+                                    <div class="fw-bold text-truncate">
+                                        <span t-if="zone.active" class="o_craf_live_dot me-1"/><t t-esc="zone.name"/>
+                                    </div>
+                                    <div class="o_craf_mzone_kg text-nowrap" t-attf-style="color: {{kindColors[zone.kind]}};">
+                                        <t t-esc="fmt(num('z_' + zone.id))"/> kg
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2 small text-muted">
+                                    <span class="text-truncate"><t t-esc="zone.product_count"/> xil<t t-if="unitsText(zone)"> · <t t-esc="unitsText(zone)"/></t></span>
+                                    <span class="text-nowrap">
+                                        <span t-if="zone.in_kg" class="text-success">+<t t-esc="short(zone.in_kg)"/></span>
+                                        <span t-if="zone.out_kg" class="text-danger ms-1">−<t t-esc="short(zone.out_kg)"/></span>
+                                    </span>
+                                </div>
+                                <div class="o_craf_mbar">
+                                    <div t-attf-style="width: {{(level(zone) * 100).toFixed(1)}}%; background: {{kindColors[zone.kind]}};"/>
+                                </div>
+                            </div>
+                        </t>
+                        <div class="small text-muted mt-3 mb-1">Oqimlar · <t t-esc="state.periodLabel"/></div>
+                        <div t-if="!activeFlows.length" class="small text-muted">Bu davrda harakat yo'q.</div>
+                        <t t-foreach="activeFlows" t-as="f" t-key="flowKey(f)">
+                            <div class="o_craf_mflow">
+                                <span class="o_craf_dot" t-attf-style="background: {{flowColor(f)}};"/>
+                                <span class="text-truncate"><t t-esc="nodeName(f.from)"/> → <t t-esc="nodeName(f.to)"/></span>
+                                <span class="ms-auto text-nowrap fw-bold"><t t-esc="short(f.kg)"/> kg</span>
+                            </div>
+                        </t>
                     </div>
-                    <svg t-else="" t-att-viewBox="viewBox" class="w-100" preserveAspectRatio="xMidYMin meet">
-                        <defs>
-                            <marker id="crafArrow" viewBox="0 0 10 10" refX="9" refY="5"
-                                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                                <path d="M0 0L10 5L0 10z" class="o_craf_arrow_head"/>
-                            </marker>
-                        </defs>
-                        <rect x="10" y="10" t-att-width="mapW - 20" t-att-height="mapH - 20" rx="18" class="o_craf_wall"/>
-                        <text x="40" y="46" class="o_craf_wall_label">CRAF ZAVODI</text>
 
-                        <t t-foreach="state.flows" t-as="flow" t-key="flow_index">
-                            <t t-set="g" t-value="flowGeom(flow)"/>
-                            <g t-if="g">
-                                <line t-att-x1="g.x1" t-att-y1="g.y1" t-att-x2="g.x2" t-att-y2="g.y2"
-                                      class="o_craf_flow" marker-end="url(#crafArrow)"/>
-                                <text t-att-x="g.lx" t-att-y="g.ly" t-att-text-anchor="g.anchor"
-                                      class="o_craf_flow_label"><t t-esc="flow.label"/></text>
-                            </g>
-                        </t>
-
-                        <t t-foreach="state.zones" t-as="zone" t-key="zone.id">
-                            <g t-att-class="'o_craf_zone' + (zone.id === state.selectedId ? ' o_selected' : '')"
-                               t-on-click="() => this.select(zone)">
-                                <rect t-att-x="zone.x" t-att-y="zone.y" t-att-width="zone.w" t-att-height="zone.h" rx="14"
-                                      class="o_craf_zone_rect" t-att-stroke="kindColors[zone.kind]"
-                                      t-att-fill="kindColors[zone.kind]" t-att-fill-opacity="fillOpacity(zone)"/>
-                                <text t-att-x="zone.x + 16" t-att-y="zone.y + 32" class="o_craf_zone_title">
-                                    <t t-esc="zone.name"/>
-                                </text>
-                                <text t-att-x="zone.x + 16" t-att-y="zone.y + 74" class="o_craf_zone_big"
-                                      t-att-fill="kindColors[zone.kind]">
-                                    <t t-esc="fmt(zone.kg_total)"/> kg
-                                </text>
-                                <text t-att-x="zone.x + 16" t-att-y="zone.y + 102" class="o_craf_zone_line">
-                                    <t t-esc="zone.product_count"/> xil mahsulot
-                                </text>
-                                <text t-if="zone.pcs_total" t-att-x="zone.x + 16" t-att-y="zone.y + 124" class="o_craf_zone_line">
-                                    <t t-esc="fmt(zone.pcs_total)"/> шт<t t-if="zone.packs_total"> · <t t-esc="fmt(zone.packs_total)"/> pachka</t>
-                                </text>
-                                <rect t-att-x="zone.x + 16" t-att-y="zone.y + zone.h - 26" t-att-width="zone.w - 32" height="10"
-                                      rx="5" class="o_craf_bar_bg"/>
-                                <rect t-att-x="zone.x + 16" t-att-y="zone.y + zone.h - 26" t-att-width="barWidth(zone)" height="10"
-                                      rx="5" t-att-fill="kindColors[zone.kind]"/>
-                                <g t-if="zone.kind === 'finished'">
-                                    <line t-att-x1="zone.x + zone.w / 2" t-att-y1="zone.y + zone.h"
-                                          t-att-x2="zone.x + zone.w / 2" t-att-y2="zone.y + zone.h + 44"
-                                          class="o_craf_flow" marker-end="url(#crafArrow)"/>
-                                    <text t-att-x="zone.x + zone.w / 2 + 10" t-att-y="zone.y + zone.h + 32"
-                                          class="o_craf_flow_label">jo'natish / sotuv</text>
-                                </g>
-                            </g>
-                        </t>
-                    </svg>
-                </div>
-
-                <div t-if="selected" class="o_craf_panel rounded border p-3" t-ref="panel">
-                    <t t-set="z" t-value="selected"/>
-                    <div class="d-flex align-items-start justify-content-between gap-2">
-                        <div class="min-w-0">
-                            <h3 class="mb-1 text-break"><t t-esc="z.name"/></h3>
-                            <span class="badge text-white" t-attf-style="background: {{kindColors[z.kind]}};">
-                                <t t-esc="kindLabels[z.kind]"/>
-                            </span>
+                    <!-- ======================= xarita (SVG) ======================= -->
+                    <div t-att-class="'o_craf_map flex-grow-1 rounded border p-2 ' + (state.mview === 'list' ? 'd-none d-md-block' : 'o_craf_map_scroll')">
+                        <div t-if="state.edit" class="alert alert-info py-2 small mb-2">
+                            <i class="fa fa-hand-paper-o me-1"/> Bloklarni sichqoncha bilan suring; <i class="fa fa-eye-slash"/> — yashirish/ko'rsatish.
+                            Tugagach «Saqlash».
                         </div>
-                        <button class="btn btn-secondary btn-sm" t-on-click="() => this.openZone(z)">
-                            <i class="fa fa-list me-1"/>Ro'yxat
-                        </button>
+                        <div t-if="!nodes.length and !state.loading" class="p-5 text-center text-muted">
+                            Xaritada ko'rsatiladigan joylashuv yo'q.
+                        </div>
+                        <svg t-else="" t-ref="svg" t-att-viewBox="viewBox" class="w-100" preserveAspectRatio="xMidYMin meet"
+                             t-on-pointermove="onPointerMove" t-on-pointerup="onPointerUp" t-on-pointerleave="onPointerUp">
+                            <defs>
+                                <pattern id="crafGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                    <path d="M20 0L0 0 0 20" class="o_craf_grid"/>
+                                </pattern>
+                                <filter id="crafShadow" x="-10%" y="-10%" width="120%" height="130%">
+                                    <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.10"/>
+                                </filter>
+                                <filter id="crafGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur stdDeviation="2.5" result="b"/>
+                                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
+                                <t t-foreach="kinds" t-as="k" t-key="k">
+                                    <marker t-att-id="'crafArrow_' + k" viewBox="0 0 10 10" refX="8" refY="5"
+                                            markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                                        <path d="M0 0L10 5L0 10z" t-att-fill="kindColors[k]"/>
+                                    </marker>
+                                </t>
+                                <marker id="crafArrow_idle" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                    <path d="M0 0L10 5L0 10z" fill="#cbd5e1"/>
+                                </marker>
+                                <t t-foreach="nodes" t-as="n" t-key="n.id">
+                                    <clipPath t-att-id="'crafClip_' + n.id">
+                                        <rect t-att-x="n.x" t-att-y="n.y" t-att-width="n.w" t-att-height="n.h" rx="16"/>
+                                    </clipPath>
+                                </t>
+                            </defs>
+                            <rect x="0" y="0" t-att-width="mapW" t-att-height="mapH" fill="url(#crafGrid)"/>
+                            <rect x="8" y="8" t-att-width="mapW - 16" t-att-height="mapH - 16" rx="20" class="o_craf_wall"/>
+                            <text x="30" y="44" class="o_craf_wall_label">CRAF ZAVODI</text>
+
+                            <!-- oqimlar -->
+                            <t t-foreach="visibleFlows" t-as="flow" t-key="flowKey(flow)">
+                                <t t-set="g" t-value="flowPath(flow)"/>
+                                <g t-if="g" t-att-class="'o_craf_flowg' + (flow.kg ? ' o_live' : ' o_idle') + (isDim(flow) ? ' o_dim' : '')"
+                                   t-on-mouseenter="() => this.setHover(flow)" t-on-mouseleave="() => this.setHover(null)">
+                                    <title><t t-esc="nodeName(flow.from)"/> → <t t-esc="nodeName(flow.to)"/>: <t t-esc="flowText(flow)"/> (<t t-esc="flow.moves"/> ta harakat)</title>
+                                    <path t-att-d="g.d" class="o_craf_flow_hit"/>
+                                    <path t-att-d="g.d" class="o_craf_flow" t-att-stroke="flow.kg ? flowColor(flow) : '#cbd5e1'"
+                                          t-att-stroke-width="flowWidth(flow)"
+                                          t-att-marker-end="flow.kg ? ('url(#crafArrow_' + (node(flow.from) ? node(flow.from).kind : 'process') + ')') : 'url(#crafArrow_idle)'"/>
+                                    <path t-if="flow.kg" t-att-d="g.d" class="o_craf_flow_dash"
+                                          t-att-stroke-width="dashWidth(flow)"
+                                          t-attf-style="animation-duration: {{flowDur(flow)}}s;"/>
+                                    <t t-foreach="particles(flow)" t-as="pt" t-key="pt.i">
+                                        <circle t-att-r="particleR(flow)" t-att-fill="flowColor(flow)" class="o_craf_particle" filter="url(#crafGlow)">
+                                            <animateMotion t-att-dur="flowDur(flow) + 's'" t-att-begin="pt.begin" repeatCount="indefinite"
+                                                           t-att-path="g.d" rotate="auto" calcMode="linear"/>
+                                        </circle>
+                                    </t>
+                                </g>
+                            </t>
+
+                            <!-- bo'limlar (ombor joylari) -->
+                            <t t-foreach="visibleZones" t-as="zone" t-key="zone.id">
+                                <g t-att-class="'o_craf_zone' + (zone.id === state.selectedId ? ' o_selected' : '') + (zone.hidden ? ' o_hidden' : '')"
+                                   t-on-click="() => this.select(zone)" t-on-pointerdown="(ev) => this.onPointerDown(ev, zone)">
+                                    <rect t-att-x="zone.x" t-att-y="zone.y" t-att-width="zone.w" t-att-height="zone.h" rx="16"
+                                          class="o_craf_zone_bg" filter="url(#crafShadow)"/>
+                                    <g t-att-clip-path="'url(#crafClip_' + zone.id + ')'">
+                                        <g class="o_craf_liquid" t-attf-style="transform: scaleY({{level(zone).toFixed(3)}});">
+                                            <rect t-att-x="zone.x" t-att-y="zone.y" t-att-width="zone.w" t-att-height="zone.h"
+                                                  t-att-fill="kindColors[zone.kind]" fill-opacity="0.13"/>
+                                        </g>
+                                        <path class="o_craf_wave" t-att-fill="kindColors[zone.kind]" fill-opacity="0.10"
+                                              t-attf-d="M{{zone.x - zone.w}},{{zone.y + zone.h * (1 - level(zone))}} q{{zone.w / 4}},-8 {{zone.w / 2}},0 t{{zone.w / 2}},0 t{{zone.w / 2}},0 t{{zone.w / 2}},0 v{{zone.h}} h-{{zone.w * 2}}z"/>
+                                    </g>
+                                    <rect t-att-x="zone.x" t-att-y="zone.y" t-att-width="zone.w" t-att-height="zone.h" rx="16"
+                                          class="o_craf_zone_rect" t-att-stroke="kindColors[zone.kind]"/>
+                                    <rect t-att-x="zone.x" t-att-y="zone.y" width="6" t-att-height="zone.h" rx="3" t-att-fill="kindColors[zone.kind]"/>
+                                    <text t-att-x="zone.x + 20" t-att-y="zone.y + 32" class="o_craf_zone_title"><t t-esc="zone.name"/></text>
+                                    <circle t-if="zone.active and !state.edit" t-att-cx="zone.x + zone.w - 22" t-att-cy="zone.y + 26" r="6"
+                                            class="o_craf_pulse" t-att-fill="kindColors[zone.kind]"/>
+                                    <text t-att-x="zone.x + 20" t-att-y="zone.y + 76" class="o_craf_zone_big" t-att-fill="kindColors[zone.kind]">
+                                        <t t-esc="short(num('z_' + zone.id))"/><tspan class="o_craf_zone_unit"> kg</tspan>
+                                    </text>
+                                    <t t-foreach="zoneLines(zone)" t-as="line" t-key="line_index">
+                                        <text t-att-x="zone.x + 20" t-att-y="zone.y + 104 + line_index * 20" class="o_craf_zone_line"><t t-esc="line"/></text>
+                                    </t>
+                                    <g class="o_craf_badges">
+                                        <text t-if="zone.in_kg" t-att-x="zone.x + 20" t-att-y="zone.y + zone.h - 16" class="o_craf_in">
+                                            ▲ +<t t-esc="short(zone.in_kg)"/> kg
+                                        </text>
+                                        <text t-if="zone.out_kg" t-att-x="zone.x + (zone.in_kg ? 120 : 20)" t-att-y="zone.y + zone.h - 16" class="o_craf_out">
+                                            ▼ −<t t-esc="short(zone.out_kg)"/> kg
+                                        </text>
+                                    </g>
+                                    <g t-if="zone.baskets" class="o_craf_basket_badge">
+                                        <rect t-att-x="zone.x + zone.w - 112" t-att-y="zone.y + 50" width="96" height="24" rx="12"
+                                              t-att-class="zone.baskets_stale ? 'o_stale' : ''"/>
+                                        <text t-att-x="zone.x + zone.w - 64" t-att-y="zone.y + 66" text-anchor="middle">
+                                            <t t-esc="zone.baskets"/> korzinka
+                                        </text>
+                                    </g>
+                                    <g t-if="state.edit" class="o_craf_eye" t-on-click.stop="() => this.toggleHidden(zone)">
+                                        <circle t-att-cx="zone.x + zone.w - 22" t-att-cy="zone.y + 26" r="14"/>
+                                        <text t-att-x="zone.x + zone.w - 22" t-att-y="zone.y + 31" text-anchor="middle"><t t-esc="zone.hidden ? '✕' : '👁'"/></text>
+                                    </g>
+                                </g>
+                            </t>
+
+                            <!-- tashqi tugunlar: ta'minotchilar, mijozlar -->
+                            <t t-foreach="visibleVirtual" t-as="vn" t-key="vn.id">
+                                <g t-att-class="'o_craf_zone o_craf_virtual' + (vn.id === state.selectedId ? ' o_selected' : '') + (vn.hidden ? ' o_hidden' : '')"
+                                   t-on-click="() => this.select(vn)" t-on-pointerdown="(ev) => this.onPointerDown(ev, vn)">
+                                    <rect t-att-x="vn.x" t-att-y="vn.y" t-att-width="vn.w" t-att-height="vn.h" rx="16" class="o_craf_virtual_rect"/>
+                                    <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 40" text-anchor="middle" class="o_craf_virtual_icon">
+                                        <t t-esc="vn.id === 'supplier' ? '🚚' : '🤝'"/>
+                                    </text>
+                                    <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 76" text-anchor="middle" class="o_craf_zone_title"><t t-esc="vn.name"/></text>
+                                    <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 112" text-anchor="middle" class="o_craf_virtual_kg">
+                                        <t t-esc="short(num('v_' + vn.id))"/> kg
+                                    </text>
+                                    <text t-att-x="vn.x + vn.w / 2" t-att-y="vn.y + 136" text-anchor="middle" class="o_craf_zone_line">
+                                        <t t-esc="vn.id === 'supplier' ? 'kirim' : 'sotuv'"/> · <t t-esc="state.periodLabel"/>
+                                    </text>
+                                    <g t-if="state.edit" class="o_craf_eye" t-on-click.stop="() => this.toggleHidden(vn)">
+                                        <circle t-att-cx="vn.x + vn.w - 22" t-att-cy="vn.y + 26" r="14"/>
+                                        <text t-att-x="vn.x + vn.w - 22" t-att-y="vn.y + 31" text-anchor="middle"><t t-esc="vn.hidden ? '✕' : '👁'"/></text>
+                                    </g>
+                                </g>
+                            </t>
+                            <!-- oqim yorliqlari — bloklar ustida -->
+                            <t t-foreach="visibleFlows" t-as="flow" t-key="'l' + flowKey(flow)">
+                                <t t-set="g" t-value="flowPath(flow)"/>
+                                <g t-if="g" t-att-class="'o_craf_flowlabel' + (isDim(flow) ? ' o_dim' : '')"
+                                   t-on-mouseenter="() => this.setHover(flow)" t-on-mouseleave="() => this.setHover(null)">
+                                    <g t-if="flow.kg" class="o_craf_pill">
+                                        <text t-att-x="g.mx" t-att-y="g.my - 17" text-anchor="middle" class="o_craf_pill_label"><t t-esc="flow.label"/></text>
+                                        <rect t-att-x="g.mx - pillWidth(flow) / 2" t-att-y="g.my - 11" t-att-width="pillWidth(flow)" height="22" rx="11"
+                                              t-att-stroke="flowColor(flow)"/>
+                                        <text t-att-x="g.mx" t-att-y="g.my + 4" text-anchor="middle"><t t-esc="short(flow.kg)"/> kg</text>
+                                    </g>
+                                    <text t-else="" t-att-x="g.mx" t-att-y="g.my - 6" text-anchor="middle" class="o_craf_flow_idle_label"><t t-esc="flow.label"/></text>
+                                </g>
+                            </t>
+                        </svg>
+                        <div class="d-none d-md-flex flex-wrap gap-3 small text-muted px-2 pt-2">
+                            <t t-foreach="kinds" t-as="k" t-key="k">
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <span class="o_craf_dot" t-attf-style="background: {{kindColors[k]}};"/>
+                                    <t t-esc="kindLabels[k]"/>
+                                </span>
+                            </t>
+                            <span class="ms-auto">Chiziq qalinligi va zarrachalar tezligi — davrdagi oqim (kg). Blok to'lishi — qoldiq.</span>
+                        </div>
                     </div>
-                    <div class="row g-2 my-3 text-center">
-                        <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(z.kg_total)"/></div><div class="small text-muted">kg</div></div></div>
-                        <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="z.product_count"/></div><div class="small text-muted">xil mahsulot</div></div></div>
-                        <div class="col-6" t-if="z.pcs_total"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(z.pcs_total)"/></div><div class="small text-muted">шт</div></div></div>
-                        <div class="col-6" t-if="z.packs_total"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(z.packs_total)"/></div><div class="small text-muted">to'liq pachka</div></div></div>
+
+                    <!-- ======================= yon panel ======================= -->
+                    <div class="o_craf_panel rounded border p-3" t-ref="panel">
+                        <t t-set="z" t-value="panelZone"/>
+                        <t t-if="z">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <h4 class="mb-0 me-auto"><t t-esc="z.name"/></h4>
+                                <button class="btn btn-light btn-sm" t-on-click="() => this.openZone(z)">
+                                    <i class="fa fa-list me-1"/>Ro'yxat
+                                </button>
+                            </div>
+                            <div class="mb-3 small">
+                                <span class="badge" t-attf-style="background: {{kindColors[z.kind]}};"><t t-esc="kindLabels[z.kind]"/></span>
+                                <span t-if="z.active" class="ms-2 text-success"><span class="o_craf_live_dot"/> oxirgi 3 soatda harakat bo'lgan</span>
+                            </div>
+                            <div class="row g-2 text-center mb-3">
+                                <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(num('z_' + z.id))"/></div><div class="small text-muted">kg (nazariy)</div></div></div>
+                                <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="z.product_count"/></div><div class="small text-muted">xil mahsulot</div></div></div>
+                                <t t-foreach="z.units.slice(0, 2)" t-as="u" t-key="u.uom">
+                                    <div class="col-6"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(u.qty)"/></div><div class="small text-muted" t-esc="u.uom"/></div></div>
+                                </t>
+                                <div class="col-6" t-if="z.packs_total"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="fmt(z.packs_total)"/></div><div class="small text-muted">to'liq pachka</div></div></div>
+                                <div class="col-6" t-if="z.baskets"><div class="o_craf_stat"><div class="o_craf_stat_v"><t t-esc="z.baskets"/></div><div class="small text-muted">to'la korzinka<t t-if="z.baskets_stale"> (<t t-esc="z.baskets_stale"/> uzoq)</t></div></div></div>
+                            </div>
+
+                            <!-- davrdagi oqimlar -->
+                            <t t-set="zf" t-value="zoneFlows(z.id)"/>
+                            <div class="o_craf_section_title">Davr: <t t-esc="state.periodLabel"/></div>
+                            <div class="o_craf_flowlist mb-3">
+                                <div t-if="!zf.incoming.length and !zf.outgoing.length and !z.made_kg and !z.used_kg and !z.fix_kg" class="small text-muted">Bu davrda harakat yo'q.</div>
+                                <t t-foreach="zf.incoming" t-as="f" t-key="'i' + flowKey(f)">
+                                    <div class="o_craf_flowrow" t-on-mouseenter="() => this.setHover(f)" t-on-mouseleave="() => this.setHover(null)">
+                                        <span class="text-success"><i class="fa fa-arrow-down"/></span>
+                                        <span class="text-truncate"><t t-esc="nodeName(f.from)"/> <span class="text-muted">· <t t-esc="f.label"/></span></span>
+                                        <span class="ms-auto text-nowrap fw-bold">+<t t-esc="fmt(f.kg)"/> kg</span>
+                                    </div>
+                                </t>
+                                <t t-foreach="zf.outgoing" t-as="f" t-key="'o' + flowKey(f)">
+                                    <div class="o_craf_flowrow" t-on-mouseenter="() => this.setHover(f)" t-on-mouseleave="() => this.setHover(null)">
+                                        <span class="text-danger"><i class="fa fa-arrow-up"/></span>
+                                        <span class="text-truncate"><t t-esc="nodeName(f.to)"/> <span class="text-muted">· <t t-esc="f.label"/></span></span>
+                                        <span class="ms-auto text-nowrap fw-bold">−<t t-esc="fmt(f.kg)"/> kg</span>
+                                    </div>
+                                </t>
+                                <div t-if="z.made_kg" class="o_craf_flowrow"><span class="text-primary"><i class="fa fa-cogs"/></span><span>Ishlab chiqarildi</span><span class="ms-auto fw-bold"><t t-esc="fmt(z.made_kg)"/> kg</span></div>
+                                <div t-if="z.used_kg" class="o_craf_flowrow"><span class="text-warning"><i class="fa fa-fire"/></span><span>Sarf (ishlab chiqarishga)</span><span class="ms-auto fw-bold">−<t t-esc="fmt(z.used_kg)"/> kg</span></div>
+                                <div t-if="z.fix_kg" class="o_craf_flowrow"><span class="text-muted"><i class="fa fa-balance-scale"/></span><span>Sanash / tuzatish</span><span class="ms-auto fw-bold"><t t-esc="(z.fix_kg > 0 ? '+' : '') + fmt(z.fix_kg)"/> kg</span></div>
+                            </div>
+
+                            <!-- mahsulotlar -->
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="o_craf_section_title mb-0 me-auto">Mahsulotlar</div>
+                                <input class="form-control form-control-sm o_craf_search" type="search" placeholder="Qidirish…"
+                                       t-att-value="state.search" t-on-input="onSearch"/>
+                            </div>
+                            <table class="table table-sm table-hover mb-2 o_craf_table">
+                                <tbody>
+                                    <tr t-foreach="z.top" t-as="item" t-key="item.id" t-on-click="() => this.openProduct(item)">
+                                        <td>
+                                            <div class="text-truncate o_craf_name"><t t-esc="item.name"/></div>
+                                            <div class="small text-muted"><t t-esc="item.code"/><t t-if="item.packs_text"> · <t t-esc="item.packs_text"/></t></div>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <div><t t-esc="fmt(item.qty, 2)"/> <t t-esc="item.uom"/></div>
+                                            <div class="small text-muted" t-if="!item.is_kg and item.kg"><t t-esc="fmt(item.kg)"/> kg</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div t-if="!z.top.length" class="small text-muted mb-2">Mahsulot topilmadi.</div>
+
+                            <!-- oxirgi harakatlar -->
+                            <div class="o_craf_section_title mt-3">Oxirgi harakatlar</div>
+                            <div t-if="state.movesLoading" class="small text-muted"><i class="fa fa-spinner fa-spin"/> yuklanmoqda…</div>
+                            <div t-elif="!state.moves.length" class="small text-muted">Bu davrda harakat yo'q.</div>
+                            <t t-else="">
+                                <t t-foreach="state.moves" t-as="mv" t-key="mv.id">
+                                    <div class="o_craf_moverow" role="button" t-on-click="() => this.openMove(mv)">
+                                        <span t-att-class="mv.incoming ? 'text-success' : 'text-danger'"><i t-att-class="'fa ' + (mv.incoming ? 'fa-sign-in' : 'fa-sign-out')"/></span>
+                                        <div class="min-w-0 flex-grow-1">
+                                            <div class="text-truncate"><t t-esc="mv.product"/></div>
+                                            <div class="small text-muted text-truncate"><t t-esc="mv.date"/> · <t t-esc="mv.incoming ? '←' : '→'"/> <t t-esc="mv.other"/> · <t t-esc="mv.ref"/></div>
+                                        </div>
+                                        <span class="text-nowrap fw-bold"><t t-esc="(mv.incoming ? '+' : '−') + fmt(mv.qty, 2)"/> <small t-esc="mv.uom"/></span>
+                                    </div>
+                                </t>
+                            </t>
+                            <div class="small text-muted mt-2">Tayyor profil kg — nazariy (kg/m × uzunlik).</div>
+                        </t>
+                        <t t-elif="selectedVirtual">
+                            <t t-set="vn" t-value="selectedVirtual"/>
+                            <t t-set="vf" t-value="zoneFlows(vn.id)"/>
+                            <h4 class="mb-1"><t t-esc="vn.name"/></h4>
+                            <div class="small text-muted mb-3">Davr: <t t-esc="state.periodLabel"/></div>
+                            <div class="o_craf_stat text-center mb-3"><div class="o_craf_stat_v"><t t-esc="fmt(num('v_' + vn.id))"/> kg</div><div class="small text-muted"><t t-esc="vn.id === 'supplier' ? 'jami kirim' : 'jami sotuv'"/></div></div>
+                            <t t-foreach="vf.outgoing.concat(vf.incoming)" t-as="f" t-key="flowKey(f)">
+                                <div class="mb-3">
+                                    <div class="o_craf_flowrow fw-bold">
+                                        <span class="text-truncate"><t t-esc="vn.id === 'supplier' ? nodeName(f.to) : nodeName(f.from)"/></span>
+                                        <span class="ms-auto"><t t-esc="fmt(f.kg)"/> kg</span>
+                                    </div>
+                                    <t t-foreach="f.products" t-as="p" t-key="p_index">
+                                        <div class="d-flex small text-muted ps-3"><span class="text-truncate me-2"><t t-esc="p.name"/></span><span class="ms-auto text-nowrap"><t t-esc="fmt(p.kg)"/> kg</span></div>
+                                    </t>
+                                </div>
+                            </t>
+                            <div t-if="!vf.outgoing.length and !vf.incoming.length" class="small text-muted">Bu davrda harakat yo'q.</div>
+                        </t>
                     </div>
-                    <div class="small text-muted mb-1">Eng ko'p (kg bo'yicha)</div>
-                    <table class="table table-sm table-hover mb-2 o_craf_table">
-                        <tbody>
-                            <tr t-foreach="z.top" t-as="item" t-key="item.id" t-on-click="() => this.openProduct(item)">
-                                <td>
-                                    <div class="text-truncate o_craf_name"><t t-esc="item.name"/></div>
-                                    <div class="small text-muted"><t t-esc="item.code"/><t t-if="item.packs_text"> · <t t-esc="item.packs_text"/></t></div>
-                                </td>
-                                <td class="text-end text-nowrap">
-                                    <div><t t-esc="fmt(item.qty, 2)"/> <t t-esc="item.is_kg ? 'kg' : 'шт'"/></div>
-                                    <div class="small text-muted" t-if="!item.is_kg and item.kg"><t t-esc="fmt(item.kg)"/> kg</div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="small text-muted">Tayyor mahsulot kg — nazariy (kg/m × uzunlik).</div>
                 </div>
             </div>
         </div>
