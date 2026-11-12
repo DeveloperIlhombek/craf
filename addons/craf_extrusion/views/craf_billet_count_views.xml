@@ -67,7 +67,7 @@
                     </div>
                     <field name="line_ids" readonly="state != 'draft'">
                         <list editable="bottom" create="false" delete="false">
-                            <field name="product_id" readonly="1"/>
+                            <field name="product_id" readonly="1" force_save="1"/>
                             <field name="system_qty"/>
                             <field name="pcs" sum="Jami"/>
                             <field name="qty_kg" sum="Jami" class="fw-bold"/>
@@ -89,7 +89,7 @@
                         </kanban>
                         <form string="Quyma">
                             <group>
-                                <field name="product_id" readonly="1"/>
+                                <field name="product_id" readonly="1" force_save="1"/>
                                 <field name="system_qty"/>
                                 <field name="pcs"/>
                                 <field name="qty_kg"/>
